@@ -87,3 +87,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+action_provision
+action_set_name
+creator_uid
+id
+index_uuid
+private_key
+synced_folders
