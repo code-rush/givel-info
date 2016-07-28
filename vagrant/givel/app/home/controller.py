@@ -6,7 +6,7 @@ hw_bp = Blueprint('home', __name__)
 api = Api(hw_bp)
 
 class HelloWorld(Resource):
-      def get(self):
+   def get(self):
        return {'Hello': 'HelloWorld'}
 
 api.add_resource(HelloWorld, '/')
