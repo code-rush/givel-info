@@ -13,14 +13,16 @@ api = Api(user_account_api_routes)
 
 
 dynamodb = boto3.resource('dynamodb')
+client = boto3.client('dynamodb')
 
 # Connect to database and create table if not already created else return Table
 try:
+    users = create_users_table()
+    print('Users Table did not exist!')
+finally:
     users = dynamodb.Table('users')
     print('Connected to users Table')
-except Exception as e:
-    print('Users Table does not exist!')
-    users = create_users_table()
+    
 
 
 class CreateUserAccount(Resource):
@@ -33,20 +35,37 @@ class CreateUserAccount(Resource):
                                     'first_name': data['first_name'],
                                     'last_name': data['last_name'],
                                     'password': password,
+                                    'givel_stars': 25,
                                     })
         return user, 201
             
 
 class UserProfile(Resource):
-    def delete(self, user_email):
+    def delete(self, user_email, password):
         user = users.get_item(Key={'email': user_email})
         if not user:
             raise BadRequest('User does not exist')
-        return users.delete_item(Key={'email': user_email}), 200
+        if user and check_password_hash(user['Item']['password'], password):
+            return users.delete_item(Key={'email': user_email}), 200
+
+    # def get(self, user_email, password):
+    #     user = users.get_item()
+
+    def put(self, user_email):
+        # user = users.get_item(Key={'email': user_email})
+        data = request.get_json(force=True)
+        if data['picture']:
+            return users.update_item(Key={'email':user_email},
+                                     AttributeUpdates={'picture':{'Action':'PUT',
+                                                                  'Value':{'S':data['picture']}
+                                                                 }
+                                                      }
+                                    ), 200
 
 
 
 api.add_resource(CreateUserAccount, '/user_accounts')
-api.add_resource(UserProfile, '/user_accounts/<user_email>')
+api.add_resource(UserProfile, '/user_accounts/<user_email>/<password>',
+                              '/user_accounts/<user_email>/')
 
 
