@@ -31,19 +31,23 @@ class CreateUserAccount(Resource):
         if not data['email'] or not data['first_name'] or not data['last_name'] or not data['password']:
             raise BadRequest('Provide all details')
         password = generate_password_hash(data['password'])
-        user = users.put_item(Item={'email': data['email'],
-                                    'first_name': data['first_name'],
-                                    'last_name': data['last_name'],
-                                    'password': password,
-                                    'givel_stars': 25,
-                                    })
+        
+        user = users.put_item(
+                       Item={'email': data['email'],
+                             'first_name': data['first_name'],
+                             'last_name': data['last_name'],
+                             'password': password,
+                             'givel_stars': 25,
+                             },
+                             ConditionExpression='attribute_not_exists(email)'
+                       )
         return user, 201
             
 
 class UserProfile(Resource):
     def delete(self, user_email, password):
         user = users.get_item(Key={'email': user_email})
-        if not user:
+        if user == null:
             raise BadRequest('User does not exist')
         if user and check_password_hash(user['Item']['password'], password):
             return users.delete_item(Key={'email': user_email}), 200
