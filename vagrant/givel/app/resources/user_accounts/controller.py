@@ -89,8 +89,8 @@ class UserProfile(Resource):
 
 
 
-api.add_resource(CreateUserAccount, '/user_accounts')
-api.add_resource(UserProfile, '/user_accounts/<user_email>/<password>',
-                              '/user_accounts/<user_email>')
+api.add_resource(CreateUserAccount, '/')
+api.add_resource(UserProfile, '/<user_email>/<password>',
+                              '/<user_email>')
 
 
