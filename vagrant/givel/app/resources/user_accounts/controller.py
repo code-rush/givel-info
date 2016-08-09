@@ -12,17 +12,14 @@ user_account_api_routes = Blueprint('account_api', __name__)
 api = Api(user_account_api_routes)
 
 
-dynamodb = boto3.resource('dynamodb')
 client = boto3.client('dynamodb')
 
 # Connect to database and create table if not already created else return Table
 try:
     users = create_users_table()
     print('Users Table did not exist!')
-finally:
-    users = dynamodb.Table('users')
-    print('Connected to users Table')
-    
+except:
+    pass
 
 
 class CreateUserAccount(Resource):
@@ -32,44 +29,63 @@ class CreateUserAccount(Resource):
             raise BadRequest('Provide all details')
         password = generate_password_hash(data['password'])
         
-        user = users.put_item(
-                       Item={'email': data['email'],
-                             'first_name': data['first_name'],
-                             'last_name': data['last_name'],
-                             'password': password,
-                             'givel_stars': 25,
-                             },
-                             ConditionExpression='attribute_not_exists(email)'
-                       )
+        try:
+            user = client.put_item(
+                            TableName='users', 
+                            Item= {'email': {'S': data['email']},
+                                 'first_name': {'S': data['first_name']},
+                                 'last_name': {'S': data['last_name']},
+                                 'password': {'S': password},
+                                 'givel_stars': {'N': '25'},
+                                 },
+                            ReturnValues='ALL_OLD',
+                            ConditionExpression='attribute_not_exists(email)',
+                           )
+        except:
+            raise BadRequest('User already exists!')
+        # print (user['Attributes'])
         return user, 201
             
 
 class UserProfile(Resource):
     def delete(self, user_email, password):
-        user = users.get_item(Key={'email': user_email})
-        if user == null:
-            raise BadRequest('User does not exist')
-        if user and check_password_hash(user['Item']['password'], password):
-            return users.delete_item(Key={'email': user_email}), 200
+        user = client.get_item(TableName='users', 
+                            Key={'email': {'S': user_email}})
+        try:
+            if user and check_password_hash(user['Item']['password']['S'],
+                                            password):
+                return client.delete_item(TableName='users', 
+                                Key={'email': {'S': user_email}}), 200
+        except:
+            raise BadRequest('User does not exist!')
 
-    # def get(self, user_email, password):
-    #     user = users.get_item()
+    
+    def get(self, user_email, password):
+        user = client.get_item(TableName='users',
+                            Key={'email': {'S':user_email}})
+        try:
+            if user and check_password_hash(user['Item']['password']['S'],
+                                        password):
+                return user['Item'], 200
+        except:
+            raise NotFound('User not found!')
+
 
     def put(self, user_email):
-        # user = users.get_item(Key={'email': user_email})
+        user = users.get_item(Key={'email': user_email})
         data = request.get_json(force=True)
         if data['picture']:
-            return users.update_item(Key={'email':user_email},
-                                     AttributeUpdates={'picture':{'Action':'PUT',
-                                                                  'Value':{'S':data['picture']}
-                                                                 }
-                                                      }
-                                    ), 200
+            return client.update_item(TableName='users',
+                                Key={'email': {'S': user_email}},
+                                UpdateExpression='SET picture = :picture',
+                                ExpressionAttributeValues={
+                                             ':picture': {'S': data['picture']}
+                                             }), 200
 
 
 
 api.add_resource(CreateUserAccount, '/user_accounts')
 api.add_resource(UserProfile, '/user_accounts/<user_email>/<password>',
-                              '/user_accounts/<user_email>/')
+                              '/user_accounts/<user_email>')
 
 
