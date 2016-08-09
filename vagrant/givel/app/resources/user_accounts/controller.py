@@ -1,7 +1,7 @@
 import boto3
 
 from app import app
-from flask import Blueprint, request, json
+from flask import Blueprint, request
 from flask_restful import Resource, Api
 
 from werkzeug.security import generate_password_hash, check_password_hash
