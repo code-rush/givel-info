@@ -45,7 +45,6 @@ class CreateUserAccount(Resource):
                            )
         except:
             raise BadRequest('User already exists!')
-        # print (user['Attributes'])
         return user, 201
             
 
