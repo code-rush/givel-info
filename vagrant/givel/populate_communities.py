@@ -2,7 +2,8 @@ import boto3
 
 db = boto3.client('dynamodb')
 
-try:
+
+try: 
     communities_table = db.create_table(
             AttributeDefinitions=[
                 {
@@ -27,11 +28,17 @@ try:
             ],
             ProvisionedThroughput={
                 'ReadCapacityUnits': 10,
-                'ReadCapacityUnits': 10
+                'WriteCapacityUnits': 10
             }
         )
+
+    communities_table.client.get_waiter('table_exists').wait(TableName='communities')
+
+    print(communities_table.item_count)
+
 except:
     pass
+
 
 
 
@@ -182,12 +189,12 @@ community21 = db.put_item(TableName='communities',
                          ConditionExpression='attribute_not_exists(city)',
                      )
 
-# community22 = db.put_item(TableName='communities',
-#                          Item={'city': {'S': 'Washington'},
-#                                'state': {'S': 'DC'}
-#                          },
-#                          ConditionExpression='attribute_not_exists(city)',
-#                      )
+community22 = db.put_item(TableName='communities',
+                         Item={'city': {'S': 'Washington'},
+                               'state': {'S': 'DC'}
+                         },
+                         ConditionExpression='attribute_not_exists(city)',
+                     )
 
 community23 = db.put_item(TableName='communities',
                          Item={'city': {'S': 'Memphis'},
@@ -391,3 +398,5 @@ community51 = db.put_item(TableName='communities',
                          },
                          ConditionExpression='attribute_not_exists(city)',
                      )
+
+print('Communities added!')

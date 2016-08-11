@@ -50,7 +50,7 @@ def create_community_table():
             ],
             ProvisionedThroughput={
                 'ReadCapacityUnits': 10,
-                'ReadCapacityUnits': 10
+                'WriteCapacityUnits': 10
             }
         )
     except:
