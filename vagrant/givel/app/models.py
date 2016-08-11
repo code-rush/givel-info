@@ -23,7 +23,7 @@ def create_users_table():
                 'WriteCapacityUnits': 10
            }
         )
-    except Exception as e:
+    except:
         try:
             users_table = dynamodb.Table('users')
         except:
@@ -53,7 +53,7 @@ def create_community_table():
                 'ReadCapacityUnits': 10
             }
         )
-    except Exception as e:
+    except:
         try:
             communities_table = dynamodb.Table('communities')
         except:

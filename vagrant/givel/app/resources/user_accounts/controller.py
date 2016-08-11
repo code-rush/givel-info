@@ -40,7 +40,6 @@ class CreateUserAccount(Resource):
                                  'password': {'S': password},
                                  'givel_stars': {'N': '25'},
                                  },
-                            ReturnValues='ALL_OLD',
                             ConditionExpression='attribute_not_exists(email)',
                            )
         except:
