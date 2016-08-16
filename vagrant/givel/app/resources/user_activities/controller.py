@@ -7,7 +7,7 @@ from flask_restful import Api, Resource
 
 
 user_activity_api_routes = Blueprint('activity_api', __name__)
-api = Api(user_activities_api_routes)
+api = Api(user_activity_api_routes)
 
 db = boto3.client('dynamodb')
 
