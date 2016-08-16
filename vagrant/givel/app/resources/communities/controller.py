@@ -1,5 +1,7 @@
 import boto3
 
+from app import app
+
 from flask import Blueprint, request, json
 from flask_restful import Resource, Api
 
@@ -14,9 +16,19 @@ except:
     pass
 
 
+community_api_routes = Blueprint('community_api', __name__)
+api = Api(community_api_routes)
+
 
 class Communities(Resource):
     def get(self):
         """Returns all communities"""
         communities = db.scan(TableName='communities')
-        return communities['Items'], 200
+        items = communities['Items']
+        results = {}
+        for i in items:
+            results[i['city']['S']] = i['state']['S']
+        return results, 200
+
+
+api.add_resource(Communities, '/')
