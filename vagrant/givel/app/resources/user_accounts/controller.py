@@ -84,6 +84,20 @@ class UserProfile(Resource):
                                 ExpressionAttributeValues={
                                              ':picture': {'S': data['profile_picture']}
                                              }), 200
+        if data['primary_community']:
+            return client.update_item(TableName='users',
+                                Key={'email': {'S': user_email}},
+                                UpdateExpression='SET primary_community = :p',
+                                ExpressionAttributeValues={
+                                             ':p': {'S': data['primary_community']} 
+                                             }), 200
+        if data['secondary_community']:
+            return client.update_item(TableName='users',
+                                Key={'email': {'S': user_email}},
+                                UpdateExpression='SET secondary_community = :p',
+                                ExpressionAttributeValues={
+                                             ':p': {'S': data['secondary_community']} 
+                                             }), 200
 
 
 
