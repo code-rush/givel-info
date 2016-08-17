@@ -36,3 +36,29 @@
   - Parameters: profile_picture, primary_community, secondary_community
   - Returns: If successfully edited returns *200 OK* Status Code
   - Description: Updates user profile.
+
+- **follow a user**
+  - Path: /api/v1/users/{user_email}/following
+  - Method: PUT
+  - Returns: *200 OK* Status Code
+  - Description: Following a user. It adds the user to the following list and 
+                 adds this user to the following users followers list.
+
+- **get all followers**
+  - Path: /api/v1/users/{user_email}/following
+  - Method: GET
+  - Returns: Users all followings list.
+  - Description: Get all list of users following user list.
+
+- **unfollow a user**
+  - Path: /api/v1/users/{user_email}/following
+  - Method: DELETE
+  - Returns: *200 OK* Status Code.
+  - Description: Removes the unfollowed user from the followings list and removes 
+                 this user from followers list from the unfollowed user.
+
+- **get users followers**
+  - Path: /api/v1/users/{user_email}/followers
+  - Method: GET
+  - Returns: List of all followers.
+  - Description: Fetches all users followers and returns it.
