@@ -4,7 +4,7 @@
 - **create a user account**
   - Path: /api/v1/user_accounts/
   - Method: POST
-  - Required Data: first_name, last_name, email and password
+  - Required Data: first_name, last_name, email, password
   - Returns: If successfully created returns *201 CREATED* Status Code, else
              if user already exists, returns *400 BAD REQUEST* with a response
              message "User already exists!"
@@ -17,7 +17,7 @@
   - Returns: User item with *200 OK* Status Code.
   - Description: Returns all user information their communities.
 
-- **Delete User**
+- **delete user**
   - Path: /api/v1/user_accounts/{user_email}/{password}
   - Method: DELETE
   - Returns: If successfully deletes returns *200 OK* Status Code.
@@ -30,4 +30,9 @@
   - Returns: city-state dictionary as key-value pair.
   - Description: Returns all cities with their value as states from the database.
 
-
+- **edit user profile**
+  - Path: /api/v1/user_accounts/{user_email}
+  - Method: PUT
+  - Parameters: profile_picture, primary_community, secondary_community
+  - Returns: If successfully edited returns *200 OK* Status Code
+  - Description: Updates user profile.
