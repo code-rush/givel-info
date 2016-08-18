@@ -1,4 +1,5 @@
 import boto3
+import datetime
 
 from app import app
 
@@ -10,6 +11,10 @@ user_activity_api_routes = Blueprint('activity_api', __name__)
 api = Api(user_activity_api_routes)
 
 db = boto3.client('dynamodb')
+
+try: 
+    posts = create_post_table()
+
 
 
 class UserFollowingActivities(Resource):
@@ -75,6 +80,15 @@ class UserFollowers(Resource):
                     )
         return user['Item']['followers'], 200
 
+
+class UserPosts(Resource):
+    def post(self, user_email):
+        """Returns Users Posts"""
+        post = db.put_item(TableName='posts',
+                           Item={'user_email': {'S': user_email},
+                                'date_time': {'S': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+                           })
+        
 
 
 api.add_resource(UserFollowingActivities, '/<user_email>/following')
