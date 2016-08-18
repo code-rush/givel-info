@@ -38,8 +38,12 @@ def create_community_table():
             TableName='communities',
             KeySchema=[
                 {
-                    'AttributeName': 'name',
+                    'AttributeName': 'city',
                     'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'state',
+                    'KeyType': 'RANGE'
                 }
             ],
             AttributeDefinitions=[
@@ -60,3 +64,79 @@ def create_community_table():
             print('Communities Table does not exist')
     finally:
         return communities_table
+
+
+def create_post_table():
+    try:
+        user_post_table = dynamodb.create_table(
+            TableName='posts',
+            KeySchema=[
+                {
+                    'AttributeName': 'date-time',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'user_email',
+                    'KeyType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'date-time'
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'user_email',
+                    'KeyType': 'S'
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 10
+            }
+        )
+    except:
+        try:
+            user_post_table = dynamodb.Table('posts')
+        except:
+            print('Communities Table does not exist')
+    finally:
+        return user_post_table
+
+
+def create_comments_table():
+    try:
+        comments_table = dynamodb.create_table(
+            TableName='comments',
+            KeySchema=[
+                {
+                    'AttributeName': 'user_email',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'date_time',
+                    'KeyType': "RANGE"
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'user_email',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'date_time',
+                    'AttributeType': 'S'
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 10
+            }
+        )
+    except:
+        try:
+            comments_table = dynamodb.Table('comments')
+        except:
+            print('Comments Table does not exist')
+    finally:
+        return comments_table
