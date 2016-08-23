@@ -38,11 +38,11 @@ def create_community_table():
             TableName='communities',
             KeySchema=[
                 {
-                    'AttributeName': 'city',
+                    'AttributeName': 'state',
                     'KeyType': 'HASH'
                 },
                 {
-                    'AttributeName': 'state',
+                    'AttributeName': 'city',
                     'KeyType': 'RANGE'
                 }
             ],
@@ -72,22 +72,22 @@ def create_post_table():
             TableName='posts',
             KeySchema=[
                 {
-                    'AttributeName': 'date-time',
+                    'AttributeName': 'user_email',
                     'KeyType': 'HASH'
                 },
                 {
-                    'AttributeName': 'user_email',
+                    'AttributeName': 'date_time',
                     'KeyType': 'RANGE'
                 }
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'date-time'
+                    'AttributeName': 'date_time'
                     'AttributeType': 'S'
                 },
                 {
                     'AttributeName': 'user_email',
-                    'KeyType': 'S'
+                    'AttributeType': 'S'
                 }
             ],
             ProvisionedThroughput={
@@ -102,6 +102,44 @@ def create_post_table():
             print('Communities Table does not exist')
     finally:
         return user_post_table
+
+
+def create_challenges_table():
+    try:
+        challenges_table = dynamodb.create_table(
+            TableName='challenges',
+            KeySchema=[
+                {
+                    'AttributeName': 'user_email',
+                    'AttributeType': 'HASH'
+                },
+                {
+                    'AttributeName': 'date_time',
+                    'AttributeType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'user_email',
+                    'AttributeType': 'S',
+                },
+                {
+                    'AttributeName': 'date_time',
+                    'AttributeType': 'S'
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 10
+            }
+        )
+    except:
+        try:
+            challenges_table = dynamodb.Table('challenges')
+        except:
+            print('challenges table does not exist')
+    finally:
+        return challenges_table
 
 
 def create_comments_table():
