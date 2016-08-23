@@ -18,11 +18,11 @@ try:
             TableName='communities',
             KeySchema=[
                 {
-                    'AttributeName': 'city',
+                    'AttributeName': 'state',
                     'KeyType': 'HASH'
                 },
                 {
-                    'AttributeName': 'state',
+                    'AttributeName': 'city',
                     'KeyType': 'RANGE'
                 }
             ],
