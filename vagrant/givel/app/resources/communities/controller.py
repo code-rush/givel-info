@@ -31,4 +31,5 @@ class Communities(Resource):
         return results, 200
 
 
+
 api.add_resource(Communities, '/')

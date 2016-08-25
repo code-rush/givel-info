@@ -1,5 +1,5 @@
 import boto3
-import datetime
+# import datetime
 
 from app import app
 
@@ -14,7 +14,8 @@ db = boto3.client('dynamodb')
 
 try: 
     posts = create_post_table()
-
+except:
+    pass
 
 
 class UserFollowingActivities(Resource):
@@ -84,10 +85,43 @@ class UserFollowers(Resource):
 class UserPosts(Resource):
     def post(self, user_email):
         """Returns Users Posts"""
+        post_data = request.get_json(force=True)
         post = db.put_item(TableName='posts',
                            Item={'user_email': {'S': user_email},
-                                'date_time': {'S': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-                           })
+                                'date_time': {'S': post_data['date_time']}
+                           }
+                      )
+        if post_data['description']:
+            post = db.update_item(TableName='posts',
+                                  Key={'user_email': {'S': user_email},
+                                       'date_time': {'S': post_data['date_time']}
+                                  },
+                                  UpdateExpression='SET description = :d',
+                                  ExpressionAttributeValues={
+                                      ':d': {'S': post_data['description']}
+                                  }
+                              )
+        if post_data['picture']:
+            post = db.update_item(TableName='posts',
+                                  Key={'user_email': {'S': user_email},
+                                       'date_time': {'S': post_data['date_time']}
+                                  },
+                                  UpdateExpression='SET picture = :p',
+                                  ExpressionAttributeValues={
+                                      ':p': {'S': post_data['picture']}
+                                  }
+                              )
+        if post_data['video']:
+            post = db.update_item(TableName='posts',
+                                  Key={'user_email': {'S': user_email},
+                                       'date_time': {'S': post_data['date_time']}
+                                  },
+                                  UpdateExpression='SET video = :v',
+                                  ExpressionAttributeValues={
+                                      ':v': {'S': post_data['video']}
+                                  }
+                              )
+
         
 
 

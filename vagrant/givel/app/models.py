@@ -82,7 +82,7 @@ def create_post_table():
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'date_time'
+                    'AttributeName': 'date_time',
                     'AttributeType': 'S'
                 },
                 {
