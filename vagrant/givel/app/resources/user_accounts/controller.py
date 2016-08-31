@@ -13,7 +13,7 @@ user_account_api_routes = Blueprint('account_api', __name__)
 api = Api(user_account_api_routes)
 
 
-client = boto3.client('dynamodb')
+db = boto3.client('dynamodb')
 
 # Connect to database and create table if not already created else return Table
 try:
@@ -32,7 +32,7 @@ class CreateUserAccount(Resource):
         password = generate_password_hash(data['password'])
         
         try:
-            user = client.put_item(
+            user = db.put_item(
                             TableName='users', 
                             Item= {'email': {'S': data['email']},
                                  'first_name': {'S': data['first_name']},
@@ -45,17 +45,17 @@ class CreateUserAccount(Resource):
         except:
             raise BadRequest('User already exists!')
         return user, 201
+
             
 
 class UserProfile(Resource):
     def delete(self, user_email, password):
         """Deletes a User"""
-        user = client.get_item(TableName='users', 
-                            Key={'email': {'S': user_email}})
+        user = db.get_item(TableName='users', 
+                        Key={'email': {'S': user_email}})
         try:
-            if user and check_password_hash(user['Item']['password']['S'],
-                                            password):
-                return client.delete_item(TableName='users', 
+            if user and check_password_hash(user['Item']['password']['S'], password):
+                return db.delete_item(TableName='users', 
                                 Key={'email': {'S': user_email}}), 200
         except:
             raise BadRequest('User does not exist!')
@@ -63,8 +63,8 @@ class UserProfile(Resource):
     
     def get(self, user_email, password):
         """Returns User Profile"""
-        user = client.get_item(TableName='users',
-                            Key={'email': {'S':user_email}})
+        user = db.get_item(TableName='users',
+                       Key={'email': {'S':user_email}})
         try:
             if user and check_password_hash(user['Item']['password']['S'],
                                         password):
@@ -73,36 +73,74 @@ class UserProfile(Resource):
             raise NotFound('User not found!')
 
 
+    # def put(self, user_email):
+    #     """Updates Users Profile"""
+    #     data = request.get_json(force=True)
+    #     if data['profile_picture'] or data['home'] or data['home_away']:
+    #         if data ['profile_picture']:
+    #             return db.update_item(TableName='users',
+    #                             Key={'email': {'S': user_email}},
+    #                             UpdateExpression='SET profile_picture = :picture',
+    #                             ExpressionAttributeValues={
+    #                                      ':picture': {'S': data['profile_picture']}}
+    #                         ), 200
+    #         if data['home']:
+    #             # add_user = db.update_item(TableName='communities',
+    #             #                     Key={'state': {'S': data['home']['state']},
+    #             #                          'city': {'S': data['home']['city']}},
+    #             #                     UpdateExpression='SET user_count = :count',
+    #             #                     ExpressionAttributeValues={
+    #             #                             ':count': {'NS': }
+    #             #                         }
+    #             #                     )
+    #             return db.update_item(TableName='users',
+    #                                 Key={'email': {'S': user_email}},
+    #                                 UpdateExpression='SET home = :p',
+    #                                 ExpressionAttributeValues={
+    #                                          ':p': {'S': data['home']}}
+    #                             ), 200
+    #         if data['home_away']:
+    #             return db.update_item(TableName='users',
+    #                                 Key={'email': {'S': user_email}},
+    #                                 UpdateExpression='SET home_away = :p',
+    #                                 ExpressionAttributeValues={
+    #                                          ':p': {'S': data['home_away']}}
+    #                             ), 200
+
+
+
+class UserProfilePicture(Resource):
+    def get(self, user_email):
+        """Returns Users Profile Picture"""
+        user = db.get_item(TableName='users',
+                        Key={'email': {'S': user_email}},
+                        ProjectionExpression='profile_picture',
+                    )
+        return user['Item']['profile_picture']['S'], 200
+
     def put(self, user_email):
-        """Updates Users Profile"""
-        user = users.get_item(Key={'email': user_email})
+        """Updates Users Profile Picture"""
         data = request.get_json(force=True)
         if data['profile_picture']:
-            return client.update_item(TableName='users',
+            return db.update_item(TableName='users',
                                 Key={'email': {'S': user_email}},
                                 UpdateExpression='SET profile_picture = :picture',
                                 ExpressionAttributeValues={
-                                             ':picture': {'S': data['profile_picture']}
-                                             }), 200
-        if data['primary_community']:
-            return client.update_item(TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='SET primary_community = :p',
-                                ExpressionAttributeValues={
-                                             ':p': {'S': data['primary_community']} 
-                                             }), 200
-        if data['secondary_community']:
-            return client.update_item(TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='SET secondary_community = :p',
-                                ExpressionAttributeValues={
-                                             ':p': {'S': data['secondary_community']} 
-                                             }), 200
+                                         ':picture': {'S': data['profile_picture']}}
+                            ), 200
+
+    def delete(self, user_email):
+        """Removes Users Profile Picture"""
+        user = db.update_item(TableName='users',
+                            Key={'email': {'S': user_email}},
+                            UpdateExpression='REMOVE profile_picture')
+        return 200   
 
 
 
 api.add_resource(CreateUserAccount, '/')
 api.add_resource(UserProfile, '/<user_email>/<password>',
                               '/<user_email>')
+api.add_resource(UserProfilePicture, '/<user_email>/profile_picture')
 
 
