@@ -76,13 +76,13 @@ def create_post_table():
                     'KeyType': 'HASH'
                 },
                 {
-                    'AttributeName': 'date_time',
+                    'AttributeName': 'creation_time',
                     'KeyType': 'RANGE'
                 }
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'date_time',
+                    'AttributeName': 'creation_time',
                     'AttributeType': 'S'
                 },
                 {
