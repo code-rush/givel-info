@@ -12,6 +12,13 @@
 4. To navigate to the project directory from inside the vagrant machine
    `cd /vagrant/givel`. This is where you will see the project directory.
 
+##To install requirements with python3-pip
+- `sudo pip3 install -r requirements.txt`
+
+
+*After the requirements are installed, configure the database*
+
+
 ##IMPORTANT
 - Use Python3 to run the application. 
 
