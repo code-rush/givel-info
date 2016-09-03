@@ -10,7 +10,17 @@
    This may take a while if run for the first time.
 3. Then run `vagrant ssh` to ssh into the virtual machine.
 4. To navigate to the project directory from inside the vagrant machine
-   `cd /vagrant/`. This is where you will see the project directory.
+   `cd /vagrant/givel`. This is where you will see the project directory.
+
+##IMPORTANT
+- Use Python3 to run the application. 
+
+**Steps to run app**
+1. Run the following command:
+   `alias python=python3`
+2. To run the application execute:
+   `python run.py`
+
 
 **Shutting down vagrant**
 - Run `logout` to logout from the environment. Then run `vagrant halt` to shutdown 
