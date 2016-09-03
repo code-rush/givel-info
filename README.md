@@ -19,13 +19,12 @@
 *After the requirements are installed, configure the database*
 
 
-##IMPORTANT
-- Use Python3 to run the application. 
+**IMPORTANT**: Use Python3 to run the application. 
 
 **Steps to run app**
-1. Run the following command:
+- Run the following command:
    `alias python=python3`
-2. To run the application execute:
+- To run the application, execute the following command:
    `python run.py`
 
 
