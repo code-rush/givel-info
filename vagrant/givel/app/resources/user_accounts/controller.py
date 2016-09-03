@@ -44,8 +44,7 @@ class CreateUserAccount(Resource):
                            )
         except:
             raise BadRequest('User already exists!')
-        return user, 201
-
+        return 201
             
 
 class UserProfile(Resource):
@@ -71,41 +70,6 @@ class UserProfile(Resource):
                 return user['Item'], 200
         except:
             raise NotFound('User not found!')
-
-
-    # def put(self, user_email):
-    #     """Updates Users Profile"""
-    #     data = request.get_json(force=True)
-    #     if data['profile_picture'] or data['home'] or data['home_away']:
-    #         if data ['profile_picture']:
-    #             return db.update_item(TableName='users',
-    #                             Key={'email': {'S': user_email}},
-    #                             UpdateExpression='SET profile_picture = :picture',
-    #                             ExpressionAttributeValues={
-    #                                      ':picture': {'S': data['profile_picture']}}
-    #                         ), 200
-    #         if data['home']:
-    #             # add_user = db.update_item(TableName='communities',
-    #             #                     Key={'state': {'S': data['home']['state']},
-    #             #                          'city': {'S': data['home']['city']}},
-    #             #                     UpdateExpression='SET user_count = :count',
-    #             #                     ExpressionAttributeValues={
-    #             #                             ':count': {'NS': }
-    #             #                         }
-    #             #                     )
-    #             return db.update_item(TableName='users',
-    #                                 Key={'email': {'S': user_email}},
-    #                                 UpdateExpression='SET home = :p',
-    #                                 ExpressionAttributeValues={
-    #                                          ':p': {'S': data['home']}}
-    #                             ), 200
-    #         if data['home_away']:
-    #             return db.update_item(TableName='users',
-    #                                 Key={'email': {'S': user_email}},
-    #                                 UpdateExpression='SET home_away = :p',
-    #                                 ExpressionAttributeValues={
-    #                                          ':p': {'S': data['home_away']}}
-    #                             ), 200
 
 
 
@@ -134,13 +98,65 @@ class UserProfilePicture(Resource):
         user = db.update_item(TableName='users',
                             Key={'email': {'S': user_email}},
                             UpdateExpression='REMOVE profile_picture')
-        return 200   
+        return user['Item'], 200   
+
+
+class UserCommunities(Resource):
+    def put(self, user_email, community):
+        """Updates User Communities"""
+        data = request.get_json(force=True)
+
+        if community == 'home':
+            user = db.update_item(TableName='users',
+                                Key={'email': {'S': user_email}},
+                                UpdateExpression='SET home = :p',
+                                ExpressionAttributeValues={
+                                         ':p': {'S': data[community]}}
+                            )
+            return 200
+
+        if community == 'home_away':
+            user = db.update_item(TableName='users',
+                                Key={'email': {'S': user_email}},
+                                UpdateExpression='SET home_away = :p',
+                                ExpressionAttributeValues={
+                                         ':p': {'S': data[community]}}
+                            )
+            return 200
+
+
+    def get(self, user_email):
+        """Returns Users Communities"""
+        users_communities = db.get_item(TableName='users',
+                                Key={'email': {'S': user_email}},
+                                ProjectionExpression='home, home_away'
+                            )
+        communities = {}
+        communities['home'] = users_communities['Item']['home']['S']
+        communities['home_away'] = users_communities['Item']['home_away']['S']
+        return communities, 200
+    
+
+    def delete(self, user_email, community):
+        """Unfollow Community"""
+        if community == 'home':
+            return db.update_item(TableName='users',
+                                Key={'email': {'S': user_email}},
+                                UpdateExpression='REMOVE home'
+                            ), 200
+
+        if community == 'home_away':
+            return db.update_item(TableName='users',
+                                Key={'email': {'S': user_email}},
+                                UpdateExpression='REMOVE home_away'
+                            ), 200
 
 
 
 api.add_resource(CreateUserAccount, '/')
-api.add_resource(UserProfile, '/<user_email>/<password>',
-                              '/<user_email>')
-api.add_resource(UserProfilePicture, '/<user_email>/profile_picture')
+api.add_resource(UserProfile, '/<user_email>/<password>')
+api.add_resource(UserProfilePicture, '/<user_email>/picture')
+api.add_resource(UserCommunities, '/<user_email>/communities/<community>',
+                                  '/<user_email>/communities/')
 
 
