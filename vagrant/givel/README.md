@@ -24,18 +24,45 @@
   - Description: Deletes the user. If the user does not exist, BadRequest 
                  exception is raised with a message "User does not exist!"
 
-- **getting all communities**
+- **get all communities**
   - Path: /api/v1/communities/
   - Method: GET
   - Returns: city-state dictionary as key-value pair.
   - Description: Returns all cities with their value as states from the database.
+                 States are abbreviated.
 
-- **edit user profile**
-  - Path: /api/v1/user_accounts/{user_email}
+- **get user's profile picture**
+  - Path: /api/v1/user_accounts/{user_email}/picture
+  - Method: GET
+  - Returns: Picture file with *200 OK* Status Code
+  - Description: Returns user's profile picture.
+
+- **edit user's profile picture**
+  - Path: /api/v1/user_accounts/{user_email}/picture
   - Method: PUT
-  - Parameters: profile_picture, primary_community, secondary_community
+  - Data: profile_picture
   - Returns: If successfully edited returns *200 OK* Status Code
-  - Description: Updates user profile.
+  - Description: Updates user's profile picture.
+
+- **delete user's profile picture**
+  - Path: /api/v1/user_accounts/{user_email}/picture
+  - Method: DELETE
+  - Returns: *200 OK* Status Code.
+  - Description: Deletes user's profile picture
+
+- **add community to the user**
+  - Path: /api/v1/user_accounts/{user_email}/communities/{community}
+  - Method: PUT
+  - Data: home, home_away
+  - Returns: *200 OK* Status Code if successfully added.
+  - Description: Adds communities to user if followed. Provide what
+                 community(**home/home_away**) to add in the url.
+
+- **remove user's community**
+  - Path: /api/v1/user_accounts/{user_email}/communities/{community}
+  - Method: DELETE
+  - Returns: *200 OK* Status code if successfully deleted.
+  - Description: Deletes the community if unfollowed by the user.
 
 - **follow a user**
   - Path: /api/v1/users/{user_email}/following
