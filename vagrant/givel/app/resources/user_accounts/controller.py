@@ -122,20 +122,7 @@ class UserCommunities(Resource):
                                 ExpressionAttributeValues={
                                          ':p': {'S': data[community]}}
                             )
-            return 200
-
-
-    def get(self, user_email):
-        """Returns Users Communities"""
-        users_communities = db.get_item(TableName='users',
-                                Key={'email': {'S': user_email}},
-                                ProjectionExpression='home, home_away'
-                            )
-        communities = {}
-        communities['home'] = users_communities['Item']['home']['S']
-        communities['home_away'] = users_communities['Item']['home_away']['S']
-        return communities, 200
-    
+            return 200  
 
     def delete(self, user_email, community):
         """Unfollow Community"""
@@ -156,7 +143,6 @@ class UserCommunities(Resource):
 api.add_resource(CreateUserAccount, '/')
 api.add_resource(UserProfile, '/<user_email>/<password>')
 api.add_resource(UserProfilePicture, '/<user_email>/picture')
-api.add_resource(UserCommunities, '/<user_email>/communities/<community>',
-                                  '/<user_email>/communities/')
+api.add_resource(UserCommunities, '/<user_email>/communities/<community>')
 
 
