@@ -8,17 +8,35 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import NotFound, BadRequest
 
 from app.models import create_users_table
+from app.helper import upload_file
 
 user_account_api_routes = Blueprint('account_api', __name__)
 api = Api(user_account_api_routes)
 
 
+BUCKET_NAME = 'profile_pictures'
+
+
 db = boto3.client('dynamodb')
+s3 = boto3.client('s3')
 
 # Connect to database and create table if not already created else return Table
 try:
     users = create_users_table()
     print('Users Table did not exist!')
+except:
+    pass
+
+# Create bucket
+try:
+    create_bucket = client.create_bucket(
+                        Bucket=BUCKET_NAME,
+                        CreateBucketConfiguration={
+                            'LocationConstraint': 'us-west-2'
+                        }
+                    )
+
+    print (create_bucket['Location'])
 except:
     pass
 
@@ -64,10 +82,14 @@ class UserProfile(Resource):
         """Returns User Profile"""
         user = db.get_item(TableName='users',
                        Key={'email': {'S':user_email}})
+        password_message = {}
         try:
             if user and check_password_hash(user['Item']['password']['S'],
                                         password):
                 return user['Item'], 200
+            else:
+                password_message['message'] = 'Password Incorrect!'
+                return password_message
         except:
             raise NotFound('User not found!')
 
@@ -80,18 +102,19 @@ class UserProfilePicture(Resource):
                         Key={'email': {'S': user_email}},
                         ProjectionExpression='profile_picture',
                     )
-        return user['Item']['profile_picture']['S'], 200
+        picture_file = s3.download_file(BUCKET_NAME, user_email, user['Item']['profile_picture']['S'])
+        return picture_file, 200
 
     def put(self, user_email):
         """Updates Users Profile Picture"""
-        data = request.get_json(force=True)
-        if data['profile_picture']:
-            return db.update_item(TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='SET profile_picture = :picture',
-                                ExpressionAttributeValues={
-                                         ':picture': {'S': data['profile_picture']}}
-                            ), 200
+        picture = request.files['file']
+        picture_file = upload_file(picture, BUCKET_NAME, user_email)
+        return db.update_item(TableName='users',
+                            Key={'email': {'S': user_email}},
+                            UpdateExpression='SET profile_picture = :picture',
+                            ExpressionAttributeValues={
+                                     ':picture': {'S': picture_file}}
+                        ), 200
 
     def delete(self, user_email):
         """Removes Users Profile Picture"""
