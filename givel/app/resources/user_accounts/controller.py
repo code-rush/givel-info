@@ -41,7 +41,7 @@ except:
     pass
 
 
-class CreateUserAccount(Resource):
+class UserAccount(Resource):
     def post(self):
         """Creates User"""
         data = request.get_json(force=True)
@@ -65,27 +65,29 @@ class CreateUserAccount(Resource):
         return 201
             
 
-class UserProfile(Resource):
-    def delete(self, user_email, password):
+    def delete(self):
         """Deletes a User"""
+        user_data = request.get_json(force=True)
         user = db.get_item(TableName='users', 
-                        Key={'email': {'S': user_email}})
+                        Key={'email': {'S': user_data['email']}})
         try:
-            if user and check_password_hash(user['Item']['password']['S'], password):
-                return db.delete_item(TableName='users', 
-                                Key={'email': {'S': user_email}}), 200
+            if user and check_password_hash(user['Item']['password']['S'], user_data['password']):
+                delete_user = db.delete_item(TableName='users', 
+                                Key={'email': {'S': user_data['email']}})
+                return 200
         except:
             raise BadRequest('User does not exist!')
 
     
-    def get(self, user_email, password):
+    def get(self):
         """Returns User Profile"""
+        user_data = request.get_json(force=True)
         user = db.get_item(TableName='users',
-                       Key={'email': {'S':user_email}})
-        password_message = {}
+                       Key={'email': {'S':user_data['email']}})
+        incorrect_password_message = {}
         try:
             if user and check_password_hash(user['Item']['password']['S'],
-                                        password):
+                                        user_data['password']):
                 return user['Item'], 200
             else:
                 password_message['message'] = 'Password Incorrect!'
@@ -175,8 +177,7 @@ class UserCommunities(Resource):
 
 
 
-api.add_resource(CreateUserAccount, '/')
-api.add_resource(UserProfile, '/<user_email>/<password>')
+api.add_resource(UserAccount, '/')
 api.add_resource(UserProfilePicture, '/<user_email>/picture')
 api.add_resource(UserCommunities, '/<user_email>/communities/<community>')
 
