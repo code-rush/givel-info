@@ -70,11 +70,15 @@ class UserAccount(Resource):
         user_data = request.get_json(force=True)
         user = db.get_item(TableName='users', 
                         Key={'email': {'S': user_data['email']}})
+        incorrect_password_message = {}
         try:
             if user and check_password_hash(user['Item']['password']['S'], user_data['password']):
                 delete_user = db.delete_item(TableName='users', 
                                 Key={'email': {'S': user_data['email']}})
                 return 200
+            else:
+                incorrect_password_message['message'] = 'Password Incorrect!'
+                return incorrect_password_message ,401
         except:
             raise BadRequest('User does not exist!')
 
@@ -90,8 +94,8 @@ class UserAccount(Resource):
                                         user_data['password']):
                 return user['Item'], 200
             else:
-                password_message['message'] = 'Password Incorrect!'
-                return password_message
+                incorrect_password_message['message'] = 'Password Incorrect!'
+                return incorrect_password_message, 401
         except:
             raise NotFound('User not found!')
 
