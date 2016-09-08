@@ -149,11 +149,23 @@ class UserCommunities(Resource):
 
     def delete(self, user_email, community):
         """Unfollow Community"""
+        # user = db.get_item(TableName='users',
+        #                 Key={'email': {'S': user_email}})
+
         if community == 'home':
             return db.update_item(TableName='users',
                                 Key={'email': {'S': user_email}},
                                 UpdateExpression='REMOVE home'
                             ), 200
+            # if user['home_away']:
+            #     home = db.update_item(TableName='users',
+            #                     Key={'email': {'S': user_email}},
+            #                     UpdateExpression='SET home = :home',
+            #                     ExpressionAttributeValues={
+            #                         ':home': {'S': user['home_away'['S']]}
+            #                     }
+            #                 )
+
 
         if community == 'home_away':
             return db.update_item(TableName='users',

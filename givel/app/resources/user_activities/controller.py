@@ -84,7 +84,7 @@ class UserFollowers(Resource):
 
 class UserPosts(Resource):
     def post(self, user_email):
-        """Returns Users Posts"""
+        """Creates User Posts"""
         post_data = request.get_json(force=True)
         post = db.put_item(TableName='posts',
                            Item={'user_email': {'S': user_email},
@@ -121,8 +121,6 @@ class UserPosts(Resource):
                                       ':v': {'S': post_data['video']}
                                   }
                               )
-
-        
 
 
 api.add_resource(UserFollowingActivities, '/<user_email>/following')
