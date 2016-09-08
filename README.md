@@ -1,7 +1,7 @@
 # Givel
 
 ## Requirements:
-- python3.5
+- python3.5+
 - virtualenv
   - To install virtualenv run `sudo pip3 install virtualenv`
 
@@ -19,5 +19,7 @@
 5. Configure the database:
   - run `aws configure`
   - follow the steps shared privately
+6. Run application:
+  - run `python run.py`
 
 **YOU ARE ALL SET**
