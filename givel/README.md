@@ -12,14 +12,16 @@
                  BadRequest exception if a User with that email already exists.
 
 - **user sign_in**
-  - Path: /api/v1/user_accounts/{user_email}/{password}
+  - Path: /api/v1/user_accounts/
   - Method: GET
+  - Required Data: email, password
   - Returns: User item with *200 OK* Status Code.
   - Description: Returns all user information their communities.
 
 - **delete user**
-  - Path: /api/v1/user_accounts/{user_email}/{password}
+  - Path: /api/v1/user_accounts/
   - Method: DELETE
+  - Required Data: email, password
   - Returns: If successfully deletes returns *200 OK* Status Code.
   - Description: Deletes the user. If the user does not exist, BadRequest 
                  exception is raised with a message "User does not exist!"
