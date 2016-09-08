@@ -19,7 +19,10 @@
 5. Configure the database:
   - run `aws configure`
   - follow the steps shared privately
-6. Run application:
-  - run `python run.py`
 
 **YOU ARE ALL SET**
+
+
+### Run Application
+
+  `python run.py`
