@@ -1,33 +1,23 @@
 # Givel
 
 ## Requirements:
-- Vagrant
-- VirtualBox
+- python3.5
+- virtualenv
+  - To install virtualenv run `sudo pip3 install virtualenv`
 
-## Getting Started:
-1. Clone the repository.
-2. Open terminal and navigate inside vagrant directory and run `vagrant up`. 
-   This may take a while if run for the first time.
-3. Then run `vagrant ssh` to ssh into the virtual machine.
-4. To navigate to the project directory from inside the vagrant machine
-   `cd /vagrant/givel`. This is where you will see the project directory.
+## Steps to Getting Started:
 
-##To install requirements with python3-pip
-- `sudo pip3 install -r requirements.txt`
+1. Create virtual environment:
+  - execute `virtualenv venv`
+2. Activate the virtual environment:
+  - execute ` . venv/bin/activate`
+3. Install all requirements:
+  - Make sure you are under the **givel/** directory
+  - execute `pip3 install -r requirements.txt`
+4. Install aws command line interface:
+  - execute `pip3 install awscli`
+5. Configure the database:
+  - run `aws configure`
+  - follow the steps shared privately
 
-
-*After the requirements are installed, configure the database*
-
-
-**IMPORTANT**: Use Python3 to run the application. 
-
-**Steps to run app**
-- Run the following command:
-   `alias python=python3`
-- To run the application, execute the following command:
-   `python run.py`
-
-
-**Shutting down vagrant**
-- Run `logout` to logout from the environment. Then run `vagrant halt` to shutdown 
-  vagrant. Or just run `vagrant halt` from another terminal.
+*YOU ARE ALL SET*
