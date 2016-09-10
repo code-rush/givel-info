@@ -66,7 +66,7 @@ def create_community_table():
         return communities_table
 
 
-def create_post_table():
+def create_posts_table():
     try:
         user_post_table = dynamodb.create_table(
             TableName='posts',
@@ -121,7 +121,7 @@ def create_challenges_table():
             AttributeDefinitions=[
                 {
                     'AttributeName': 'user_email',
-                    'AttributeType': 'S',
+                    'AttributeType': 'S'
                 },
                 {
                     'AttributeName': 'date_time',

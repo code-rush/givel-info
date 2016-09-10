@@ -10,8 +10,12 @@ from app.models import create_community_table
 db = boto3.client('dynamodb')
 
 try:
-    communities = create_community_table()
-    print('Communities table is being created')
+    table_response = db.describe_table(TableName='communities')
+    if table_response['Table']['TableStatus'] == 'ACTIVE':
+        print('Communities Table exists!')
+    else:
+        communities = create_community_table()
+        print('Communities table created!')
 except:
     pass
 

@@ -14,7 +14,7 @@ user_account_api_routes = Blueprint('account_api', __name__)
 api = Api(user_account_api_routes)
 
 
-BUCKET_NAME = 'profile_pictures'
+BUCKET_NAME = 'profilepictures'
 
 
 db = boto3.client('dynamodb')
@@ -22,8 +22,12 @@ s3 = boto3.client('s3')
 
 # Connect to database and create table if not already created else return Table
 try:
-    users = create_users_table()
-    print('Users Table did not exist!')
+    table_response = db.describe_table(TableName='users')
+    if table_response['Table']['TableStatus'] == 'ACTIVE':
+        print('Users Table exists!')
+    else:
+        users = create_users_table()
+        print('Users Table created!')
 except:
     pass
 
