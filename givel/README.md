@@ -12,11 +12,11 @@
                  BadRequest exception if a User with that email already exists.
 
 - **user sign_in**
-  - Path: /api/v1/user_accounts/
-  - Method: GET
+  - Path: /api/v1/user_accounts/login
+  - Method: POST
   - Required Data: email, password
-  - Returns: User item with *200 OK* Status Code.
-  - Description: Returns all user information their communities.
+  - Returns: User with *200 OK* Status Code.
+  - Description: Returns the user.
 
 - **delete user**
   - Path: /api/v1/user_accounts/
