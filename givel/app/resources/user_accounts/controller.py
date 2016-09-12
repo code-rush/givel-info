@@ -86,8 +86,9 @@ class UserAccount(Resource):
         except:
             raise BadRequest('User does not exist!')
 
-    
-    def get(self):
+
+class UserLogin(Resource):
+    def post(self):
         """Returns User Profile"""
         user_data = request.get_json(force=True)
         user = db.get_item(TableName='users',
@@ -194,5 +195,6 @@ class UserCommunities(Resource):
 api.add_resource(UserAccount, '/')
 api.add_resource(UserProfilePicture, '/<user_email>/picture')
 api.add_resource(UserCommunities, '/<user_email>/communities/<community>')
+api.add_resource(UserLogin, '/login')
 
 
