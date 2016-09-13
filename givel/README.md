@@ -73,10 +73,11 @@
   - Description: Following a user. It adds the user to the following list and 
                  adds this user to the following users followers list.
 
-- **get all followers**
+- **get all users followings**
   - Path: /api/v1/users/{user_email}/following
   - Method: GET
-  - Returns: Users all followings list.
+  - Returns: Users all followings list if any else a message indicating an empty 
+             following lists
   - Description: Get all list of users following user list.
 
 - **unfollow a user**
@@ -89,5 +90,6 @@
 - **get users followers**
   - Path: /api/v1/users/{user_email}/followers
   - Method: GET
-  - Returns: List of all followers.
+  - Returns: List of all followers if any else a message indicating an empty 
+             followers list.
   - Description: Fetches all users followers and returns it.
