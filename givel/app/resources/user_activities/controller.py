@@ -58,46 +58,56 @@ class UserFollowing(Resource):
         """Adds a user to the following and followers list"""
         data = request.get_json(force=True)
         follow_user_email = data['follow_user']
-        if data['follow_user']:
-            user = db.update_item(
-                        TableName='users',
-                        Key={'email': {'S': user_email}},
-                        UpdateExpression='ADD following = :following',
-                        ExpressionAttributeValues={
-                            ':following': {'SS': [follow_user_email]}
-                        }
-                    )
-            user_following = db.update_item(
-                        TableName='users',
-                        Key={'email': {'S': data['follow_user']}},
-                        UpdateExpression='ADD followers = :follower',
-                        ExpressionAttributeValues={
-                            ':follower': {'SS': [user_email]}
-                        }
-                    )
-        return 200
+        response = {}
+        try:
+            if data['follow_user']:
+                user = db.update_item(
+                            TableName='users',
+                            Key={'email': {'S': user_email}},
+                            UpdateExpression='ADD following :following',
+                            ExpressionAttributeValues={
+                                ':following': {'SS': [follow_user_email]}
+                            }
+                        )
+                user_following = db.update_item(
+                            TableName='users',
+                            Key={'email': {'S': data['follow_user']}},
+                            UpdateExpression='ADD followers :follower',
+                            ExpressionAttributeValues={
+                                ':follower': {'SS': [user_email]}
+                            }
+                        )
+                response['message'] = 'Successful!'
+        except:
+            response['message'] = 'Failure!'
+        return response, 200
 
     def delete(self, user_email):
         """Unfollows a user"""
         data = request.get_json(force=True)
-        if data['unfollow_user']:
-            user = db.update_item(
-                        TableName='users',
-                        Key={'email': {'S': user_email}},
-                        UpdateExpression='DELETE :user',
-                        ExpressionAttributeValues={
-                            ':user': {'SS':[data['unfollow_user']]}
-                        }
-                    )
-            user_following = db.update_item(
-                        TableName='users',
-                        Key={'email': {'S': data['unfollow_user']}},
-                        UpdateExpression='DELETE :follower',
-                        ExpressionAttributeValues={
-                            ':follower': {'SS':[user_email]}
-                        }
-                    )
-        return 200
+        response = {}
+        try:
+            if data['unfollow_user']:
+                user = db.update_item(
+                            TableName='users',
+                            Key={'email': {'S': user_email}},
+                            UpdateExpression='DELETE following :user',
+                            ExpressionAttributeValues={
+                                ':user': {'SS':[data['unfollow_user']]}
+                            }
+                        )
+                user_following = db.update_item(
+                            TableName='users',
+                            Key={'email': {'S': data['unfollow_user']}},
+                            UpdateExpression='DELETE followers :follower',
+                            ExpressionAttributeValues={
+                                ':follower': {'SS':[user_email]}
+                            }
+                        )
+                response['message'] = 'Successful!'
+        except:
+            response['message'] = 'Failure'
+        return response, 200
 
 
 class UserFollowers(Resource):
