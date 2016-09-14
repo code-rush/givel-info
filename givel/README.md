@@ -84,6 +84,7 @@
 - **unfollow a user**
   - Path: /api/v1/users/{user_email}/following
   - Method: DELETE
+  - Data: unfollow_user
   - Returns: *200 OK* Status Code.
   - Description: Removes the unfollowed user from the followings list and removes 
                  this user from followers list from the unfollowed user.
