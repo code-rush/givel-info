@@ -69,6 +69,7 @@
 - **follow a user**
   - Path: /api/v1/users/{user_email}/following
   - Method: PUT
+  - Data: follow_user
   - Returns: *200 OK* Status Code
   - Description: Following a user. It adds the user to the following list and 
                  adds this user to the following users followers list.
