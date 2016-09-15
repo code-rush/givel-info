@@ -62,7 +62,7 @@
 - **add community to the user**
   - Path: /api/v1/user_accounts/{user_email}/communities/{community}
   - Method: PUT
-  - Data: home, home_away
+  - Data: community
   - Returns: *200 OK* Status Code with a message if a community successfully added.
   - Description: Adds communities to user if followed. Provide what
                  community(**home/home_away**) to add in the url. In order to follow
@@ -72,35 +72,38 @@
 - **remove user's community**
   - Path: /api/v1/user_accounts/{user_email}/communities/{community}
   - Method: DELETE
-  - Returns: *200 OK* Status code if successfully deleted.
-  - Description: Deletes the community if unfollowed by the user.
+  - Returns: *200 OK* Status code with a message if community successfully deleted.
+  - Description: Deletes the community if unfollowed by the user. If a **home** community is 
+                 deleted and there exists **home_away** then **home_away** community is changed 
+                 to **home** community. If a request is sent to delete a community that does 
+                 not exists then a BadRequest Exception is raised.
 
 - **follow a user**
   - Path: /api/v1/users/{user_email}/following
   - Method: PUT
   - Data: follow_user
-  - Returns: *200 OK* Status Code
+  - Returns: *200 OK* Status Code with a success message.
   - Description: Following a user. It adds the user to the following list and 
                  adds this user to the following users followers list.
 
 - **get all users followings**
   - Path: /api/v1/users/{user_email}/following
   - Method: GET
-  - Returns: Users all followings list if any else a message indicating an empty 
-             following lists
-  - Description: Get all list of users following user list.
+  - Returns: Users all followings list as results with a message and *200 OK* Status Code.
+  - Description: Get all list of user's following user list as results and also 
+                 returns a message.
 
 - **unfollow a user**
   - Path: /api/v1/users/{user_email}/following
   - Method: DELETE
   - Data: unfollow_user
-  - Returns: *200 OK* Status Code.
+  - Returns: *200 OK* Status Code with a success message.
   - Description: Removes the unfollowed user from the followings list and removes 
-                 this user from followers list from the unfollowed user.
+                 this user from followers list from the unfollowed user. Returns a message 
+                 if this operation fails or is successfully executed.
 
 - **get users followers**
   - Path: /api/v1/users/{user_email}/followers
   - Method: GET
-  - Returns: List of all followers if any else a message indicating an empty 
-             followers list.
-  - Description: Fetches all users followers and returns it.
+  - Returns: List of all followers if any with a success message and *200 OK* Status Code.
+  - Description: Returns all users followers as results with a message.
