@@ -142,7 +142,7 @@ class UserProfilePicture(Resource):
                                 )
                 response['message'] = 'File uploaded!'
             else:
-                response ['message'] = picture_file
+                response ['message'] = 'File not allowed!'
             return response, 200
         except:
             raise BadRequest('Invalid Operation!')

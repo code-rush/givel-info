@@ -63,10 +63,13 @@ class Communities(Resource):
         """Returns all communities"""
         communities = db.scan(TableName='communities')
         items = communities['Items']
+        response = {}
         results = {}
         for i in items:
             results[i['city']['S']] = STATES[i['state']['S']]
-        return results, 200
+        response['message'] = 'Success!'
+        response['results'] = results
+        return response, 200
 
 # class CommunityPosts(Resource):
 #     def get(self, user_email):

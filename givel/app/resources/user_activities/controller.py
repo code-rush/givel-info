@@ -122,7 +122,7 @@ class UserFollowers(Resource):
         if user['Item'].get('followers') != None:
             response['message'] = 'Success!'
             response['result'] = user['Item']['followers']
-        else
+        else:
             response['message'] = 'Success!'
             response['message'] = 'You have no followers!'
         return response_message, 200
