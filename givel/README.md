@@ -73,9 +73,9 @@
   - Path: /api/v1/user_accounts/{user_email}/communities/{community}
   - Method: **DELETE**
   - Returns: *200 OK* Status code with a message if community successfully deleted.
-  - Description: Deletes the community if unfollowed by the user. If a **home** community is 
-                 deleted and there exists **home_away** then **home_away** community is changed 
-                 to **home** community. If a request is sent to delete a community that does 
+  - Description: Deletes the community if unfollowed by the user. If a *home* community is 
+                 deleted and there exists *home_away* then *home_away* community is changed 
+                 to *home* community. If a request is sent to delete a community that does 
                  not exists then a BadRequest Exception is raised.
 
 - **follow a user**
