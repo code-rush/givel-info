@@ -5,8 +5,8 @@
   - Path: /api/v1/user_accounts/
   - Method: POST
   - Required Data: first_name, last_name, email, password
-  - Returns: If successfully created returns *201 CREATED* Status Code, else
-             if user already exists, returns *400 BAD REQUEST* with a response
+  - Returns: If successfully created returns *201 CREATED* Status Code with a success message, 
+             elseif user already exists, returns *400 BAD REQUEST* Status Code with a 
              message "User already exists!"
   - Description: Creates a new user. Email must be unique. Will raise a 
                  BadRequest exception if a User with that email already exists.
@@ -15,50 +15,59 @@
   - Path: /api/v1/user_accounts/login
   - Method: POST
   - Required Data: email, password
-  - Returns: User with *200 OK* Status Code.
-  - Description: Returns the user.
+  - Returns: *200 OK* Status Code with a success message and result containing
+             User information.
+  - Description: If user exists and successfully logs in returns Users Information, else if 
+                 user doesn't exist returns NotFound Exception with a message.
 
 - **delete user**
   - Path: /api/v1/user_accounts/
   - Method: DELETE
   - Required Data: email, password
-  - Returns: If successfully deletes returns *200 OK* Status Code.
-  - Description: Deletes the user. If the user does not exist, BadRequest 
-                 exception is raised with a message "User does not exist!"
+  - Returns: *200 OK* Status Code with a message if User successfully deleted.
+  - Description: User needs to enter correct password inorder to delete the account.
+                 If the user does not exist, BadRequest exception is raised with a 
+                 message "User does not exist!"
 
 - **get all communities**
   - Path: /api/v1/communities/
   - Method: GET
-  - Returns: city-state dictionary as key-value pair.
+  - Returns: A success message with result as city-state dictionary key-value pair.
   - Description: Returns all cities with their value as states from the database.
                  States are abbreviated.
 
 - **get user's profile picture**
   - Path: /api/v1/user_accounts/{user_email}/picture
   - Method: GET
-  - Returns: Picture file with *200 OK* Status Code
-  - Description: Returns user's profile picture.
+  - Returns: User's profile picture link address with *200 OK* Status Code and a message.
+  - Description: Returns user's profile picture with a success message else raises 
+                 NotFound Exception if the picture does not exist.
 
-- **edit user's profile picture**
+- **add user's profile picture**
   - Path: /api/v1/user_accounts/{user_email}/picture
-  - Method: PUT
-  - Data: profile_picture
-  - Returns: If successfully edited returns *200 OK* Status Code
-  - Description: Updates user's profile picture.
+  - Method: POST
+  - File: picture
+  - Extensions Allowed: .jpg, .png, .jpeg.
+  - Returns: If successfully added returns *200 OK* Status Code with a message.
+  - Description: Uploads user's profile picture if file is in allowed extensions, else
+                 returns a message "File not allowed".
 
 - **delete user's profile picture**
   - Path: /api/v1/user_accounts/{user_email}/picture
   - Method: DELETE
-  - Returns: *200 OK* Status Code.
-  - Description: Deletes user's profile picture
+  - Returns: *200 OK* Status Code with a message if picture successfully deleted.
+  - Description: Deletes user's profile picture if exists else raises BadRequest Exception 
+                 if picture does not exists.
 
 - **add community to the user**
   - Path: /api/v1/user_accounts/{user_email}/communities/{community}
   - Method: PUT
   - Data: home, home_away
-  - Returns: *200 OK* Status Code if successfully added.
+  - Returns: *200 OK* Status Code with a message if a community successfully added.
   - Description: Adds communities to user if followed. Provide what
-                 community(**home/home_away**) to add in the url.
+                 community(**home/home_away**) to add in the url. In order to follow
+                 a **home_away** community, a user must first follow a **home** community 
+                 else it will raise a BadRequest Exception.
 
 - **remove user's community**
   - Path: /api/v1/user_accounts/{user_email}/communities/{community}
