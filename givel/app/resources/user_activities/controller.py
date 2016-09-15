@@ -42,22 +42,23 @@ except:
 class UserFollowing(Resource):
     def get(self, user_email):
         """Returns list of users followings"""
-        response_message = {}
-        try:
-            user = db.get_item(
-                        TableName='users',
-                        Key={'email': {'S': user_email}}
-                    )
-            return user['Item']['following'], 200
-        except:
-            response_message['message'] = 'You have no followings!'
-            return response_message, 200
+        response = {}
+        user = db.get_item(
+                    TableName='users',
+                    Key={'email': {'S': user_email}}
+                )
+        if user['Item'].get('following') != None:
+            response['message'] = 'Success!'
+            response['result'] = user['Item']['following']
+        else:
+            response['message'] = 'Success!'
+            response['result'] = 'You have no followings!'
+        return response, 200
 
 
     def put(self, user_email):
         """Adds a user to the following and followers list"""
         data = request.get_json(force=True)
-        follow_user_email = data['follow_user']
         response = {}
         try:
             if data['follow_user']:
@@ -66,7 +67,7 @@ class UserFollowing(Resource):
                             Key={'email': {'S': user_email}},
                             UpdateExpression='ADD following :following',
                             ExpressionAttributeValues={
-                                ':following': {'SS': [follow_user_email]}
+                                ':following': {'SS': [data['follow_user']]}
                             }
                         )
                 user_following = db.update_item(
@@ -77,9 +78,9 @@ class UserFollowing(Resource):
                                 ':follower': {'SS': [user_email]}
                             }
                         )
-                response['message'] = 'Successful!'
+                response['message'] = 'Successfully following the user!'
         except:
-            response['message'] = 'Failure!'
+            response['message'] = 'Failed to follow user!'
         return response, 200
 
     def delete(self, user_email):
@@ -104,25 +105,27 @@ class UserFollowing(Resource):
                                 ':follower': {'SS':[user_email]}
                             }
                         )
-                response['message'] = 'Successful!'
+                response['message'] = 'Success! You unfollowed the user.'
         except:
-            response['message'] = 'Failure'
+            response['message'] = 'Failed to unfollow the user.'
         return response, 200
 
 
 class UserFollowers(Resource):
     def get(self, user_email):
         """Returns list of followers"""
-        response_message = {}
-        try:
-            user = db.get_item(
-                            TableName='users',
-                            Key={'email': {'S': user_email}}
-                        )
-            return user['Item']['followers'], 200
-        except:
-            response_message['message'] = 'You have no followers!'
-            return response_message, 200
+        response = {}
+        user = db.get_item(
+                        TableName='users',
+                        Key={'email': {'S': user_email}}
+                    )
+        if user['Item'].get('followers') != None:
+            response['message'] = 'Success!'
+            response['result'] = user['Item']['followers']
+        else
+            response['message'] = 'Success!'
+            response['message'] = 'You have no followers!'
+        return response_message, 200
 
 
 class UserPosts(Resource):
