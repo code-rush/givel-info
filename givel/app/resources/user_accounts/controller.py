@@ -14,7 +14,8 @@ user_account_api_routes = Blueprint('account_api', __name__)
 api = Api(user_account_api_routes)
 
 
-BUCKET_NAME = 'profilepictures'
+BUCKET_NAME = 'gprofilepictures'
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 
 db = boto3.client('dynamodb')
@@ -52,7 +53,7 @@ class UserAccount(Resource):
         if not data['email'] or not data['first_name'] or not data['last_name'] or not data['password']:
             raise BadRequest('Provide all details')
         password = generate_password_hash(data['password'])
-        
+        response = {}
         try:
             user = db.put_item(
                             TableName='users', 
@@ -64,9 +65,10 @@ class UserAccount(Resource):
                                  },
                             ConditionExpression='attribute_not_exists(email)',
                            )
+            response['message'] = 'User successfully created!'
+            return response, 201
         except:
             raise BadRequest('User already exists!')
-        return 201
             
 
     def delete(self):
@@ -74,15 +76,16 @@ class UserAccount(Resource):
         user_data = request.get_json(force=True)
         user = db.get_item(TableName='users', 
                         Key={'email': {'S': user_data['email']}})
-        incorrect_password_message = {}
+        response = {}
         try:
             if user and check_password_hash(user['Item']['password']['S'], user_data['password']):
                 delete_user = db.delete_item(TableName='users', 
                                 Key={'email': {'S': user_data['email']}})
-                return 200
+                response['message'] = 'User deleted!'
+                return response, 200
             else:
-                incorrect_password_message['message'] = 'Password Incorrect!'
-                return incorrect_password_message ,401
+                response['message'] = 'Incorrect Password!'
+                return response ,401
         except:
             raise BadRequest('User does not exist!')
 
@@ -93,14 +96,16 @@ class UserLogin(Resource):
         user_data = request.get_json(force=True)
         user = db.get_item(TableName='users',
                        Key={'email': {'S':user_data['email']}})
-        incorrect_password_message = {}
+        response = {}
         try:
             if user and check_password_hash(user['Item']['password']['S'],
                                         user_data['password']):
-                return user['Item'], 200
+                response['message'] = 'User successfully Logged In!'
+                response['result'] = user['Item']
+                return response, 200
             else:
-                incorrect_password_message['message'] = 'Password Incorrect!'
-                return incorrect_password_message, 401
+                response['message'] = 'Incorrect Password!'
+                return response, 401
         except:
             raise NotFound('User not found!')
 
@@ -109,86 +114,128 @@ class UserLogin(Resource):
 class UserProfilePicture(Resource):
     def get(self, user_email):
         """Returns Users Profile Picture"""
-        user = db.get_item(TableName='users',
-                        Key={'email': {'S': user_email}},
-                        ProjectionExpression='profile_picture',
-                    )
-        picture_file = s3.download_file(BUCKET_NAME, user_email, user['Item']['profile_picture']['S'])
-        return picture_file, 200
-
-    def put(self, user_email):
-        """Updates Users Profile Picture"""
-        picture = request.files['file']
-        picture_file = upload_file(picture, BUCKET_NAME, user_email)
-        return db.update_item(TableName='users',
+        response = {}
+        try:
+            user = db.get_item(TableName='users',
                             Key={'email': {'S': user_email}},
-                            UpdateExpression='SET profile_picture = :picture',
-                            ExpressionAttributeValues={
-                                     ':picture': {'S': picture_file}}
-                        ), 200
+                            ProjectionExpression='profile_picture',
+                        )
+            # picture_file = s3.download_file(BUCKET_NAME, user_email, user['Item']['profile_picture']['S'])
+            response['message'] = 'Success!'
+            response['result'] = user['Item']
+            return response, 200
+        except:
+            raise NotFound('Picture not found!')
+
+    def post(self, user_email):
+        """Updates Users Profile Picture"""
+        picture = request.files['picture']
+        response = {}
+        try:
+            picture_file = upload_file(picture, BUCKET_NAME, user_email, ALLOWED_EXTENSIONS)
+            if picture_file != None:
+                user = db.update_item(TableName='users',
+                                    Key={'email': {'S': user_email}},
+                                    UpdateExpression='SET profile_picture = :picture',
+                                    ExpressionAttributeValues={
+                                             ':picture': {'S': picture_file}}
+                                )
+                response['message'] = 'File uploaded!'
+            else:
+                response ['message'] = picture_file
+            return response, 200
+        except:
+            raise BadRequest('Invalid Operation!')
 
     def delete(self, user_email):
         """Removes Users Profile Picture"""
-        user = db.update_item(TableName='users',
-                            Key={'email': {'S': user_email}},
-                            UpdateExpression='REMOVE profile_picture')
-        return user['Item'], 200   
+        response = {}
+        user = db.get_item(TableName='users',
+                            Key={'email': {'S': user_email}}
+                        )
+
+        if user['Item'].get('profile_picture') != None:
+            user = db.update_item(TableName='users',
+                               Key={'email': {'S': user_email}},
+                               UpdateExpression='REMOVE profile_picture')
+            delete_image = s3.delete_object(Bucket=BUCKET_NAME, Key=user_email)
+            response['message'] = 'File deleted!'
+            return response, 200
+        else:
+            raise BadRequest('Picture not found!')
 
 
 class UserCommunities(Resource):
     def put(self, user_email, community):
         """Updates User Communities"""
         data = request.get_json(force=True)
+        response = {}
+        user = db.get_item(TableName='users',
+                            Key={'email': {'S': user_email}}
+                        )
 
         if community == 'home':
-            user = db.update_item(TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='SET home = :p',
-                                ExpressionAttributeValues={
-                                         ':p': {'S': data[community]}}
-                            )
-            return 200
+            try:
+                user_home = db.update_item(TableName='users',
+                                    Key={'email': {'S': user_email}},
+                                    UpdateExpression='SET home = :p',
+                                    ExpressionAttributeValues={
+                                             ':p': {'S': data['community']}}
+                                )
+                response['message'] = 'home community successfully added!'
+                return response, 200
+            except:
+                raise BadRequest('Failure')
 
         if community == 'home_away':
-            user = db.update_item(TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='SET home_away = :p',
-                                ExpressionAttributeValues={
-                                         ':p': {'S': data[community]}}
-                            )
-            return 200  
+            if user['Item'].get('home') == None:
+                raise BadRequest('To add a home_away community, you ' + \
+                            'need to add a home community first')
+            else:
+                user_home_away = db.update_item(TableName='users',
+                                    Key={'email': {'S': user_email}},
+                                    UpdateExpression='SET home_away = :p',
+                                    ExpressionAttributeValues={
+                                             ':p': {'S': data['community']}}
+                                )
+                response['message'] = 'home_away community successfully added!'
+                return response, 200
 
     def delete(self, user_email, community):
         """Unfollow Community"""
         user = db.get_item(TableName='users',
-                        Key={'email': {'S': user_email}})
+                        Key={'email': {'S': user_email}}
+                    )
+        response = {}
 
-        if community == 'home':
-            if user['home_away']:
+        if user['Item'].get(community) == None:
+            raise BadRequest('Community not found!')
+        elif community == 'home':
+            if user['Item'].get('home_away') != None:
                 home = db.update_item(TableName='users',
                                 Key={'email': {'S': user_email}},
                                 UpdateExpression='SET home = :home',
                                 ExpressionAttributeValues={
-                                    ':home': {'S': user['home_away'['S']]}
+                                    ':home': {'S': user['Item']['home_away']['S']}
                                 }
                             )
                 delete_home_away = db.update_item(TableName='users',
                                 Key={'email': {'S': user_email}},
                                 UpdateExpression='REMOVE home_away'
                             )
-                return 200
             else:
-                return  db.update_item(TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='REMOVE home'
-                            ), 200
-
-
-        if community == 'home_away':
-            return db.update_item(TableName='users',
+                delete_home = db.update_item(TableName='users',
+                                    Key={'email': {'S': user_email}},
+                                    UpdateExpression='REMOVE home'
+                                )
+            response['message'] = 'Successfully deleted home community!'
+        elif community == 'home_away':
+            delete_home_away = db.update_item(TableName='users',
                                 Key={'email': {'S': user_email}},
                                 UpdateExpression='REMOVE home_away'
-                            ), 200
+                            )
+            response['message'] = 'Successfully deleted home community!'
+        return response, 200
 
 
 
