@@ -125,7 +125,7 @@ class UserFollowers(Resource):
         else:
             response['message'] = 'Success!'
             response['message'] = 'You have no followers!'
-        return response_message, 200
+        return response, 200
 
 
 class UserPosts(Resource):
