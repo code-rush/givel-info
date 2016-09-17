@@ -99,7 +99,7 @@ def create_posts_table():
         try:
             user_post_table = dynamodb.Table('posts')
         except:
-            print('Communities Table does not exist')
+            print('posts Table does not exist')
     finally:
         return user_post_table
 
