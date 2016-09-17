@@ -10,29 +10,34 @@ from app.models import create_challenges_table
 from app.models import create_posts_table
 from app.helper import upload_file
 
+from werkzeug.exceptions import BadRequest
+
 user_activity_api_routes = Blueprint('activity_api', __name__)
 api = Api(user_activity_api_routes)
 
-BUCKET_NAME = 'posts'
+BUCKET_NAME = 'givelposts'
+ALLOWED_EXTENSIONS = set(['jpg', 'png', 'jpeg', 'mpeg', 'mp4'])
 
 db = boto3.client('dynamodb')
 s3 = boto3.client('s3')
 
 try: 
-    table_response = db.describe_table(TableName='posts')
-    if table_response['Table']['TableStatus'] == 'ACTIVE':
-        print('Posts Table exists!')
-    else:
+    try:
+        table_response = db.describe_table(TableName='posts')
+        if table_response['Table']['TableStatus'] == 'ACTIVE':
+            print('Posts Table exists!')
+    except:
         posts = create_posts_table()
         print('Posts Table created!')
 except:
     pass
 
 try:
-    table_response = db.describe_table(TableName='challenges')
-    if table_response['Table']['TableStatus']:
-        print('Challenges Table exists!')
-    else:
+    try:
+        table_response = db.describe_table(TableName='challenges')
+        if table_response['Table']['TableStatus']:
+            print('Challenges Table exists!')
+    except:
         challenges = create_challenges_table()
         print('Challenges Table created!')
 except:
@@ -68,7 +73,8 @@ class UserFollowing(Resource):
                             UpdateExpression='ADD following :following',
                             ExpressionAttributeValues={
                                 ':following': {'SS': [data['follow_user']]}
-                            }
+                            },
+                            ReturnValues='UPDATED_NEW'
                         )
                 user_following = db.update_item(
                             TableName='users',
@@ -79,6 +85,7 @@ class UserFollowing(Resource):
                             }
                         )
                 response['message'] = 'Successfully following the user!'
+                response['result'] = user['Attributes']
         except:
             response['message'] = 'Failed to follow user!'
         return response, 200
@@ -95,7 +102,8 @@ class UserFollowing(Resource):
                             UpdateExpression='DELETE following :user',
                             ExpressionAttributeValues={
                                 ':user': {'SS':[data['unfollow_user']]}
-                            }
+                            },
+                            ReturnValues='UPDATED_NEW'
                         )
                 user_following = db.update_item(
                             TableName='users',
@@ -106,8 +114,12 @@ class UserFollowing(Resource):
                             }
                         )
                 response['message'] = 'Success! You unfollowed the user.'
+                if user.get('Attributes') != None:
+                    response['result'] = user['Attributes']
+                else:
+                    response['result'] = 'You have no Followings!'
         except:
-            response['message'] = 'Failed to unfollow the user.'
+            response['message'] = 'Request Failed.'
         return response, 200
 
 
@@ -131,57 +143,103 @@ class UserFollowers(Resource):
 class UserPosts(Resource):
     def post(self, user_email):
         """Creates User Posts"""
+        response = {}
         post_data = request.get_json(force=True)
-        date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        post = db.put_item(TableName='posts',
-                           Item={'user_email': {'S': user_email},
-                                'date_time': {'S': date}
-                           }
-                      )
-        try:
-            if post_data['description']:
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        date = datetime.date.today().isoformat()
+        time = datetime.datetime.now().strftime("%H:%M:%S")
+        if post_data.get('content') == None and post_data.get('file') == None:
+            raise BadRequest('Cannot post an empty post!')
+        else:
+            post = db.put_item(TableName='posts',
+                            Item={'user_email': {'S': user_email},
+                                 'creation_time': {'S': date_time},
+                                 'date': {'S': date},
+                                 'time': {'S': time},
+                                 'value': {'N': '0'}
+                            }
+                        )
+            if post_data.get('content') != None:
                 post = db.update_item(TableName='posts',
                                       Key={'user_email': {'S': user_email},
-                                           'date_time': {'S': date}
+                                           'creation_time': {'S': date_time}
                                       },
-                                      UpdateExpression='SET description = :d',
+                                      UpdateExpression='SET content = :d',
                                       ExpressionAttributeValues={
-                                          ':d': {'S': post_data['description']}
+                                          ':d': {'S': post_data['content']}
                                       }
                                   )
-        except:
-            try:
-                if post_data['picture']:
-                    picture = request.files['picture_file']
-                    picture_file = upload_file(picture, BUCKET_NAME, user_email)
+            if post_data.get('file') != None:
+                file = request.files['file']
+                media_file, file_type = upload_file(file, BUCKET_NAME, user_email+date, ALLOWED_EXTENSIONS)
+                if file_type == 'picture_file':
                     post = db.update_item(TableName='posts',
                                           Key={'user_email': {'S': user_email},
-                                               'date_time': {'S': date}
+                                               'creation_time': {'S': date_time}
                                           },
-                                          UpdateExpression='SET picture = :p',
+                                          UpdateExpression='ADD pictures :p',
                                           ExpressionAttributeValues={
-                                              ':p': {'S': picture_file}
+                                              ':p': {'SS': [media_file]}
                                           }
                                       )
-            except:
-                pass
+                elif file_type == 'video_file':
+                    post = db.update_item(TableName='posts',
+                                          Key={'user_email': {'S': user_email},
+                                               'creation_time': {'S': date_time}
+                                          },
+                                          UpdateExpression='ADD video :v',
+                                          ExpressionAttributeValues={
+                                              ':v': {'SS': [media_file]}
+                                          }
+                                      )
+            response['message'] = 'Success! Post Created!'
+            return response, 201
 
-            try:
-                if post_data['video']:
-                    video = request.files['video_file']
-                    video_file = upload_file(video, BUCKET_NAME, user_email)
-                    post = db.update_item(TableName='posts',
-                                          Key={'user_email': {'S': user_email},
-                                               'date_time': {'S': date}
-                                          },
-                                          UpdateExpression='SET video = :v',
-                                          ExpressionAttributeValues={
-                                              ':v': {'S': video_file}
-                                          }
-                                      )
-            except:
-                pass
-        return post, 200
+
+        # try:
+        #     if post_data['description']:
+        #         post = db.update_item(TableName='posts',
+        #                               Key={'user_email': {'S': user_email},
+        #                                    'date_time': {'S': date}
+        #                               },
+        #                               UpdateExpression='SET description = :d',
+        #                               ExpressionAttributeValues={
+        #                                   ':d': {'S': post_data['description']}
+        #                               }
+        #                           )
+                
+        # except:
+        #     try:
+        #         if post_data['picture']:
+        #             picture = request.files['picture_file']
+        #             picture_file = upload_file(picture, BUCKET_NAME, user_email)
+        #             post = db.update_item(TableName='posts',
+        #                                   Key={'user_email': {'S': user_email},
+        #                                        'date_time': {'S': date}
+        #                                   },
+        #                                   UpdateExpression='SET picture = :p',
+        #                                   ExpressionAttributeValues={
+        #                                       ':p': {'S': picture_file}
+        #                                   }
+        #                               )
+        #     except:
+        #         pass
+
+        #     try:
+        #         if post_data['video']:
+        #             video = request.files['video_file']
+        #             video_file = upload_file(video, BUCKET_NAME, user_email)
+        #             post = db.update_item(TableName='posts',
+        #                                   Key={'user_email': {'S': user_email},
+        #                                        'date_time': {'S': date}
+        #                                   },
+        #                                   UpdateExpression='SET video = :v',
+        #                                   ExpressionAttributeValues={
+        #                                       ':v': {'S': video_file}
+        #                                   }
+        #                               )
+        #     except:
+        #         pass
 
 
 # class ChallengePosts(Resource):
