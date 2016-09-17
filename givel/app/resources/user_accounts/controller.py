@@ -32,19 +32,6 @@ try:
 except:
     pass
 
-# Create bucket
-try:
-    create_bucket = client.create_bucket(
-                        Bucket=BUCKET_NAME,
-                        CreateBucketConfiguration={
-                            'LocationConstraint': 'us-west-2'
-                        }
-                    )
-
-    print (create_bucket['Location'])
-except:
-    pass
-
 
 class UserAccount(Resource):
     def post(self):
