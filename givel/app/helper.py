@@ -6,8 +6,21 @@ s3 = boto3.client('s3')
 IMAGE = set(['jpg', 'png', 'jpeg'])
 VIDEO = set(['mp4', 'mpeg'])
 
-
 def upload_file(file, bucket, key, extensions):
+    if file and allowed_file(file.filename, extensions):
+        filename = str(bucket)+'.s3.amazonaws.com/'+str(key)
+        upload_file = s3.put_object(
+                            Bucket=bucket,
+                            Body=file,
+                            Key=key,
+                            ACL='public-read',
+                            ContentType='image/jpeg'
+                        )
+        return filename
+    else:
+        return None
+
+def upload_post_file(file, bucket, key, extensions):
     # try:
     #     s3.head_bucket(Bucket=bucket)
     # except:
