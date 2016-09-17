@@ -107,3 +107,13 @@
   - Method: **GET**
   - Returns: List of all followers if any with a success message and *200 OK* Status Code.
   - Description: Returns all users followers as results with a message.
+
+- **create post**
+  - Path: /api/v1/users/{user_email}/post
+  - Method: **POST**
+  - Data: content
+  - Returns:  *200 OK* Status Code and message if post created successfully.
+  - Description: Creates post. To create a post content is required. If the post does not
+                 contain any data, it will raise a BadRequest Exception.
+
+
