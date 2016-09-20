@@ -153,12 +153,12 @@ class UserPosts(Resource):
                         Key={'email': {'S': user_email}
                         }
                     )
-        home_community = user['Item']['home']
+        home_community = user['Item']['home']['S']
         if post_data.get('content') == None and request.files['file'] == None:
             raise BadRequest('Cannot create an empty post!')
         else:
             post = db.put_item(TableName='posts',
-                            Item={'user_email': {'S': user_email},
+                            Item={'email': {'S': user_email},
                                  'creation_time': {'S': date_time},
                                  'date': {'S': date},
                                  'time': {'S': time},
@@ -167,27 +167,27 @@ class UserPosts(Resource):
                         )
             if post_data.get('location') != None:
                 post = db.update_item(TableName='posts',
-                                      Key={'user_email':{'S': user_email},
+                                      Key={'email':{'S': user_email},
                                            'creation_time': {'S': date_time}
                                       },
-                                      UpdateExpression='SET location = :location',
+                                      UpdateExpression='SET post_location = :l',
                                       ExpressionAttributeValues={
-                                          ':location': {'S': post_data['location']}
+                                          ':l': {'S': post_data['location']}
                                       }
                                   )
             else:
                 post = db.update_item(TableName='posts',
-                                      Key={'user_email': {'S': user_email},
+                                      Key={'email': {'S': user_email},
                                            'creation_time': {'S': date_time}
                                       },
-                                      UpdateExpression='SET location = :location',
+                                      UpdateExpression='SET post_location = :l',
                                       ExpressionAttributeValues={
-                                          ':location': {'S': home_community}
+                                          ':l': {'S': home_community}
                                       }
                                   )
-            if post_data.get('content') != None and request.files['file'] == None:
+            if post_data.get('content') != None:
                 post = db.update_item(TableName='posts',
-                                      Key={'user_email': {'S': user_email},
+                                      Key={'email': {'S': user_email},
                                            'creation_time': {'S': date_time}
                                       },
                                       UpdateExpression='SET content = :d',
@@ -200,7 +200,7 @@ class UserPosts(Resource):
                 media_file, file_type = upload_file(f, BUCKET_NAME, user_email+date, ALLOWED_EXTENSIONS)
                 if file_type == 'picture_file':
                     post = db.update_item(TableName='posts',
-                                          Key={'user_email': {'S': user_email},
+                                          Key={'email': {'S': user_email},
                                                'creation_time': {'S': date_time}
                                           },
                                           UpdateExpression='ADD pictures :p',
@@ -210,7 +210,7 @@ class UserPosts(Resource):
                                       )
                 elif file_type == 'video_file':
                     post = db.update_item(TableName='posts',
-                                          Key={'user_email': {'S': user_email},
+                                          Key={'email': {'S': user_email},
                                                'creation_time': {'S': date_time}
                                           },
                                           UpdateExpression='ADD video :v',
@@ -220,7 +220,7 @@ class UserPosts(Resource):
                                       )
             elif post_data.get('content') != None and request.files['file'] != None:
                 post = db.update_item(TableName='posts',
-                                      Key={'user_email': {'S': user_email},
+                                      Key={'email': {'S': user_email},
                                            'creation_time': {'S': date_time}
                                       },
                                       UpdateExpression='SET content = :d',
@@ -234,28 +234,28 @@ class UserPosts(Resource):
             return response, 201
 
 
-        # def put(self, user_email):
-        #     """Edit Post"""
-        #     response = {}
-        #     post_data = request.get_json(force=True)
-        #     if 
+    # def put(self, user_email):
+    #     """Edit Post"""
+    #     response = {}
+    #     post_data = request.get_json(force=True)
+    #     if 
 
 
-        # def get(self, user_email):
-        #     """Get all user's Posts"""
-        #     response = {}
-        #     user = db.get_item(TableName='users',
-        #                     Key={'email': {'S': user_email}}
-        #                 )
-        #     if user['Item'].get('following') == None:
-        #         response['message'] = 'Success!'
-        #         response['result'] = 'You have no followings!'
-        #     else:
-        #         users_following = user['Item']['following']
-        #         for users in users_followings:
-        #             following_post = db.query(TableName='posts',
-        #                                     Select='ALL_ATTRIBUTES'
-        #                                     )
+    # def get(self, user_email):
+    #     """Get all user's Posts"""
+    #     response = {}
+    #     user = db.get_item(TableName='users',
+    #                     Key={'email': {'S': user_email}}
+    #                 )
+    #     if user['Item'].get('following') == None:
+    #         response['message'] = 'Success!'
+    #         response['result'] = 'You have no followings!'
+    #     else:
+    #         users_following = user['Item']['following']
+    #         for users in users_followings:
+    #             following_post = db.query(TableName='posts',
+    #                                     Select='ALL_ATTRIBUTES'
+    #                                     )
 
 
 
