@@ -32,16 +32,17 @@ try:
 except:
     pass
 
-try:
-    try:
-        table_response = db.describe_table(TableName='challenges')
-        if table_response['Table']['TableStatus']:
-            print('Challenges Table exists!')
-    except:
-        challenges = create_challenges_table()
-        print('Challenges Table created!')
-except:
-    pass
+
+# try:
+#     try:
+#         table_response = db.describe_table(TableName='challenges')
+#         if table_response['Table']['TableStatus']:
+#             print('Challenges Table exists!')
+#     except:
+#         challenges = create_challenges_table()
+#         print('Challenges Table created!')
+# except:
+#     pass
 
 
 class UserFollowing(Resource):
@@ -142,14 +143,19 @@ class UserFollowers(Resource):
 
 class UserPosts(Resource):
     def post(self, user_email):
-        """Creates User Posts"""
+        """Creates Post"""
         response = {}
         post_data = request.get_json(force=True)
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         date = datetime.date.today().isoformat()
         time = datetime.datetime.now().strftime("%H:%M:%S")
-        if post_data.get('content') == None and post_data.get('file') == None:
-            raise BadRequest('Cannot post an empty post!')
+        user = db.get_item(TableName='users',
+                        Key={'email': {'S': user_email}
+                        }
+                    )
+        home_community = user['Item']['home']
+        if post_data.get('content') == None and request.files['file'] == None:
+            raise BadRequest('Cannot create an empty post!')
         else:
             post = db.put_item(TableName='posts',
                             Item={'user_email': {'S': user_email},
@@ -159,7 +165,27 @@ class UserPosts(Resource):
                                  'value': {'N': '0'}
                             }
                         )
-            if post_data.get('content') != None:
+            if post_data.get('location') != None:
+                post = db.update_item(TableName='posts',
+                                      Key={'user_email':{'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET location = :location',
+                                      ExpressionAttributeValues={
+                                          ':location': {'S': post_data['location']}
+                                      }
+                                  )
+            else:
+                post = db.update_item(TableName='posts',
+                                      Key={'user_email': {'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET location = :location',
+                                      ExpressionAttributeValues={
+                                          ':location': {'S': home_community}
+                                      }
+                                  )
+            if post_data.get('content') != None and request.files['file'] == None:
                 post = db.update_item(TableName='posts',
                                       Key={'user_email': {'S': user_email},
                                            'creation_time': {'S': date_time}
@@ -169,9 +195,9 @@ class UserPosts(Resource):
                                           ':d': {'S': post_data['content']}
                                       }
                                   )
-            if post_data.get('file') != None:
-                file = request.files['file']
-                media_file, file_type = upload_file(file, BUCKET_NAME, user_email+date, ALLOWED_EXTENSIONS)
+            elif request.files['file'] != None and post_data.get('content') == None:
+                f = request.file['file']
+                media_file, file_type = upload_file(f, BUCKET_NAME, user_email+date, ALLOWED_EXTENSIONS)
                 if file_type == 'picture_file':
                     post = db.update_item(TableName='posts',
                                           Key={'user_email': {'S': user_email},
@@ -192,54 +218,45 @@ class UserPosts(Resource):
                                               ':v': {'SS': [media_file]}
                                           }
                                       )
+            elif post_data.get('content') != None and request.files['file'] != None:
+                post = db.update_item(TableName='posts',
+                                      Key={'user_email': {'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET content = :d',
+                                      ExpressionAttributeValues={
+                                          ':d': {'S': post_data['content']}
+                                      }
+                                  )
+                response['result']['post_id'] = user_email
+                response['result']['post_key'] = date_time
             response['message'] = 'Success! Post Created!'
             return response, 201
 
 
-        # try:
-        #     if post_data['description']:
-        #         post = db.update_item(TableName='posts',
-        #                               Key={'user_email': {'S': user_email},
-        #                                    'date_time': {'S': date}
-        #                               },
-        #                               UpdateExpression='SET description = :d',
-        #                               ExpressionAttributeValues={
-        #                                   ':d': {'S': post_data['description']}
-        #                               }
-        #                           )
-                
-        # except:
-        #     try:
-        #         if post_data['picture']:
-        #             picture = request.files['picture_file']
-        #             picture_file = upload_file(picture, BUCKET_NAME, user_email)
-        #             post = db.update_item(TableName='posts',
-        #                                   Key={'user_email': {'S': user_email},
-        #                                        'date_time': {'S': date}
-        #                                   },
-        #                                   UpdateExpression='SET picture = :p',
-        #                                   ExpressionAttributeValues={
-        #                                       ':p': {'S': picture_file}
-        #                                   }
-        #                               )
-        #     except:
-        #         pass
+        # def put(self, user_email):
+        #     """Edit Post"""
+        #     response = {}
+        #     post_data = request.get_json(force=True)
+        #     if 
 
-        #     try:
-        #         if post_data['video']:
-        #             video = request.files['video_file']
-        #             video_file = upload_file(video, BUCKET_NAME, user_email)
-        #             post = db.update_item(TableName='posts',
-        #                                   Key={'user_email': {'S': user_email},
-        #                                        'date_time': {'S': date}
-        #                                   },
-        #                                   UpdateExpression='SET video = :v',
-        #                                   ExpressionAttributeValues={
-        #                                       ':v': {'S': video_file}
-        #                                   }
-        #                               )
-        #     except:
-        #         pass
+
+        # def get(self, user_email):
+        #     """Get all user's Posts"""
+        #     response = {}
+        #     user = db.get_item(TableName='users',
+        #                     Key={'email': {'S': user_email}}
+        #                 )
+        #     if user['Item'].get('following') == None:
+        #         response['message'] = 'Success!'
+        #         response['result'] = 'You have no followings!'
+        #     else:
+        #         users_following = user['Item']['following']
+        #         for users in users_followings:
+        #             following_post = db.query(TableName='posts',
+        #                                     Select='ALL_ATTRIBUTES'
+        #                                     )
+
 
 
 # class ChallengePosts(Resource):
