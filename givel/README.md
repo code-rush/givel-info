@@ -111,9 +111,12 @@
 - **create post**
   - Path: /api/v1/users/{user_email}/post
   - Method: **POST**
-  - Data: content
+  - Data: content, location(provide only when location service is on)
   - Returns:  *200 OK* Status Code and message if post created successfully.
   - Description: Creates post. To create a post content is required. If the post does not
                  contain any data, it will raise a BadRequest Exception.
+                 Provide location only when the user have their location services on
+                 for the application. The location should be a string in the following 
+                 syntax: "City, State".
 
 
