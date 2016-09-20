@@ -72,7 +72,7 @@ def create_posts_table():
             TableName='posts',
             KeySchema=[
                 {
-                    'AttributeName': 'user_email',
+                    'AttributeName': 'email',
                     'KeyType': 'HASH'
                 },
                 {
@@ -86,8 +86,34 @@ def create_posts_table():
                     'AttributeType': 'S'
                 },
                 {
-                    'AttributeName': 'user_email',
+                    'AttributeName': 'email',
                     'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'value',
+                    'AttributeType': 'N'
+                }
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'post-email-value',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'email',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'value',
+                            'KeyType': 'RANGE'
+                        },
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 10,
+                        'WriteCapacityUnits': 10
+                    }
                 }
             ],
             ProvisionedThroughput={
