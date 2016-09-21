@@ -174,21 +174,21 @@ def create_comments_table():
             TableName='comments',
             KeySchema=[
                 {
-                    'AttributeName': 'user_email',
+                    'AttributeName': 'email',
                     'KeyType': 'HASH'
                 },
                 {
-                    'AttributeName': 'date_time',
+                    'AttributeName': 'creation_time',
                     'KeyType': "RANGE"
                 }
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'user_email',
+                    'AttributeName': 'email',
                     'AttributeType': 'S'
                 },
                 {
-                    'AttributeName': 'date_time',
+                    'AttributeName': 'creation_time',
                     'AttributeType': 'S'
                 }
             ],
