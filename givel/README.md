@@ -4,6 +4,7 @@
 - **create a user account**
   - Path: /api/v1/user_accounts/
   - Method: **POST**
+  - Content-Type: application/json
   - Required Data: first_name, last_name, email, password
   - Returns: If successfully created returns *201 CREATED* Status Code with a success message, 
              elseif user already exists, returns *400 BAD REQUEST* Status Code with a 
@@ -14,6 +15,7 @@
 - **user sign_in**
   - Path: /api/v1/user_accounts/login
   - Method: **POST**
+  - Content-Type: application/json
   - Required Data: email, password
   - Returns: *200 OK* Status Code with a success message and result containing
              User information.
@@ -23,6 +25,7 @@
 - **delete user**
   - Path: /api/v1/user_accounts/
   - Method: **DELETE**
+  - Content-Type: application/json
   - Required Data: email, password
   - Returns: *200 OK* Status Code with a message if User successfully deleted.
   - Description: User needs to enter correct password inorder to delete the account.
@@ -46,6 +49,7 @@
 - **add user's profile picture**
   - Path: /api/v1/user_accounts/{user_email}/picture
   - Method: **POST**
+  - Content-Type: multipart/form-data
   - File: picture
   - Extensions Allowed: .jpg, .png, .jpeg.
   - Returns: If successfully added returns *200 OK* Status Code with a message.
@@ -62,6 +66,7 @@
 - **add community to the user**
   - Path: /api/v1/user_accounts/{user_email}/communities/{community}
   - Method: **PUT**
+  - Content-Type: application/json
   - Data: community
   - Returns: *200 OK* Status Code with a message if a community successfully added.
   - Description: Adds communities to user if followed. Provide what
@@ -72,6 +77,7 @@
 - **remove user's community**
   - Path: /api/v1/user_accounts/{user_email}/communities/{community}
   - Method: **DELETE**
+  - Content-Type: application/json
   - Returns: *200 OK* Status code with a message if community successfully deleted.
   - Description: Deletes the community if unfollowed by the user. If a *home* community is 
                  deleted and there exists *home_away* then *home_away* community is changed 
@@ -81,6 +87,7 @@
 - **follow a user**
   - Path: /api/v1/users/{user_email}/following
   - Method: **PUT**
+  - Content-Type: application/json
   - Data: follow_user
   - Returns: *200 OK* Status Code with a success message.
   - Description: Following a user. It adds the user to the following list and 
@@ -96,6 +103,7 @@
 - **unfollow a user**
   - Path: /api/v1/users/{user_email}/following
   - Method: **DELETE**
+  - Content-Type: application/json
   - Data: unfollow_user
   - Returns: *200 OK* Status Code with a success message.
   - Description: Removes the unfollowed user from the followings list and removes 
@@ -111,8 +119,17 @@
 - **create post**
   - Path: /api/v1/users/{user_email}/post
   - Method: **POST**
-  - Data: content, location(provide only when location service is on)
-  - Returns:  *200 OK* Status Code and message if post created successfully.
+  - Content-Type: multipart/form-data
+  - Required Data: - content= (some text)
+                   - file_count= 0 (default value should be 0. while sending file value is 
+                                  number of files. Max value is 1.)
+  - Optional Data: - file = (send file only if file_count is not 0)
+                   - location = (send location as 'city, state' only if location services 
+                               services are on)
+  - Allowed files: - IMAGE(.jpg, .png, .jpeg)
+                   - VIDEOS(.mp4, .mpeg)
+  - Returns:  *201 OK* Status Code and message if post created successfully.
+              *400 BAD REQUEST* and message if failed to create post.
   - Description: Creates post. To create a post content is required. If the post does not
                  contain any data, it will raise a BadRequest Exception.
                  Provide location only when the user have their location services on
