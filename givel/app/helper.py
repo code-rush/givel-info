@@ -21,16 +21,8 @@ def upload_file(file, bucket, key, extensions):
         return None
 
 def upload_post_file(file, bucket, key, extensions):
-    # try:
-    #     s3.head_bucket(Bucket=bucket)
-    # except:
-    #     print('Bucket does not exist!')
-    #     print('Creating Bucket')
-    #     create_bucket = s3.create_bucket(Bucket=bucket)
-    #     print('Bucket Created')
-
     if file and allowed_file(file.filename, extensions):
-        file_type = type_of_file(file)
+        file_type = type_of_file(file.filename)
         filename = str(bucket)+'.s3.amazonaws.com/'+str(key)
         if file_type == 'picture_file':
             upload_file = s3.put_object(
