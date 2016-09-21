@@ -8,7 +8,7 @@ from flask_restful import Api, Resource
 
 from app.models import create_challenges_table
 from app.models import create_posts_table
-from app.helper import upload_file
+from app.helper import upload_post_file
 
 from werkzeug.exceptions import BadRequest
 
@@ -145,8 +145,8 @@ class UserPosts(Resource):
     def post(self, user_email):
         """Creates Post"""
         response = {}
-        post_data = request.get_json(force=True)
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        file_id_ex = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         date = datetime.date.today().isoformat()
         time = datetime.datetime.now().strftime("%H:%M:%S")
         user = db.get_item(TableName='users',
@@ -154,84 +154,92 @@ class UserPosts(Resource):
                         }
                     )
         home_community = user['Item']['home']['S']
-        if post_data.get('content') == None and request.files['file'] == None:
-            raise BadRequest('Cannot create an empty post!')
-        else:
-            post = db.put_item(TableName='posts',
-                            Item={'email': {'S': user_email},
-                                 'creation_time': {'S': date_time},
-                                 'date': {'S': date},
-                                 'time': {'S': time},
-                                 'value': {'N': '0'}
-                            }
-                        )
-            if post_data.get('location') != None:
-                post = db.update_item(TableName='posts',
-                                      Key={'email':{'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET post_location = :l',
-                                      ExpressionAttributeValues={
-                                          ':l': {'S': post_data['location']}
-                                      }
-                                  )
+
+        if request.form['content'] or ('file_count' in request.form and int(request.form['file_count'])) != 0:
+            if int(request.form['file_count']) > 1:
+                raise BadRequest('Only one file is allowed!')
             else:
-                post = db.update_item(TableName='posts',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET post_location = :l',
-                                      ExpressionAttributeValues={
-                                          ':l': {'S': home_community}
-                                      }
-                                  )
-            if post_data.get('content') != None:
-                post = db.update_item(TableName='posts',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET content = :d',
-                                      ExpressionAttributeValues={
-                                          ':d': {'S': post_data['content']}
-                                      }
-                                  )
-            elif request.files['file'] != None and post_data.get('content') == None:
-                f = request.file['file']
-                media_file, file_type = upload_file(f, BUCKET_NAME, user_email+date, ALLOWED_EXTENSIONS)
-                if file_type == 'picture_file':
+                post = db.put_item(TableName='posts',
+                                Item={'email': {'S': user_email},
+                                     'creation_time': {'S': date_time},
+                                     'date': {'S': date},
+                                     'time': {'S': time},
+                                     'value': {'N': '0'}
+                                }
+                            )
+                if 'location' in request.form:
+                    post = db.update_item(TableName='posts',
+                                          Key={'email':{'S': user_email},
+                                               'creation_time': {'S': date_time}
+                                          },
+                                          UpdateExpression='SET post_location = :l',
+                                          ExpressionAttributeValues={
+                                              ':l': {'S': post_data['location']}
+                                          }
+                                      )
+                else:
                     post = db.update_item(TableName='posts',
                                           Key={'email': {'S': user_email},
                                                'creation_time': {'S': date_time}
                                           },
-                                          UpdateExpression='ADD pictures :p',
+                                          UpdateExpression='SET post_location = :l',
                                           ExpressionAttributeValues={
-                                              ':p': {'SS': [media_file]}
+                                              ':l': {'S': home_community}
                                           }
                                       )
-                elif file_type == 'video_file':
-                    post = db.update_item(TableName='posts',
-                                          Key={'email': {'S': user_email},
-                                               'creation_time': {'S': date_time}
-                                          },
-                                          UpdateExpression='ADD video :v',
-                                          ExpressionAttributeValues={
-                                              ':v': {'SS': [media_file]}
-                                          }
-                                      )
-            elif post_data.get('content') != None and request.files['file'] != None:
-                post = db.update_item(TableName='posts',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET content = :d',
-                                      ExpressionAttributeValues={
-                                          ':d': {'S': post_data['content']}
-                                      }
-                                  )
-                response['result']['post_id'] = user_email
-                response['result']['post_key'] = date_time
-            response['message'] = 'Success! Post Created!'
-            return response, 201
+                if 'content' in request.form:
+                    try:
+                        post = db.update_item(TableName='posts',
+                                              Key={'email': {'S': user_email},
+                                                   'creation_time': {'S': date_time}
+                                              },
+                                              UpdateExpression='SET content = :d',
+                                              ExpressionAttributeValues={
+                                                  ':d': {'S': request.form['content']}
+                                              }
+                                          )
+                        response['message'] = 'Success! Post Created!'
+                    except:
+                        post = db.delete_item(TableName='posts',
+                                         Key={'email': {'S': user_email},
+                                              'creation_time': {'S': date_time}
+                                         }
+                                     )
+                        raise BadRequest('Failed to create post')
+                if 'file_count' in request.form and int(request.form['file_count']) == 1:
+                        f = request.files['file']
+                        try:
+                            media_file, file_type = upload_post_file(f, BUCKET_NAME,
+                                             user_email+file_id_ex, ALLOWED_EXTENSIONS)
+                            if file_type == 'picture_file':
+                                post = db.update_item(TableName='posts',
+                                                      Key={'email': {'S': user_email},
+                                                           'creation_time': {'S': date_time}
+                                                      },
+                                                      UpdateExpression='ADD pictures :p',
+                                                      ExpressionAttributeValues={
+                                                          ':p': {'SS': [media_file]}
+                                                      }
+                                                  )
+                            elif file_type == 'video_file':
+                                post = db.update_item(TableName='posts',
+                                                      Key={'email': {'S': user_email},
+                                                           'creation_time': {'S': date_time}
+                                                      },
+                                                      UpdateExpression='ADD video :v',
+                                                      ExpressionAttributeValues={
+                                                          ':v': {'SS': [media_file]}
+                                                      }
+                                                  )
+                            response['message'] = 'Success! Post Created!'
+                        except:
+                            post = db.delete_item(TableName='posts',
+                                             Key={'email': {'S': user_email},
+                                                  'creation_time': {'S': date_time}
+                                             }
+                                         )
+                            raise BadRequest('Failed to create post')
+                return response, 201
 
 
     # def put(self, user_email):
@@ -256,7 +264,6 @@ class UserPosts(Resource):
     #             following_post = db.query(TableName='posts',
     #                                     Select='ALL_ATTRIBUTES'
     #                                     )
-
 
 
 # class ChallengePosts(Resource):
