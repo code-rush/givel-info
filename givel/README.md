@@ -120,14 +120,17 @@
   - Path: /api/v1/users/{user_email}/post
   - Method: **POST**
   - Content-Type: multipart/form-data
-  - Required Data: - content= (some text)
-                   - file_count= 0 (default value should be 0. while sending file value is 
-                                  number of files. Max value is 1.)
-  - Optional Data: - file = (send file only if file_count is not 0)
-                   - location = (send location as 'city, state' only if location services 
-                               services are on)
-  - Allowed files: - IMAGE(.jpg, .png, .jpeg)
-                   - VIDEOS(.mp4, .mpeg)
+  - Required Data: 
+      - content= (some text)
+      - file_count= 0 (default value should be 0. while sending file value is 
+                       number of files. Max value is 1.)
+  - Optional Data: 
+      - file = (send file only if file_count is not 0)
+      - location = (send location as 'city, state' only if location services 
+                    services are on)
+  - Allowed files: 
+      - IMAGE(.jpg, .png, .jpeg)
+      - VIDEOS(.mp4, .mpeg)
   - Returns:  *201 OK* Status Code and message if post created successfully.
               *400 BAD REQUEST* and message if failed to create post.
   - Description: Creates post. To create a post content is required. If the post does not
@@ -135,5 +138,16 @@
                  Provide location only when the user have their location services on
                  for the application. The location should be a string in the following 
                  syntax: "City, State".
+  - IMPORTANT: Handle that the users should not be able to create empty post on the client side.
+
+- **edit post**
+  - Path: /api/v1/users/post/edit
+  - Method: **PUT**
+  - Content-Type: application/json
+  - Data: content, post_id, post_key
+  - Return: *200 OK* Status Code and message if post edited successfully.
+  - Description: Edits post content. Once post is created, only the content is allowed 
+                 to be edited.
+
 
 
