@@ -178,7 +178,7 @@ class UserPosts(Resource):
                                           },
                                           UpdateExpression='SET post_location = :l',
                                           ExpressionAttributeValues={
-                                              ':l': {'S': post_data['location']}
+                                              ':l': {'S': request.form['location']}
                                           }
                                       )
                 else:
@@ -272,20 +272,12 @@ class UserPosts(Resource):
 
 
     # def get(self, user_email):
-    #     """Get all user's Posts"""
+    #     """Get all the user's posts"""
     #     response = {}
-    #     user = db.get_item(TableName='users',
-    #                     Key={'email': {'S': user_email}}
-    #                 )
-    #     if user['Item'].get('following') == None:
-    #         response['message'] = 'Success!'
-    #         response['result'] = 'You have no followings!'
-    #     else:
-    #         users_following = user['Item']['following']
-    #         for users in users_followings:
-    #             following_post = db.query(TableName='posts',
-    #                                     Select='ALL_ATTRIBUTES'
-    #                                     )
+    #     user_posts = db.query(TableName='posts',
+    #                         SELECT='ALL_ATTRIBUTES',
+    #                         Limit=50,
+    #                         KeyConditionExpression=)
 
 
 # class ChallengePosts(Resource):
