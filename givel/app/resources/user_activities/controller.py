@@ -164,7 +164,11 @@ class UserPosts(Resource):
                                      'creation_time': {'S': date_time},
                                      'date': {'S': date},
                                      'time': {'S': time},
-                                     'value': {'N': '0'}
+                                     'value': {'N': '0'},
+                                     'likes': {'N': '0'},
+                                     'stars': {'N': '0'},
+                                     'favorites': {'N': '0'},
+                                     'comments': {'N': '0'}
                                 }
                             )
                 if 'location' in request.form:
