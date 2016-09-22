@@ -246,11 +246,29 @@ class UserPosts(Resource):
                 return response, 201
 
 
-    # def put(self, user_email):
-    #     """Edit Post"""
-    #     response = {}
-    #     post_data = request.get_json(force=True)
-    #     if 
+    def put(self):
+        """Edit Post"""
+        response = {}
+        post_data = request.get_json(force=True)
+        if post_data.get('post_id') == None and post_data.get('post_key') == None:
+            raise BadRequest('Post ID and KEY is required to edit a post')
+        if post_data.get('content') != None:
+            try:
+                post = db.update_item(TableName='posts',
+                                    Key={'email': {'S': post_data['post_id']},
+                                         'creation_time': {'S': post_data['post_key']}
+                                    },
+                                    UpdateExpression='SET content = :c',
+                                    ExpressionAttributeValues={
+                                        ':c': {'S': post_data['content']}
+                                    }
+                                )
+                response['message'] = 'Successfully edited!'
+            except:
+                raise BadRequest('Failed to edit post!')
+        else:
+            raise BadRequest('Only post content is allowed to edit!')
+        return response, 200
 
 
     # def get(self, user_email):
