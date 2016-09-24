@@ -141,7 +141,7 @@ class UserFollowers(Resource):
         return response, 200
 
 
-class UserPosts(Resource):
+class UsersPost(Resource):
     def post(self, user_email):
         """Creates Post"""
         response = {}
@@ -271,13 +271,60 @@ class UserPosts(Resource):
         return response, 200
 
 
-    # def get(self, user_email):
-    #     """Get all the user's posts"""
-    #     response = {}
-    #     user_posts = db.query(TableName='posts',
-    #                         SELECT='ALL_ATTRIBUTES',
-    #                         Limit=50,
-    #                         KeyConditionExpression=)
+    def get(self, user_email):
+        """Get all the user's posts"""
+        response = {}
+        try:
+            user_posts = db.query(TableName='posts',
+                                Select='ALL_ATTRIBUTES',
+                                Limit=50,
+                                ConsistentRead=True,
+                                KeyConditionExpression='email = :e',
+                                ExpressionAttributeValues={
+                                    ':e': {'S': user_email}
+                                }
+                            )
+            current_datetime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S').rsplit(' ', 1)
+            current_date = current_datetime[0].rsplit('-',2)
+            current_time = current_datetime[1].rsplit(':',2)
+            for posts in user_posts['Items']:
+                post_date = posts['date']['S'].rsplit('-',2)
+                post_time = posts['time']['S'].rsplit(':',2)
+                if post_date[0] == current_date[0]:
+                    if post_date[1] == current_date[1]:
+                        if post_date[2] == current_date[2]:
+                            if post_time[0] == current_time[0]:
+                                if post_time[1] == current_time[1]:
+                                    if post_time[2] == current_time[2]:
+                                        posted_time = '0s'
+                                    else:
+                                        posted_time = str(int(current_time[2]) - int(post_time[2])) + 's'
+                                else:
+                                    posted_time = str(int(current_time[1]) - int(post_time[1])) + 'm'
+                            else:
+                                posted_time = str(int(current_time[0]) - int(post_time[0])) + 'hr'
+                        else:
+                            posted_time = str(int(current_date[2]) - int(post_date[2])) + 'd'
+                    else:
+                        posted_time = str(int(current_date[1]) - int(post_date[1])) + 'M'
+                else:
+                    posted_time = str(int(current_date[0]) - int(post_date[0])) + 'yr'
+                # post_time = calculate_post_deltatime(posts['date'])
+                posts['posted_time'] = {}
+                posts['posted_time']['S'] = posted_time + ' ago'
+                posts['post_id'] = {}
+                posts['post_id']['S'] = posts['email']['S']
+                posts['post_key'] = {}
+                posts['post_key']['S'] = posts['creation_time']['S']
+                del posts['email']
+                del posts['creation_time']
+                del posts['date']
+                del posts['time']
+            response['message'] = 'Successfully fetched users all posts!'
+            response['result'] = user_posts['Items']
+        except:
+            response['message'] = 'Failed to fetch users posts!'
+        return response, 200
 
 
 # class ChallengePosts(Resource):
@@ -299,6 +346,6 @@ class UserPosts(Resource):
 
 api.add_resource(UserFollowing, '/<user_email>/following')
 api.add_resource(UserFollowers, '/<user_email>/followers')
-api.add_resource(UserPosts, '/<user_email>/post')
+api.add_resource(UsersPost, '/<user_email>/post')
 
 
