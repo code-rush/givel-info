@@ -136,22 +136,48 @@ def create_challenges_table():
             TableName='challenges',
             KeySchema=[
                 {
-                    'AttributeName': 'user_email',
-                    'AttributeType': 'HASH'
+                    'AttributeName': 'challenge_id',
+                    'KeyType': 'HASH'
                 },
                 {
-                    'AttributeName': 'date_time',
-                    'AttributeType': 'RANGE'
+                    'AttributeName': 'challenge_key',
+                    'KeyType': 'RANGE'
                 }
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'user_email',
+                    'AttributeName': 'challenge_id',
                     'AttributeType': 'S'
                 },
                 {
-                    'AttributeName': 'date_time',
+                    'AttributeName': 'challenge_key',
                     'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'value',
+                    'AttributeType': 'N'
+                }
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'challenge-email-value',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'challenge_id',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'value',
+                            'KeyType': 'RANGE'
+                        },
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 10,
+                        'WriteCapacityUnits': 10
+                    }
                 }
             ],
             ProvisionedThroughput={
