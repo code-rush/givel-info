@@ -155,8 +155,33 @@
   - Return: *200 OK* Status Code and message if fetched post successfully.
   - Description: Gets all users posts. 
                 - Use *posted_time* to display time on post.
-                - Send *email* as post_id and *creation_time* as post_key to edit the post.
 
+- **create challenge**
+  - Path: /api/v1/users/{user_email}/challenge
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: description
+  - Optional Data: location
+  - Returns: *201 OK* Status Code and message if challenge created succesfully.
+  - Description: Creates challenge. To create a challenge, description is required.
+                 If it does not contain any description, it will raise a BadRequest
+                 Exception with a message.
+                 Provide location only when the user have their location services on
+                 for the application. The location should be a string in the following 
+                 syntax: "City, State".
 
+- **edit challenge**
+  - Path: /api/v1/users/challenge/edit
+  - Method: **PUT**
+  - Content-Type: application/json
+  - Data: content, challenge_id, challenge_key
+  - Return: *200 OK* Status Code and message if challenge edited successfully.
+  - Description: Edits challenge description.
 
+- **get user's posts**
+  - Path: /api/v1/users/{user_email}/challenge
+  - Method: **GET**
+  - Return: *200 OK* Status Code and message if fetched challenges successfully.
+  - Description: Gets all users challenges. 
+                - Use *posted_time* to display time on challenge.
 
