@@ -149,5 +149,14 @@
   - Description: Edits post content. Once post is created, only the content is allowed 
                  to be edited.
 
+- **get user's posts**
+  - Path: /api/v1/users/{user_email}/post
+  - Method: **GET**
+  - Return: *200 OK* Status Code and message if fetched post successfully.
+  - Description: Gets all users posts. 
+                - Use *posted_time* to display time on post.
+                - Send *email* as post_id and *creation_time* as post_key to edit the post.
+
+
 
 
