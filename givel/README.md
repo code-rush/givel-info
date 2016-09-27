@@ -175,13 +175,13 @@
   - Method: **PUT**
   - Content-Type: application/json
   - Data: content, challenge_id, challenge_key
-  - Return: *200 OK* Status Code and message if challenge edited successfully.
+  - Returns: *200 OK* Status Code and message if challenge edited successfully.
   - Description: Edits challenge description.
 
 - **get user's challenges**
   - Path: /api/v1/users/{user_email}/challenge
   - Method: **GET**
-  - Return: *200 OK* Status Code and message if fetched challenges successfully.
+  - Returns: *200 OK* Status Code and message if fetched challenges successfully.
   - Description: Gets all users challenges. 
                 - Use *posted_time* to display time on challenge.
 
@@ -196,6 +196,21 @@
   - Path: /api/v1/users/challenge
   - Method: **DELETE**
   - Required Data: post_id, post_key
-  - Return: *200 OK* Status code if the post is deleted successfully.
+  - Returns: *200 OK* Status code if the post is deleted successfully.
   - Description: Deletes the user's post.
+
+- **change user's password**
+  - Path: /api/v1/user_accounts/{user_email}/password
+  - Method: **PUT**
+  - Required Data: current_password, new_password
+  - Returns: *200 OK* Status Code if the password changed successfully.
+  - Description: Changes user's password. Current password is required to authenticate 
+                 user and then the password is changed to the new password. 
+                 Raises exception if any data is not provided.
+                 Results in failure if the current password does not match user's current 
+                 password.
+  -IMPORTANT: Check if new_password and confirm_password matches on the front end 
+              before sending the new password.
+
+
 
