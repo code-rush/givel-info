@@ -249,7 +249,7 @@ class UsersPost(Resource):
         """Edit Post"""
         response = {}
         post_data = request.get_json(force=True)
-        if post_data.get('post_id') == None and post_data.get('post_key') == None:
+        if post_data.get('post_id') == None or post_data.get('post_key') == None:
             raise BadRequest('Post ID and KEY is required to edit a post')
         if post_data.get('content') != None:
             try:
@@ -325,6 +325,35 @@ class UsersPost(Resource):
             response['message'] = 'Failed to fetch users posts!'
         return response, 200
 
+    def delete(self):
+        """Deletes User's Post"""
+        response={}
+        post_data = request.get_json(force=True)
+        if post_data.get('post_id') == None or post_data.get('post_key') == None:
+            raise BadRequest('Please provide required data')
+        else:
+            post = db.get_item(TableName='posts',
+                               Key={'email': {'S': post_data['post_id']},
+                                    'creation_time': {'S': post_data['post_key']}
+                               }
+                           )
+            if post.get('pictures') != None:
+                for picture in post['pictures']:
+                    key = picture.rsplit('/', 1)[1]
+                    delete_pic = s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+            if post.get('video') != None:
+                for video in post['video']:
+                    key = video.rsplit('/', 1)[1]
+                    delete_video = s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+
+            delete_post = db.delete_item(TableName='posts',
+                                        Key={'email': {'S': post_data['post_id']},
+                                             'creation_time': {'S': post_data['post_key']}
+                                        }
+                                    )
+            response['message'] = 'Post deleted!'
+            return response, 200
+
 
 class ChallengePosts(Resource):
     def post(self, user_email):
@@ -385,7 +414,7 @@ class ChallengePosts(Resource):
         """Edit Challenge"""
         response = {}
         challenge_data = request.get_json(force=True)
-        if challenge_data.get('challenge_id') == None and challenge_data.get('challenge_key') == None:
+        if challenge_data.get('challenge_id') == None or challenge_data.get('challenge_key') == None:
             raise BadRequest('Challenge ID and KEY is required to edit a post')
         if challenge_data.get('description') != None:
             try:
@@ -454,12 +483,30 @@ class ChallengePosts(Resource):
             response['message'] = 'Failed to fetch users posts!'
         return response, 200
 
+    def delete(self):
+        """Deletes User's Post"""
+        response={}
+        challenge_data = request.get_json(force=True)
+        if challenge_data.get('challenge_id') == None or challenge_data.get('challenge_key') == None:
+            raise BadRequest('Please provide required data')
+        else:
+            delete_challenge = db.delete_item(TableName='challenges',
+                               Key={'challenge_id': {'S': challenge_data['challenge_id']},
+                                    'challenge_key': {'S': challenge_data['challenge_key']}
+                               }
+                           )
+
+            response['message'] = 'Challenge deleted!'
+            return response, 200
+
 
 
 
 api.add_resource(UserFollowing, '/<user_email>/following')
 api.add_resource(UserFollowers, '/<user_email>/followers')
-api.add_resource(UsersPost, '/<user_email>/post', '/post/edit')
-api.add_resource(ChallengePosts, '/<user_email>/challenge', '/challenge/edit')
+api.add_resource(UsersPost, '/<user_email>/post',
+                            '/post')
+api.add_resource(ChallengePosts, '/<user_email>/challenge', 
+                                 '/challenge')
 
 
