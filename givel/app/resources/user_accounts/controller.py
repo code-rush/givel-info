@@ -225,10 +225,39 @@ class UserCommunities(Resource):
         return response, 200
 
 
+class ChangePassword(Resource):
+    """Change user's password"""
+    def put(self, user_email):
+        response = {}
+        user = db.get_item(TableName='users', 
+                            Key={'email': {'S': user_email}
+                            }
+                        )
+        user_data = request.get_json(force=True)
+        if user_data.get('current_password') == None \
+          or user_data.get('new_password') == None:
+            raise BadRequest('Please provide all details')
+        else:
+            if check_password_hash(user['Item']['password']['S'], \
+                                    user_data['current_password']):
+                update_pwd = db.update_item(TableName='users',
+                                        Key={'email': {'S': user_email}},
+                                        UpdateExpression='SET password = :pwd',
+                                        ExpressionAttributeValues={
+                                            ':pwd': {'S': generate_password_hash(user_data['new_password'])}
+                                        },
+                                        ReturnValues='UPDATED_NEW'
+                                    )
+                response['message'] = 'Password Updated!'
+            else:
+                response['message'] = 'Please enter correct current password'
+
+            return response, 200
+
 
 api.add_resource(UserAccount, '/')
 api.add_resource(UserProfilePicture, '/<user_email>/picture')
 api.add_resource(UserCommunities, '/<user_email>/communities/<community>')
 api.add_resource(UserLogin, '/login')
-
+api.add_resource(ChangePassword, '/<user_email>/password')
 
