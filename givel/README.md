@@ -141,7 +141,7 @@
   - IMPORTANT: Handle that the users should not be able to create empty post on the client side.
 
 - **edit post**
-  - Path: /api/v1/users/post/edit
+  - Path: /api/v1/users/post
   - Method: **PUT**
   - Content-Type: application/json
   - Data: content, post_id, post_key
@@ -171,17 +171,31 @@
                  syntax: "City, State".
 
 - **edit challenge**
-  - Path: /api/v1/users/challenge/edit
+  - Path: /api/v1/users/challenge
   - Method: **PUT**
   - Content-Type: application/json
   - Data: content, challenge_id, challenge_key
   - Return: *200 OK* Status Code and message if challenge edited successfully.
   - Description: Edits challenge description.
 
-- **get user's posts**
+- **get user's challenges**
   - Path: /api/v1/users/{user_email}/challenge
   - Method: **GET**
   - Return: *200 OK* Status Code and message if fetched challenges successfully.
   - Description: Gets all users challenges. 
                 - Use *posted_time* to display time on challenge.
+
+- **delete user's post**
+  - Path: /api/v1/users/post
+  - Method: **DELETE**
+  - Required Data: post_id, post_key
+  - Return: *200 OK* Status code if the post is deleted successfully.
+  - Description: Deletes the user's post.
+
+- **delete user's challenge**
+  - Path: /api/v1/users/challenge
+  - Method: **DELETE**
+  - Required Data: post_id, post_key
+  - Return: *200 OK* Status code if the post is deleted successfully.
+  - Description: Deletes the user's post.
 
