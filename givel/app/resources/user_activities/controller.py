@@ -146,13 +146,8 @@ class UsersPost(Resource):
         response = {}
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         file_id_ex = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        date = datetime.date.today().isoformat()
-        time = datetime.datetime.now().strftime("%H:%M:%S")
-        user = db.get_item(TableName='users',
-                        Key={'email': {'S': user_email}
-                        }
-                    )
-        home_community = user['Item']['home']['S']
+        date = date_time.rsplit(' ', 1)[0]
+        time = date_time.rsplit(' ', 1)[1]
 
         if request.form['content'] or ('file_count' in request.form and int(request.form['file_count'])) != 0:
             if int(request.form['file_count']) > 1:
@@ -181,6 +176,11 @@ class UsersPost(Resource):
                                           }
                                       )
                 else:
+                    user = db.get_item(TableName='users',
+                                    Key={'email': {'S': user_email}
+                                    }
+                                )
+                    home_community = user['Item']['home']['S']
                     post = db.update_item(TableName='posts',
                                           Key={'email': {'S': user_email},
                                                'creation_time': {'S': date_time}
@@ -303,14 +303,18 @@ class UsersPost(Resource):
                             else:
                                 posted_time = str(int(current_time[0]) - int(post_time[0])) + 'hr'
                         else:
-                            posted_time = str(int(current_date[2]) - int(post_date[2])) + 'd'
+                            pt = int(current_date[2]) - int(post_date[2])
+                            if pt == 1:
+                                posted_time = 'yesterday'
+                            else:
+                                posted_time = str(pt) + 'd'
                     else:
                         posted_time = str(int(current_date[1]) - int(post_date[1])) + 'M'
                 else:
                     posted_time = str(int(current_date[0]) - int(post_date[0])) + 'yr'
                 # post_time = calculate_post_deltatime(posts['date'])
                 posts['posted_time'] = {}
-                posts['posted_time']['S'] = posted_time + ' ago'
+                posts['posted_time']['S'] = posted_time
                 posts['post_id'] = {}
                 posts['post_id']['S'] = posts['email']['S']
                 posts['post_key'] = {}
@@ -364,12 +368,6 @@ class ChallengePosts(Resource):
         date = date_time.rsplit(' ', 1)[0]
         time = date_time.rsplit(' ', 1)[1]
 
-        user = db.get_item(TableName='users',
-                        Key={'email': {'S': user_email}
-                        }
-                    )
-        home_community = user['Item']['home']['S']
-
         if challenge_data.get('description') == None:
             raise BadRequest('Cannot create an empty challenge!')
         else:
@@ -398,6 +396,11 @@ class ChallengePosts(Resource):
                                       }
                                   )
             else:
+                user = db.get_item(TableName='users',
+                                Key={'email': {'S': user_email}
+                                }
+                            )
+                home_community = user['Item']['home']['S']
                 challenge_post = db.update_item(TableName='challenges',
                                       Key={'challenge_id': {'S': user_email},
                                            'challenge_key': {'S': date_time}
@@ -467,14 +470,18 @@ class ChallengePosts(Resource):
                             else:
                                 posted_time = str(int(current_time[0]) - int(post_time[0])) + 'hr'
                         else:
-                            posted_time = str(int(current_date[2]) - int(post_date[2])) + 'd'
+                            pt = int(current_date[2]) - int(post_date[2])
+                            if pt == 1:
+                                posted_time = 'yesterday'
+                            else:
+                                posted_time = str(pt) + 'd'
                     else:
                         posted_time = str(int(current_date[1]) - int(post_date[1])) + 'M'
                 else:
                     posted_time = str(int(current_date[0]) - int(post_date[0])) + 'yr'
                 # post_time = calculate_post_deltatime(posts['date'])
                 posts['posted_time'] = {}
-                posts['posted_time']['S'] = posted_time + ' ago'
+                posts['posted_time']['S'] = posted_time
                 del posts['date']
                 del posts['time']
             response['message'] = 'Successfully fetched users all challenges!'
@@ -500,6 +507,155 @@ class ChallengePosts(Resource):
             return response, 200
 
 
+class UserRepostFeed(Resource):
+    def post(self, user_email):
+        """Repost user's post"""
+        response = {}
+        data = request.get_json(force=True)
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        date = date_time.rsplit(' ', 1)[0]
+        time = date_time.rsplit(' ', 1)[1]
+
+        try:
+            post = db.put_item(TableName='posts',
+                            Item={'email': {'S': user_email},
+                                 'creation_time': {'S': date_time},
+                                 'date': {'S': date},
+                                 'time': {'S': time},
+                                 'value': {'N': '0'},
+                                 'likes': {'N': '0'},
+                                 'stars': {'N': '0'},
+                                 'favorites': {'N': '0'},
+                                 'comments': {'N': '0'}
+                            }
+                        )
+            if data.get('content') != None:
+                post = db.update_item(TableName='posts',
+                                      Key={'email': {'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET content = :d',
+                                      ExpressionAttributeValues={
+                                          ':d': {'S': data['content']}
+                                      }
+                                  )
+            if data.get('location') != None:
+                post = db.update_item(TableName='posts',
+                                      Key={'email':{'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET post_location = :l',
+                                      ExpressionAttributeValues={
+                                          ':l': {'S': data['location']}
+                                      }
+                                  )
+            else:
+                user = db.get_item(TableName='users',
+                                Key={'email': {'S': user_email}
+                                }
+                            )
+                home_community = user['Item']['home']['S']
+                post = db.update_item(TableName='posts',
+                                      Key={'email': {'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET post_location = :l',
+                                      ExpressionAttributeValues={
+                                          ':l': {'S': home_community}
+                                      }
+                                  )
+            if data.get('pictures') != None:
+                post = db.update_item(TableName='posts',
+                                      Key={'email': {'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='ADD pictures :p',
+                                      ExpressionAttributeValues={
+                                          ':p': {'SS': data['pictures']}
+                                      }
+                                  )
+            if data.get('video') != None:
+                post = db.update_item(TableName='posts',
+                                      Key={'email': {'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='ADD video :v',
+                                      ExpressionAttributeValues={
+                                          ':v': {'SS': data['video']}
+                                      }
+                                  )
+
+            response['message'] = 'Repost successful!'
+        except:
+            response['media_file'] = 'Repost failed!'        
+        return response, 200
+
+
+class ChallengeRepost(Resource):
+    def post(self, user_email):
+        """Reposts user's challenge"""
+        response = {}
+        data = request.get_json(force=True)
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        date = date_time.rsplit(' ', 1)[0]
+        time = date_time.rsplit(' ', 1)[1]
+
+        try:
+            challenge_post = db.put_item(TableName='challenges',
+                                        Item={'challenge_id': {'S': user_email},
+                                              'challenge_key': {'S': date_time},
+                                              'likes': {'N': '0'},
+                                              'value': {'N': '0'},
+                                              'status': {'S': 'ACTIVE'},
+                                              'comments': {'N': '0'},
+                                              'favorites': {'N': '0'},
+                                              'date': {'S': date},
+                                              'time': {'S': time},
+                                              'stars': {'N': '0'}
+                                        }
+                                    )
+            if data.get('description') != None:
+                challenge_post = db.update_item(TableName='challenges',
+                                      Key={'email': {'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET description = :d',
+                                      ExpressionAttributeValues={
+                                          ':d': {'S': data['description']}
+                                      }
+                                  )
+            if data.get('location') != None:
+                challenge_post = db.update_item(TableName='challenges',
+                                      Key={'email':{'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET challenge_location = :l',
+                                      ExpressionAttributeValues={
+                                          ':l': {'S': data['location']}
+                                      }
+                                  )
+            else:
+                user = db.get_item(TableName='users',
+                                Key={'email': {'S': user_email}
+                                }
+                            )
+                home_community = user['Item']['home']['S']
+                challenge_post = db.update_item(TableName='challenges',
+                                      Key={'email': {'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET challenge_location = :l',
+                                      ExpressionAttributeValues={
+                                          ':l': {'S': home_community}
+                                      }
+                                  )
+            response['message'] = 'Repost successful!'
+        except:
+            response['media_file'] = 'Repost failed!'
+        return response, 200
+        
+
+
 
 
 api.add_resource(UserFollowing, '/<user_email>/following')
@@ -508,5 +664,7 @@ api.add_resource(UsersPost, '/<user_email>/post',
                             '/post')
 api.add_resource(ChallengePosts, '/<user_email>/challenge', 
                                  '/challenge')
+api.add_resource(UserRepostFeed, '/<user_email>/post/repost')
+api.add_resource(ChallengeRepost, '</user_email>/challenge/repost')
 
 
