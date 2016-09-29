@@ -212,5 +212,27 @@
   -IMPORTANT: Check if new_password and confirm_password matches on the front end 
               before sending the new password.
 
+- **repost post feed**
+  - Path: /api/v1/users/{user_email}/post/repost
+  - Method: **POST**
+  - Data:
+      - content    (type = string)
+      - location   (type = string)
+      - pictures   (type = [string])
+      - video      (type = [string])
+  - Returns: *200 OK* Status Code if repost is successful
+  - Description: Reposts users feed post. The client should send all the data from the post 
+                 in string format for content and location and for images and videos the 
+                 client should send as arrays of strings.
+
+- **repost challenge**
+  - Path: /api/v1/users/{user_email}/challenge/repost
+  - Method: **POST**
+  - Data:
+      - content    (type = string)
+      - location   (type = string)
+  - Returns: *200 OK* Status Code if repost is successful
+  - Description: Reposts users challenge.
+
 
 
