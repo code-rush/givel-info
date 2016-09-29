@@ -665,6 +665,6 @@ api.add_resource(UsersPost, '/<user_email>/post',
 api.add_resource(ChallengePosts, '/<user_email>/challenge', 
                                  '/challenge')
 api.add_resource(UserRepostFeed, '/<user_email>/post/repost')
-api.add_resource(ChallengeRepost, '</user_email>/challenge/repost')
+api.add_resource(ChallengeRepost, '/<user_email>/challenge/repost')
 
 
