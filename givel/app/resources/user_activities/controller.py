@@ -619,7 +619,7 @@ class ChallengeRepost(Resource):
                 repost = db.put_item(TableName='challenges',
                                         Item={'challenge_id': {'S': user_email},
                                               'challenge_key': {'S': date_time},
-                                              'description': {'S': post['Item']['description']['S']}
+                                              'description': {'S': post['Item']['description']['S']},
                                               'likes': {'N': '0'},
                                               'value': {'N': '0'},
                                               'status': {'S': 'ACTIVE'},
