@@ -517,7 +517,15 @@ class UserRepostFeed(Resource):
         time = date_time.rsplit(' ', 1)[1]
 
         try:
-            post = db.put_item(TableName='posts',
+            if data.get('id') == None or data.get('key') == None:
+                raise BadRequest('Please provide post ID and Key!')
+            else:
+                post = db.get_item(TableName='posts',
+                                Key={'email': {'S': data['id']},
+                                     'creation_time': {'S': data['key']}
+                                }
+                            )
+                repost = db.put_item(TableName='posts',
                             Item={'email': {'S': user_email},
                                  'creation_time': {'S': date_time},
                                  'date': {'S': date},
@@ -529,65 +537,64 @@ class UserRepostFeed(Resource):
                                  'comments': {'N': '0'}
                             }
                         )
-            if data.get('content') != None:
-                post = db.update_item(TableName='posts',
+
+                if post['Item'].get('content') != None:
+                    repost = db.update_item(TableName='posts',
                                       Key={'email': {'S': user_email},
                                            'creation_time': {'S': date_time}
                                       },
                                       UpdateExpression='SET content = :d',
                                       ExpressionAttributeValues={
-                                          ':d': {'S': data['content']}
+                                          ':d': {'S': post['Item']['content']['S']}
                                       }
                                   )
-            if data.get('location') != None:
-                post = db.update_item(TableName='posts',
-                                      Key={'email':{'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET post_location = :l',
-                                      ExpressionAttributeValues={
-                                          ':l': {'S': data['location']}
-                                      }
-                                  )
-            else:
-                user = db.get_item(TableName='users',
-                                Key={'email': {'S': user_email}
-                                }
-                            )
-                home_community = user['Item']['home']['S']
-                post = db.update_item(TableName='posts',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET post_location = :l',
-                                      ExpressionAttributeValues={
-                                          ':l': {'S': home_community}
-                                      }
-                                  )
-            if data.get('pictures') != None:
-                post = db.update_item(TableName='posts',
+                if post ['Item'].get('pictures') != None:
+                    repost = db.update_item(TableName='posts',
                                       Key={'email': {'S': user_email},
                                            'creation_time': {'S': date_time}
                                       },
                                       UpdateExpression='ADD pictures :p',
                                       ExpressionAttributeValues={
-                                          ':p': {'SS': data['pictures']}
+                                          ':p': {'SS': post['Item']['pictures']['SS']}
                                       }
                                   )
-            if data.get('video') != None:
-                post = db.update_item(TableName='posts',
+                if post['Item'].get('video') != None:
+                    repost = db.update_item(TableName='posts',
                                       Key={'email': {'S': user_email},
                                            'creation_time': {'S': date_time}
                                       },
                                       UpdateExpression='ADD video :v',
                                       ExpressionAttributeValues={
-                                          ':v': {'SS': data['video']}
+                                          ':v': {'SS': post['Item']['video']['SS']}
                                       }
                                   )
-
-            response['message'] = 'Repost successful!'
+                if data.get('location') != None:
+                    repost = db.update_item(TableName='posts',
+                                          Key={'email':{'S': user_email},
+                                               'creation_time': {'S': date_time}
+                                          },
+                                          UpdateExpression='SET post_location = :l',
+                                          ExpressionAttributeValues={
+                                              ':l': {'S': data['location']}
+                                          }
+                                      )
+                else:
+                    user = db.get_item(TableName='users',
+                                    Key={'email': {'S': user_email}})
+                    print(user)
+                    home_community = user['Item']['home']['S']
+                    repost = db.update_item(TableName='posts',
+                                          Key={'email': {'S': user_email},
+                                               'creation_time': {'S': date_time}
+                                          },
+                                          UpdateExpression='SET post_location = :l',
+                                          ExpressionAttributeValues={
+                                              ':l': {'S': home_community}
+                                          }
+                                      )
+                response['message'] = 'Repost successful!'
         except:
-            response['media_file'] = 'Repost failed!'        
+            response['message'] = 'Repost failed!'        
         return response, 200
 
 
@@ -601,9 +608,18 @@ class ChallengeRepost(Resource):
         time = date_time.rsplit(' ', 1)[1]
 
         try:
-            challenge_post = db.put_item(TableName='challenges',
+            if data.get('id') == None and data.get('key') == None:
+                raise BadRequest('Please provide ID and Key')
+            else:
+                post = db.get_item(TableName='challenges',
+                                Key={'challenge_id': {'S': data['id']},
+                                     'challenge_key': {'S': data['key']}
+                                }
+                            )
+                repost = db.put_item(TableName='challenges',
                                         Item={'challenge_id': {'S': user_email},
                                               'challenge_key': {'S': date_time},
+                                              'description': {'S': post['Item']['description']['S']}
                                               'likes': {'N': '0'},
                                               'value': {'N': '0'},
                                               'status': {'S': 'ACTIVE'},
@@ -614,42 +630,31 @@ class ChallengeRepost(Resource):
                                               'stars': {'N': '0'}
                                         }
                                     )
-            if data.get('description') != None:
-                challenge_post = db.update_item(TableName='challenges',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET description = :d',
-                                      ExpressionAttributeValues={
-                                          ':d': {'S': data['description']}
-                                      }
-                                  )
-            if data.get('location') != None:
-                challenge_post = db.update_item(TableName='challenges',
-                                      Key={'email':{'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET challenge_location = :l',
-                                      ExpressionAttributeValues={
-                                          ':l': {'S': data['location']}
-                                      }
-                                  )
-            else:
-                user = db.get_item(TableName='users',
-                                Key={'email': {'S': user_email}
-                                }
-                            )
-                home_community = user['Item']['home']['S']
-                challenge_post = db.update_item(TableName='challenges',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET challenge_location = :l',
-                                      ExpressionAttributeValues={
-                                          ':l': {'S': home_community}
-                                      }
-                                  )
-            response['message'] = 'Repost successful!'
+                if data.get('location') != None:
+                    repost = db.update_item(TableName='challenges',
+                                          Key={'email':{'S': user_email},
+                                               'creation_time': {'S': date_time}
+                                          },
+                                          UpdateExpression='SET challenge_location = :l',
+                                          ExpressionAttributeValues={
+                                              ':l': {'S': data['location']}
+                                          }
+                                      )
+                else:
+                    user = db.get_item(TableName='users',
+                                    Key={'email': {'S': user_email}
+                                    }
+                                )
+                    repost = db.update_item(TableName='challenges',
+                                          Key={'email': {'S': user_email},
+                                               'creation_time': {'S': date_time}
+                                          },
+                                          UpdateExpression='SET challenge_location = :l',
+                                          ExpressionAttributeValues={
+                                              ':l': {'S': user['Item']['home']['S']}
+                                          }
+                                      )
+                response['message'] = 'Repost successful!'
         except:
             response['media_file'] = 'Repost failed!'
         return response, 200
