@@ -35,9 +35,11 @@
 - **get all communities**
   - Path: /api/v1/communities/
   - Method: **GET**
-  - Returns: A success message with result as city-state dictionary key-value pair.
-  - Description: Returns all cities with their value as states from the database.
-                 States are abbreviated.
+  - Returns: results as an array of communities with city, state 
+             member counts.
+  - Description: Returns all communities in a dictionary with key city, state and members.
+                 States are abbreviated. The client needs to sort them in the alphabetical 
+                 order.
 
 - **get user's profile picture**
   - Path: /api/v1/users/accounts/{user_email}/picture
@@ -144,7 +146,7 @@
   - Path: /api/v1/users/post
   - Method: **PUT**
   - Content-Type: application/json
-  - Data: content, post_id, post_key
+  - Data: content, id, key
   - Return: *200 OK* Status Code and message if post edited successfully.
   - Description: Edits post content. Once post is created, only the content is allowed 
                  to be edited.
@@ -174,7 +176,7 @@
   - Path: /api/v1/users/challenge
   - Method: **PUT**
   - Content-Type: application/json
-  - Data: content, challenge_id, challenge_key
+  - Data: content, id, key
   - Returns: *200 OK* Status Code and message if challenge edited successfully.
   - Description: Edits challenge description.
 
@@ -188,14 +190,14 @@
 - **delete user's post**
   - Path: /api/v1/users/post
   - Method: **DELETE**
-  - Required Data: post_id, post_key
+  - Required Data: id, key
   - Return: *200 OK* Status code if the post is deleted successfully.
   - Description: Deletes the user's post.
 
 - **delete user's challenge**
   - Path: /api/v1/users/challenge
   - Method: **DELETE**
-  - Required Data: post_id, post_key
+  - Required Data: id, key
   - Returns: *200 OK* Status code if the post is deleted successfully.
   - Description: Deletes the user's post.
 
