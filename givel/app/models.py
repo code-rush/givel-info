@@ -136,21 +136,21 @@ def create_challenges_table():
             TableName='challenges',
             KeySchema=[
                 {
-                    'AttributeName': 'challenge_id',
+                    'AttributeName': 'email',
                     'KeyType': 'HASH'
                 },
                 {
-                    'AttributeName': 'challenge_key',
+                    'AttributeName': 'creation_time',
                     'KeyType': 'RANGE'
                 }
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'challenge_id',
+                    'AttributeName': 'email',
                     'AttributeType': 'S'
                 },
                 {
-                    'AttributeName': 'challenge_key',
+                    'AttributeName': 'creation_time',
                     'AttributeType': 'S'
                 },
                 {
@@ -163,7 +163,7 @@ def create_challenges_table():
                     'IndexName': 'challenge-email-value',
                     'KeySchema': [
                         {
-                            'AttributeName': 'challenge_id',
+                            'AttributeName': 'email',
                             'KeyType': 'HASH'
                         },
                         {
