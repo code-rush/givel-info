@@ -107,7 +107,6 @@ class UserProfilePicture(Resource):
                             Key={'email': {'S': user_email}},
                             ProjectionExpression='profile_picture',
                         )
-            # picture_file = s3.download_file(BUCKET_NAME, user_email, user['Item']['profile_picture']['S'])
             response['message'] = 'Success!'
             response['result'] = user['Item']
             return response, 200
