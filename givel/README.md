@@ -2,7 +2,7 @@
 
 ## Endpoints:
 - **create a user account**
-  - Path: /api/v1/user_accounts/
+  - Path: /api/v1/users/accounts/
   - Method: **POST**
   - Content-Type: application/json
   - Required Data: first_name, last_name, email, password
@@ -13,7 +13,7 @@
                  BadRequest exception if a User with that email already exists.
 
 - **user sign_in**
-  - Path: /api/v1/user_accounts/login
+  - Path: /api/v1/users/accounts/login
   - Method: **POST**
   - Content-Type: application/json
   - Required Data: email, password
@@ -23,7 +23,7 @@
                  user doesn't exist returns NotFound Exception with a message.
 
 - **delete user**
-  - Path: /api/v1/user_accounts/
+  - Path: /api/v1/users/accounts/
   - Method: **DELETE**
   - Content-Type: application/json
   - Required Data: email, password
@@ -40,14 +40,14 @@
                  States are abbreviated.
 
 - **get user's profile picture**
-  - Path: /api/v1/user_accounts/{user_email}/picture
+  - Path: /api/v1/users/accounts/{user_email}/picture
   - Method: **GET**
   - Returns: User's profile picture link address with *200 OK* Status Code and a message.
   - Description: Returns user's profile picture with a success message else raises 
                  NotFound Exception if the picture does not exist.
 
 - **add user's profile picture**
-  - Path: /api/v1/user_accounts/{user_email}/picture
+  - Path: /api/v1/users/accounts/{user_email}/picture
   - Method: **POST**
   - Content-Type: multipart/form-data
   - File: picture
@@ -57,14 +57,14 @@
                  returns a message "File not allowed".
 
 - **delete user's profile picture**
-  - Path: /api/v1/user_accounts/{user_email}/picture
+  - Path: /api/v1/users/accounts/{user_email}/picture
   - Method: **DELETE**
   - Returns: *200 OK* Status Code with a message if picture successfully deleted.
   - Description: Deletes user's profile picture if exists else raises BadRequest Exception 
                  if picture does not exists.
 
 - **add community to the user**
-  - Path: /api/v1/user_accounts/{user_email}/communities/{community}
+  - Path: /api/v1/users/accounts/{user_email}/communities/{community}
   - Method: **PUT**
   - Content-Type: application/json
   - Data: community
@@ -75,7 +75,7 @@
                  else it will raise a BadRequest Exception.
 
 - **remove user's community**
-  - Path: /api/v1/user_accounts/{user_email}/communities/{community}
+  - Path: /api/v1/users/accounts/{user_email}/communities/{community}
   - Method: **DELETE**
   - Content-Type: application/json
   - Returns: *200 OK* Status code with a message if community successfully deleted.
