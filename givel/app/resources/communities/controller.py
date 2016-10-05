@@ -64,11 +64,10 @@ class Communities(Resource):
         communities = db.scan(TableName='communities')
         items = communities['Items']
         response = {}
-        results = {}
         for i in items:
-            results[i['city']['S']] = STATES[i['state']['S']]
+            i['state']['S'] = STATES[i['state']['S']]
         response['message'] = 'Success!'
-        response['results'] = results
+        response['results'] = items
         return response, 200
 
 # class CommunityPosts(Resource):
