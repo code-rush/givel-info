@@ -8,7 +8,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import NotFound, BadRequest
 
 from app.models import create_users_table
-from app.helper import upload_file
+from app.helper import upload_file, check_if_community_exists
+from app.helper import update_member_counts
 
 user_account_api_routes = Blueprint('account_api', __name__)
 api = Api(user_account_api_routes)
@@ -161,31 +162,39 @@ class UserCommunities(Resource):
                         )
 
         if community == 'home':
-            try:
+            city, state, exists = check_if_community_exists(data['community'])
+            if exists == True:
                 user_home = db.update_item(TableName='users',
-                                    Key={'email': {'S': user_email}},
-                                    UpdateExpression='SET home = :p',
-                                    ExpressionAttributeValues={
-                                             ':p': {'S': data['community']}}
-                                )
+                                Key={'email': {'S': user_email}},
+                                UpdateExpression='SET home = :p',
+                                ExpressionAttributeValues={
+                                         ':p': {'S': data['community']}}
+                            )
+                update_member_counts(city, state, 'add')
                 response['message'] = 'home community successfully added!'
                 return response, 200
-            except:
-                raise BadRequest('Failure')
+            else:
+                raise BadRequest('{} community does not exist!'.format(data['community']))
+
 
         if community == 'home_away':
             if user['Item'].get('home') == None:
                 raise BadRequest('To add a home_away community, you ' + \
                             'need to add a home community first')
             else:
-                user_home_away = db.update_item(TableName='users',
-                                    Key={'email': {'S': user_email}},
-                                    UpdateExpression='SET home_away = :p',
-                                    ExpressionAttributeValues={
-                                             ':p': {'S': data['community']}}
-                                )
-                response['message'] = 'home_away community successfully added!'
-                return response, 200
+                city, state, exists = check_if_community_exists(data['community'])
+                if exists == True:
+                    user_home_away = db.update_item(TableName='users',
+                                        Key={'email': {'S': user_email}},
+                                        UpdateExpression='SET home_away = :p',
+                                        ExpressionAttributeValues={
+                                                 ':p': {'S': data['community']}}
+                                    )
+                    update_member_counts(city, state, 'add')
+                    response['message'] = 'home_away community successfully added!'
+                    return response, 200
+                else:
+                    raise BadRequest('{} community does not exist!'.format(data['community']))
 
     def delete(self, user_email, community):
         """Unfollow Community"""
@@ -197,6 +206,9 @@ class UserCommunities(Resource):
         if user['Item'].get(community) == None:
             raise BadRequest('Community not found!')
         elif community == 'home':
+            comm = user['Item']['home']['S'].rsplit(' ', 1)
+            state = comm[1]
+            city = comm[0][:-1]
             if user['Item'].get('home_away') != None:
                 home = db.update_item(TableName='users',
                                 Key={'email': {'S': user_email}},
@@ -214,12 +226,17 @@ class UserCommunities(Resource):
                                     Key={'email': {'S': user_email}},
                                     UpdateExpression='REMOVE home'
                                 )
+            update_member_counts(city, state, 'remove')
             response['message'] = 'Successfully deleted home community!'
         elif community == 'home_away':
+            comm = user['Item']['home_away']['S'].rsplit(' ', 1)
+            state = comm[1]
+            city = comm[0][:-1]
             delete_home_away = db.update_item(TableName='users',
                                 Key={'email': {'S': user_email}},
                                 UpdateExpression='REMOVE home_away'
                             )
+            update_member_counts(city, state, 'remove')
             response['message'] = 'Successfully deleted home community!'
         return response, 200
 
