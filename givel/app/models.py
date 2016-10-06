@@ -194,6 +194,66 @@ def create_challenges_table():
         return challenges_table
 
 
+def create_likes_table():
+    try:
+        likes_table = dynamodb.create_table(
+            TableName='likes',
+            KeySchema=[
+                {
+                    'AttributeName': 'email',
+                    'KeyType': 'HASH'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'email',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'feed_id',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'feed_id',
+                    'AttributeType': 'S'
+                }
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'likes-feed-id-key',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'feed_id',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'feed_key',
+                            'KeyType': 'RANGE'
+                        }
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 5,
+                        'WriteCapacityUnits': 5
+                    }
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 5,
+                'WriteCapacityUnits': 5
+            }
+        )
+    except:
+        try:
+            likes_table = dynamodb.Table('likes')
+        except:
+            print('likes table does not exist')
+    finally:
+        return likes_table
+
+
 def create_comments_table():
     try:
         comments_table = dynamodb.create_table(
