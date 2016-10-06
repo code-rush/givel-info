@@ -7,7 +7,6 @@ from flask import Blueprint, request
 from flask_restful import Api, Resource
 
 from app.models import create_challenges_table
-from app.models import create_posts_table
 from app.helper import upload_post_file
 
 from werkzeug.exceptions import BadRequest
@@ -163,6 +162,12 @@ class UsersChallengePosts(Resource):
                 # post_time = calculate_post_deltatime(posts['date'])
                 posts['posted_time'] = {}
                 posts['posted_time']['S'] = posted_time
+                posts['id'] = {}
+                posts['id']['S'] = posts['email']['S']
+                posts['key'] = {}
+                posts['key']['S'] = posts['creation_time']['S']
+                del posts['email']
+                del posts['creation_time']
                 del posts['date']
                 del posts['time']
             response['message'] = 'Successfully fetched users all challenges!'
