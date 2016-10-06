@@ -164,15 +164,18 @@ class UserCommunities(Resource):
         if community == 'home':
             city, state, exists = check_if_community_exists(data['community'])
             if exists == True:
-                user_home = db.update_item(TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='SET home = :p',
-                                ExpressionAttributeValues={
-                                         ':p': {'S': data['community']}}
-                            )
-                update_member_counts(city, state, 'add')
-                response['message'] = 'home community successfully added!'
-                return response, 200
+                try:
+                    user_home = db.update_item(TableName='users',
+                                    Key={'email': {'S': user_email}},
+                                    UpdateExpression='SET home = :p',
+                                    ExpressionAttributeValues={
+                                             ':p': {'S': data['community']}}
+                                )
+                    update_member_counts(city, state, 'add')
+                    response['message'] = 'home community successfully added!'
+                    return response, 200
+                except:
+                    raise BadRequest('Failed to add community!')
             else:
                 raise BadRequest('{} community does not exist!'.format(data['community']))
 
@@ -184,15 +187,18 @@ class UserCommunities(Resource):
             else:
                 city, state, exists = check_if_community_exists(data['community'])
                 if exists == True:
-                    user_home_away = db.update_item(TableName='users',
-                                        Key={'email': {'S': user_email}},
-                                        UpdateExpression='SET home_away = :p',
-                                        ExpressionAttributeValues={
-                                                 ':p': {'S': data['community']}}
-                                    )
-                    update_member_counts(city, state, 'add')
-                    response['message'] = 'home_away community successfully added!'
-                    return response, 200
+                    try:
+                        user_home_away = db.update_item(TableName='users',
+                                            Key={'email': {'S': user_email}},
+                                            UpdateExpression='SET home_away = :p',
+                                            ExpressionAttributeValues={
+                                                     ':p': {'S': data['community']}}
+                                        )
+                        update_member_counts(city, state, 'add')
+                        response['message'] = 'home_away community successfully added!'
+                        return response, 200
+                    except:
+                        raise BadRequest('Failed to add community!')
                 else:
                     raise BadRequest('{} community does not exist!'.format(data['community']))
 
@@ -209,35 +215,41 @@ class UserCommunities(Resource):
             comm = user['Item']['home']['S'].rsplit(' ', 1)
             state = comm[1]
             city = comm[0][:-1]
-            if user['Item'].get('home_away') != None:
-                home = db.update_item(TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='SET home = :home',
-                                ExpressionAttributeValues={
-                                    ':home': {'S': user['Item']['home_away']['S']}
-                                }
-                            )
-                delete_home_away = db.update_item(TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='REMOVE home_away'
-                            )
-            else:
-                delete_home = db.update_item(TableName='users',
+            try:
+                if user['Item'].get('home_away') != None:
+                    home = db.update_item(TableName='users',
                                     Key={'email': {'S': user_email}},
-                                    UpdateExpression='REMOVE home'
+                                    UpdateExpression='SET home = :home',
+                                    ExpressionAttributeValues={
+                                        ':home': {'S': user['Item']['home_away']['S']}
+                                    }
                                 )
-            update_member_counts(city, state, 'remove')
-            response['message'] = 'Successfully deleted home community!'
+                    delete_home_away = db.update_item(TableName='users',
+                                    Key={'email': {'S': user_email}},
+                                    UpdateExpression='REMOVE home_away'
+                                )
+                else:
+                    delete_home = db.update_item(TableName='users',
+                                        Key={'email': {'S': user_email}},
+                                        UpdateExpression='REMOVE home'
+                                    )
+                update_member_counts(city, state, 'remove')
+                response['message'] = 'Successfully deleted home community!'
+            except:
+                raise BadRequest('Failed to add community!')
         elif community == 'home_away':
             comm = user['Item']['home_away']['S'].rsplit(' ', 1)
             state = comm[1]
             city = comm[0][:-1]
-            delete_home_away = db.update_item(TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='REMOVE home_away'
-                            )
-            update_member_counts(city, state, 'remove')
-            response['message'] = 'Successfully deleted home community!'
+            try:
+                delete_home_away = db.update_item(TableName='users',
+                                    Key={'email': {'S': user_email}},
+                                    UpdateExpression='REMOVE home_away'
+                                )
+                update_member_counts(city, state, 'remove')
+                response['message'] = 'Successfully deleted home community!'
+            except:
+                raise BadRequest('Failed to add community!')
         return response, 200
 
 
