@@ -105,6 +105,7 @@ def check_if_community_exists(community):
             return city, state, exist
     return city, state, exist
 
+
 def update_member_counts(city, state, operation):
     """Updates Member Counts"""
     if operation == 'add':
@@ -128,5 +129,27 @@ def update_member_counts(city, state, operation):
                                     }
                                 )
 
+
+def update_likes(id, key, operation):
+    if operation == 'like':
+        update_likes = db.update_item(TableName='posts',
+                                Key={'email': {'S': id},
+                                     'creation_time': {'S': key}
+                                },
+                                UpdateExpression='SET likes = likes + :l',
+                                ExpressionAttributeValues={
+                                    ':l': {'N': '1'}
+                                }
+                            )
+    elif operation == 'dislike':
+        update_likes = db.update_item(TableName='posts',
+                                Key={'email': {'S': id},
+                                     'creation_time': {'S': key}
+                                },
+                                UpdateExpression='SET likes = likes - :l',
+                                ExpressionAttributeValues={
+                                    ':l': {'N': '1'}
+                                }
+                            )
 
 
