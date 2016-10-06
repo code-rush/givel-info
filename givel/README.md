@@ -191,6 +191,7 @@
   - Path: /api/v1/users/post
   - Method: **DELETE**
   - Required Data: id, key
+  - Content-Type: application/json
   - Return: *200 OK* Status code if the post is deleted successfully.
   - Description: Deletes the user's post.
 
@@ -198,6 +199,7 @@
   - Path: /api/v1/users/challenge
   - Method: **DELETE**
   - Required Data: id, key
+  - Content-Type: application/json
   - Returns: *200 OK* Status code if the post is deleted successfully.
   - Description: Deletes the user's post.
 
@@ -205,6 +207,7 @@
   - Path: /api/v1/user_accounts/{user_email}/password
   - Method: **PUT**
   - Required Data: current_password, new_password
+  - Content-Type: application/json
   - Returns: *200 OK* Status Code if the password changed successfully.
   - Description: Changes user's password. Current password is required to authenticate 
                  user and then the password is changed to the new password. 
@@ -218,6 +221,7 @@
   - Path: /api/v1/users/{user_email}/post/repost
   - Method: **POST**
   - Data: id, key, location(optional)
+  - Content-Type: application/json
   - Returns: *200 OK* Status Code if repost is successful
   - Description: Reposts users feed post. The client should send key and id for the post 
                  and location if the location services are on.
@@ -226,9 +230,21 @@
   - Path: /api/v1/users/{user_email}/challenge/repost
   - Method: **POST**
   - Data: id, key, location(optional)
+  - Content-Type: application/json
   - Returns: *200 OK* Status Code if repost is successful
   - Description: Reposts users challenge. The client should send key and id for the post 
                  and location if the location services are on.
 
+- **feed like/dislike**
+  - Path: /api/v1/feeds/likes/{user_email}
+  - Method: **PUT**
+  - Required Data: id, key, emotion
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code with a message if request is successful
+  - Description: Adds users likes to a feed(post/challenge). Provide id and key of the 
+                 feed to be liked. *emotion* can be either 'like' or 'dislike'. A user 
+                 cannot 'dislike' a feed unless the user has 'liked' it first.
+                 If any other value than 'like' or 'dislike' is sent, it raises a 
+                 BadRequest Exception.
 
 
