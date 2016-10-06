@@ -45,101 +45,90 @@ class UsersPost(Resource):
             if int(request.form['file_count']) > 1:
                 raise BadRequest('Only one file is allowed!')
             else:
-                post = db.put_item(TableName='posts',
-                                Item={'email': {'S': user_email},
-                                     'creation_time': {'S': date_time},
-                                     'date': {'S': date},
-                                     'time': {'S': time},
-                                     'value': {'N': '0'},
-                                     'likes': {'N': '0'},
-                                     'stars': {'N': '0'},
-                                     'favorites': {'N': '0'},
-                                     'comments': {'N': '0'}
-                                }
-                            )
-                if 'location' in request.form:
-                    post = db.update_item(TableName='posts',
-                                          Key={'email':{'S': user_email},
-                                               'creation_time': {'S': date_time}
-                                          },
-                                          UpdateExpression='SET #loc = :l',
-                                          ExpressionAttributeNames={
-                                              '#loc': 'location'
-                                          },
-                                          ExpressionAttributeValues={
-                                              ':l': {'S': request.form['location']}
-                                          }
-                                      )
-                else:
-                    user = db.get_item(TableName='users',
-                                    Key={'email': {'S': user_email}
+                try:
+                    post = db.put_item(TableName='posts',
+                                    Item={'email': {'S': user_email},
+                                         'creation_time': {'S': date_time},
+                                         'value': {'N': '0'},
+                                         'likes': {'N': '0'},
+                                         'stars': {'N': '0'},
+                                         'favorites': {'N': '0'},
+                                         'comments': {'N': '0'}
                                     }
                                 )
-                    home_community = user['Item']['home']['S']
-                    post = db.update_item(TableName='posts',
+                    if 'location' in request.form:
+                        post = db.update_item(TableName='posts',
+                                      Key={'email':{'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET #loc = :l',
+                                      ExpressionAttributeNames={
+                                          '#loc': 'location'
+                                      },
+                                      ExpressionAttributeValues={
+                                          ':l': {'S': request.form['location']}
+                                      }
+                                  )
+                    else:
+                        user = db.get_item(TableName='users',
+                                        Key={'email': {'S': user_email}
+                                        }
+                                    )
+                        home_community = user['Item']['home']['S']
+                        post = db.update_item(TableName='posts',
+                                      Key={'email': {'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET #loc = :l',
+                                      ExpressionAttributeNames={
+                                          '#loc': 'location'
+                                      },
+                                      ExpressionAttributeValues={
+                                          ':l': {'S': home_community}
+                                      }
+                                  )
+                    if 'content' in request.form:
+                        post = db.update_item(TableName='posts',
+                                      Key={'email': {'S': user_email},
+                                           'creation_time': {'S': date_time}
+                                      },
+                                      UpdateExpression='SET content = :d',
+                                      ExpressionAttributeValues={
+                                          ':d': {'S': request.form['content']}
+                                      }
+                                  )
+                    if 'file_count' in request.form and int(request.form['file_count']) == 1:
+                        f = request.files['file']
+                        media_file, file_type = upload_post_file(f, BUCKET_NAME,
+                                         user_email+file_id_ex, ALLOWED_EXTENSIONS)
+                        if file_type == 'picture_file':
+                            post = db.update_item(TableName='posts',
                                           Key={'email': {'S': user_email},
                                                'creation_time': {'S': date_time}
                                           },
-                                          UpdateExpression='SET #loc = :l',
-                                          ExpressionAttributeNames={
-                                              '#loc': 'location'
-                                          },
+                                          UpdateExpression='ADD pictures :p',
                                           ExpressionAttributeValues={
-                                              ':l': {'S': home_community}
+                                              ':p': {'SS': [media_file]}
                                           }
                                       )
-                if 'content' in request.form:
-                    try:
-                        post = db.update_item(TableName='posts',
-                                              Key={'email': {'S': user_email},
-                                                   'creation_time': {'S': date_time}
-                                              },
-                                              UpdateExpression='SET content = :d',
-                                              ExpressionAttributeValues={
-                                                  ':d': {'S': request.form['content']}
-                                              }
-                                          )
-                        response['message'] = 'Success! Post Created!'
-                    except:
-                        post = db.delete_item(TableName='posts',
-                                         Key={'email': {'S': user_email},
-                                              'creation_time': {'S': date_time}
-                                         }
-                                     )
-                        raise BadRequest('Failed to create post')
-                if 'file_count' in request.form and int(request.form['file_count']) == 1:
-                        f = request.files['file']
-                        try:
-                            media_file, file_type = upload_post_file(f, BUCKET_NAME,
-                                             user_email+file_id_ex, ALLOWED_EXTENSIONS)
-                            if file_type == 'picture_file':
-                                post = db.update_item(TableName='posts',
-                                                      Key={'email': {'S': user_email},
-                                                           'creation_time': {'S': date_time}
-                                                      },
-                                                      UpdateExpression='ADD pictures :p',
-                                                      ExpressionAttributeValues={
-                                                          ':p': {'SS': [media_file]}
-                                                      }
-                                                  )
-                            elif file_type == 'video_file':
-                                post = db.update_item(TableName='posts',
-                                                      Key={'email': {'S': user_email},
-                                                           'creation_time': {'S': date_time}
-                                                      },
-                                                      UpdateExpression='ADD video :v',
-                                                      ExpressionAttributeValues={
-                                                          ':v': {'SS': [media_file]}
-                                                      }
-                                                  )
-                            response['message'] = 'Success! Post Created!'
-                        except:
-                            post = db.delete_item(TableName='posts',
-                                             Key={'email': {'S': user_email},
-                                                  'creation_time': {'S': date_time}
-                                             }
-                                         )
-                            raise BadRequest('Failed to create post')
+                        elif file_type == 'video_file':
+                            post = db.update_item(TableName='posts',
+                                          Key={'email': {'S': user_email},
+                                               'creation_time': {'S': date_time}
+                                          },
+                                          UpdateExpression='ADD videos :v',
+                                          ExpressionAttributeValues={
+                                              ':v': {'SS': [media_file]}
+                                          }
+                                      )
+                    response['message'] = 'Success! Post Created!'
+                except:
+                    post = db.delete_item(TableName='posts',
+                                 Key={'email': {'S': user_email},
+                                      'creation_time': {'S': date_time}
+                                 }
+                             )
+                    raise BadRequest('Failed to create post')
                 return response, 201
 
 
@@ -175,7 +164,7 @@ class UsersPost(Resource):
             user_posts = db.query(TableName='posts',
                                 Select='ALL_ATTRIBUTES',
                                 Limit=50,
-                                ConsistentRead=True,
+                                # ConsistentRead=True,
                                 KeyConditionExpression='email = :e',
                                 ExpressionAttributeValues={
                                     ':e': {'S': user_email}
@@ -185,8 +174,12 @@ class UsersPost(Resource):
             current_date = current_datetime[0].rsplit('-',2)
             current_time = current_datetime[1].rsplit(':',2)
             for posts in user_posts['Items']:
-                post_date = posts['date']['S'].rsplit('-',2)
-                post_time = posts['time']['S'].rsplit(':',2)
+                post_datetime = posts['creation_time']['S'].rsplit(' ',1)
+                print(post_datetime)
+                post_date = post_datetime[0].rsplit('-',2)
+                print(post_date)
+                post_time = post_datetime[1].rsplit(':',2)
+                print(post_time)
                 if post_date[0] == current_date[0]:
                     if post_date[1] == current_date[1]:
                         if post_date[2] == current_date[2]:
@@ -219,8 +212,6 @@ class UsersPost(Resource):
                 posts['key']['S'] = posts['creation_time']['S']
                 del posts['email']
                 del posts['creation_time']
-                del posts['date']
-                del posts['time']
             response['message'] = 'Successfully fetched users all posts!'
             response['result'] = user_posts['Items']
         except:
@@ -239,14 +230,14 @@ class UsersPost(Resource):
                                     'creation_time': {'S': post_data['key']}
                                }
                            )
-            if post.get('pictures') != None:
-                for picture in post['pictures']:
+            if post['Item'].get('pictures') != None:
+                for picture in post['Item']['pictures']['SS']:
                     key = picture.rsplit('/', 1)[1]
-                    delete_pic = s3.delete_object(Bucket=BUCKET_NAME, Key=key)
-            if post.get('video') != None:
-                for video in post['video']:
+                    s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+            if post['Item'].get('videos') != None:
+                for video in post['Item']['videos']['SS']:
                     key = video.rsplit('/', 1)[1]
-                    delete_video = s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+                    s3.delete_object(Bucket=BUCKET_NAME, Key=key)
 
             delete_post = db.delete_item(TableName='posts',
                                         Key={'email': {'S': post_data['id']},
@@ -308,14 +299,14 @@ class UserRepostFeed(Resource):
                                           ':p': {'SS': post['Item']['pictures']['SS']}
                                       }
                                   )
-                if post['Item'].get('video') != None:
+                if post['Item'].get('videos') != None:
                     repost = db.update_item(TableName='posts',
                                       Key={'email': {'S': user_email},
                                            'creation_time': {'S': date_time}
                                       },
-                                      UpdateExpression='ADD video :v',
+                                      UpdateExpression='ADD videos :v',
                                       ExpressionAttributeValues={
-                                          ':v': {'SS': post['Item']['video']['SS']}
+                                          ':v': {'SS': post['Item']['videos']['SS']}
                                       }
                                   )
                 if data.get('location') != None:
