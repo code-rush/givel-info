@@ -345,6 +345,7 @@ class UserRepostFeed(Resource):
 
 
 
-api.add_resource(UsersPost, '/<user_email>/post',
-                            '/posts')
-api.add_resource(UserRepostFeed, '/<user_email>/post/repost')
+api.add_resource(UsersPost, '/<user_email>',
+                            '/')
+api.add_resource(UserRepostFeed, '/repost/<user_email>')
+
