@@ -119,7 +119,7 @@
   - Description: Returns all users followers as results with a message.
 
 - **create post**
-  - Path: /api/v1/users/{user_email}/post
+  - Path: /api/v1/users/posts/{user_email}
   - Method: **POST**
   - Content-Type: multipart/form-data
   - Required Data: 
@@ -143,7 +143,7 @@
   - IMPORTANT: Handle that the users should not be able to create empty post on the client side.
 
 - **edit post**
-  - Path: /api/v1/users/post
+  - Path: /api/v1/users/posts/
   - Method: **PUT**
   - Content-Type: application/json
   - Data: content, id, key
@@ -152,7 +152,7 @@
                  to be edited.
 
 - **get user's posts**
-  - Path: /api/v1/users/{user_email}/post
+  - Path: /api/v1/users/posts/{user_email}
   - Method: **GET**
   - Return: *200 OK* Status Code and message if fetched post successfully.
   - Description: Gets all users posts. 
@@ -188,7 +188,7 @@
                 - Use *posted_time* to display time on challenge.
 
 - **delete user's post**
-  - Path: /api/v1/users/post
+  - Path: /api/v1/users/posts/
   - Method: **DELETE**
   - Required Data: id, key
   - Content-Type: application/json
@@ -218,7 +218,7 @@
               before sending the new password.
 
 - **repost feed post**
-  - Path: /api/v1/users/{user_email}/post/repost
+  - Path: /api/v1/users/posts/repost/{user_email}
   - Method: **POST**
   - Data: id, key, location(optional)
   - Content-Type: application/json
@@ -235,16 +235,29 @@
   - Description: Reposts users challenge. The client should send key and id for the post 
                  and location if the location services are on.
 
-- **feed like/dislike**
+- **feed like/unlike**
   - Path: /api/v1/feeds/likes/{user_email}
   - Method: **PUT**
   - Required Data: id, key, emotion
   - Content-Type: application/json
   - Returns: *200 OK* Status Code with a message if request is successful
-  - Description: Adds users likes to a feed(post/challenge). Provide id and key of the 
-                 feed to be liked. *emotion* can be either 'like' or 'dislike'. A user 
-                 cannot 'dislike' a feed unless the user has 'liked' it first.
-                 If any other value than 'like' or 'dislike' is sent, it raises a 
-                 BadRequest Exception.
+  - Description: - Adds user's likes to a feed(post/challenge). 
+                 - Provide id and key of the feed to be liked. 
+                 - *emotion* can be either 'like' or 'unlike'. A user 
+                   cannot 'unlike' a feed unless the user has 'liked' it first.
+                 - If any other value than 'like' or 'unlike' is sent, it raises a 
+                   BadRequest Exception.
+                 - user_email is the email of the user who likes/unlikes the post.
 
+- **share stars**
+  - Path: /api/v1/feeds/stars/{user_email}
+  - Method: **PUT**
+  - Required Data: id, key, stars
+  - Content-Type: application/json
+  - Returns: *200 OK* Status code with a message if the request is successful
+  - Description: - Adds stars count to the post.
+                 - If the stars to be donated are more than what the user have,
+                   it raises a BadRequest Exception. (Though this should be handled 
+                   on the client side to not go beyond the number of what the user has)
+                 - user_email is the email of the user who donates the stars.
 
