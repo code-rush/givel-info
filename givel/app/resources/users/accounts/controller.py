@@ -145,7 +145,7 @@ class UserProfilePicture(Resource):
             user = db.update_item(TableName='users',
                                Key={'email': {'S': user_email}},
                                UpdateExpression='REMOVE profile_picture')
-            delete_image = s3.delete_object(Bucket=BUCKET_NAME, Key=user_email)
+            s3.delete_object(Bucket=BUCKET_NAME, Key=user_email)
             response['message'] = 'File deleted!'
             return response, 200
         else:
