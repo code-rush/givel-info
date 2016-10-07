@@ -5,8 +5,8 @@ from app import app
 from flask import Blueprint, request
 from flask_restful import Api, Resource
 
-from app.models import create_likes_table
-from app.helper import update_likes
+from app.models import create_likes_table, create_stars_table
+from app.helper import update_likes, update_value
 from werkzeug.exceptions import BadRequest
 
 feed_activity_api_routes = Blueprint('feed_activity_api', __name__)
@@ -26,6 +26,17 @@ try:
 except:
     pass
 
+try: 
+    try:
+        table_response = db.describe_table(TableName='stars')
+        if table_response['Table']['TableStatus'] == 'ACTIVE':
+            print('stars table exists!')
+    except:
+        stars = create_stars_table()
+        print('stars table created!')
+except:
+    pass
+
 
 class FeedLikes(Resource):
     def put(self, user_email):
@@ -35,22 +46,26 @@ class FeedLikes(Resource):
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('feed id and key not provided')
         else:
-            if data['emotion'] != 'like' or data['emotion'] !='dislike':
-                raise BadRequest('emotion can only be either like or dislike')
+            feed = data['id']+'_'+data['key']
+            if data['emotion'] != 'like' and data['emotion'] != 'unlike':
+                raise BadRequest('emotion can only be either like or unlike')
             try:
                 if data['emotion'] == 'like':
                     like_post = db.put_item(TableName='likes',
-                                            Item={'email': {'S': user_email},
-                                                 'feed_id': {'S': data['id']},
-                                                 'feed_key': {'S': data['key']}
+                                            Item={'feed': {'S': feed},
+                                                  'user': {'S': user_email}
                                             }
                                         )
                     response['message'] = 'Success! Feed liked!'
-                elif data.get('emotion') == 'dislike':
-                    dislike_post = db.delete_item(TableName='likes',
-                                            Key={'email': {'S': user_email}})
-                    response['message'] = 'Success! Feed disliked!'
+                elif data.get('emotion') == 'unlike':
+                    unlike_post = db.delete_item(TableName='likes',
+                                            Key={'feed': {'S': feed},
+                                                 'user': {'S': user_email}
+                                            }
+                                        )
+                    response['message'] = 'Success! Feed unliked!'
                 update_likes(data['id'], data['key'], data['emotion'])
+                update_value(data['id'], data['key'], data['emotion'])
                 return response, 200
             except:
                 raise BadRequest('Request Failed!')
@@ -73,8 +88,106 @@ class FeedLikes(Resource):
     #                 if 
 
 
+class FeedStars(Resource):
+    def put(self, user_email):
+        response = {}
+        data = request.get_json(force=True)
+
+        users_stars = db.get_item(TableName='users',
+                        Key={'email': {'S': user_email}},
+                        ConsistentRead=True,
+                        ProjectionExpression='givel_stars')
+
+        if int(users_stars['Item']['givel_stars']['N']) == 0:
+            raise BadRequest('You have no stars left to donate.')
+        if data.get('id') == None or data.get('key') == None:
+            raise BadRequest('feed id and key not provided')
+        else:
+            if int(data['stars']) == 0:
+                raise BadRequest('Cannot donate less than 1 star.')
+            feed = data['id']+'_'+data['key']
+            if int(users_stars['Item']['givel_stars']['N']) < int(data['stars']):
+                raise BadRequest('You don\'t have enough stars to donate.')
+            if data.get('stars') != None:
+                try:
+                    get_star_post = db.get_item(TableName='stars',
+                                          Key={'feed': {'S': feed},
+                                               'user': {'S': user_email}
+                                          }
+                                      )
+                    if get_star_post.get('Item') != None:
+                        star_post = db.update_item(TableName='stars',
+                                        Key={'feed': {'S': feed},
+                                             'user': {'S': user_email}
+                                        },
+                                        UpdateExpression='SET stars = stars + :s',
+                                        ExpressionAttributeValues={
+                                            ':s': {'N': str(data['stars'])}
+                                        }
+                                    )
+                    else:
+                        star_post = db.put_item(TableName='stars',
+                                        Item={'feed': {'S': feed},
+                                              'user': {'S': user_email},
+                                              'stars': {'N': str(data['stars'])}
+                                        }
+                                    )
+                except:
+                    raise BadRequest('Request Failed!')
+
+                try:
+                    user_stars = db.update_item(TableName='users',
+                                Key={'email': {'S': user_email}},
+                                UpdateExpression='SET givel_stars = givel_stars - :s',
+                                ExpressionAttributeValues={
+                                    ':s': {'N': str(data['stars'])}
+                                }
+                            )
+                except:
+                    rollback_post = db.delete_item(TableName='stars',
+                                    Key={'feed': {'S': feed},
+                                         'user': {'S': user_email}
+                                    }
+                                )
+                    raise BadRequest('Request Failed! Try again later!')
+
+                try:
+                    post_owner = db.update_item(TableName='users',
+                                    Key={'email': {'S': data['id']}},
+                                    UpdateExpression='SET givel_stars = givel_stars + :s',
+                                    ExpressionAttributeValues={
+                                        ':s': {'N': str(data['stars'])}
+                                    }
+                                )
+                except:
+                    rollback_post = db.update_item(TableName='users',
+                                    Key={'email': {'S': user_email}},
+                                    UpdateExpression='SET givel_stars = givel_stars + :s',
+                                    ExpressionAttributeValues={
+                                        ':s': {'N': str(data['stars'])}
+                                    }
+                                )
+                    raise BadRequest('Request Failed! Try again later!')
+
+                update_stars_count = db.update_item(TableName='posts',
+                                Key={'email': {'S': data['id']},
+                                     'creation_time': {'S': data['key']}
+                                },
+                                UpdateExpression='SET stars = stars + :s',
+                                ExpressionAttributeValues={
+                                    ':s': {'N': str(data['stars'])}
+                                }
+                            )
+                update_value(data['id'], data['key'], 'stars', data['stars'])
+                response['message'] = 'Successfully donated stars!'
+            return response, 200
+
+
+
+
 api.add_resource(FeedLikes, '/likes/<user_email>',
                             '/likes')
+api.add_resource(FeedStars, '/stars/<user_email>')
 
 
 
