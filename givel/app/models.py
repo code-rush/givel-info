@@ -200,44 +200,22 @@ def create_likes_table():
             TableName='likes',
             KeySchema=[
                 {
-                    'AttributeName': 'email',
+                    'AttributeName': 'feed',
                     'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'user',
+                    'KeyType': 'RANGE'
                 }
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'email',
+                    'AttributeName': 'user',
                     'AttributeType': 'S'
                 },
                 {
-                    'AttributeName': 'feed_id',
+                    'AttributeName': 'feed',
                     'AttributeType': 'S'
-                },
-                {
-                    'AttributeName': 'feed_id',
-                    'AttributeType': 'S'
-                }
-            ],
-            GlobalSecondaryIndexes=[
-                {
-                    'IndexName': 'likes-feed-id-key',
-                    'KeySchema': [
-                        {
-                            'AttributeName': 'feed_id',
-                            'KeyType': 'HASH'
-                        },
-                        {
-                            'AttributeName': 'feed_key',
-                            'KeyType': 'RANGE'
-                        }
-                    ],
-                    'Projection': {
-                        'ProjectionType': 'ALL'
-                    },
-                    'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 5,
-                        'WriteCapacityUnits': 5
-                    }
                 }
             ],
             ProvisionedThroughput={
@@ -251,7 +229,45 @@ def create_likes_table():
         except:
             print('likes table does not exist')
     finally:
-        return likes_table
+        return 
+
+
+def create_stars_table():
+    try:
+        stars_table = dynamodb.create_table(
+            TableName='stars',
+            KeySchema=[
+                {
+                    'AttributeName': 'feed',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'user',
+                    'KeyType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'user',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'feed',
+                    'AttributeType': 'S'
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 5,
+                'WriteCapacityUnits': 5
+            }
+        )
+    except:
+        try:
+            stars_table = dynamodb.Table('stars')
+        except:
+            print('stars table does not exist')
+    finally:
+        return stars_table
 
 
 def create_comments_table():
