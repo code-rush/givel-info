@@ -132,7 +132,7 @@ def update_member_counts(city, state, operation):
 
 def update_likes(id, key, operation):
     if operation == 'like':
-        update_likes = db.update_item(TableName='posts',
+        update_count = db.update_item(TableName='posts',
                                 Key={'email': {'S': id},
                                      'creation_time': {'S': key}
                                 },
@@ -141,8 +141,8 @@ def update_likes(id, key, operation):
                                     ':l': {'N': '1'}
                                 }
                             )
-    elif operation == 'dislike':
-        update_likes = db.update_item(TableName='posts',
+    elif operation == 'unlike':
+        update_count = db.update_item(TableName='posts',
                                 Key={'email': {'S': id},
                                      'creation_time': {'S': key}
                                 },
@@ -152,4 +152,47 @@ def update_likes(id, key, operation):
                                 }
                             )
 
+
+def update_value(id, key, operation, stars=None):
+    if operation == 'like':
+        update_count = db.update_item(TableName='posts',
+                                Key={'email': {'S': id},
+                                     'creation_time': {'S': key}
+                                },
+                                UpdateExpression='SET #val = #val + :v',
+                                ExpressionAttributeNames={
+                                    '#val': 'value'
+                                },
+                                ExpressionAttributeValues={
+                                    ':v': {'N': '1'}
+                                }
+                            )
+    elif operation == 'unlike':
+        update_count = db.update_item(TableName='posts',
+                                Key={'email': {'S': id},
+                                     'creation_time': {'S': key}
+                                },
+                                UpdateExpression='SET #val = #val - :v',
+                                ExpressionAttributeNames={
+                                    '#val': 'value'
+                                },
+                                ExpressionAttributeValues={
+                                    ':v': {'N': '1'}
+                                }
+                            )
+    elif operation == 'stars':
+        if stars != None:
+            value = str(int(stars) * 5)
+            update_count = db.update_item(TableName='posts',
+                                    Key={'email': {'S': id},
+                                         'creation_time': {'S': key}
+                                    },
+                                    UpdateExpression='SET #val = #val + :v',
+                                    ExpressionAttributeNames={
+                                        '#val': 'value'
+                                    },
+                                    ExpressionAttributeValues={
+                                        ':v': {'N': value}
+                                    }
+                                )
 
