@@ -130,9 +130,9 @@ def update_member_counts(city, state, operation):
                                 )
 
 
-def update_likes(id, key, operation):
+def update_likes(feed, id, key, operation):
     if operation == 'like':
-        update_count = db.update_item(TableName='posts',
+        update_count = db.update_item(TableName=feed,
                                 Key={'email': {'S': id},
                                      'creation_time': {'S': key}
                                 },
@@ -142,7 +142,7 @@ def update_likes(id, key, operation):
                                 }
                             )
     elif operation == 'unlike':
-        update_count = db.update_item(TableName='posts',
+        update_count = db.update_item(TableName=feed,
                                 Key={'email': {'S': id},
                                      'creation_time': {'S': key}
                                 },
@@ -153,9 +153,9 @@ def update_likes(id, key, operation):
                             )
 
 
-def update_value(id, key, operation, stars=None):
+def update_value(feed, id, key, operation, stars=None):
     if operation == 'like':
-        update_count = db.update_item(TableName='posts',
+        update_count = db.update_item(TableName=feed,
                                 Key={'email': {'S': id},
                                      'creation_time': {'S': key}
                                 },
@@ -168,7 +168,7 @@ def update_value(id, key, operation, stars=None):
                                 }
                             )
     elif operation == 'unlike':
-        update_count = db.update_item(TableName='posts',
+        update_count = db.update_item(TableName=feed,
                                 Key={'email': {'S': id},
                                      'creation_time': {'S': key}
                                 },
@@ -183,7 +183,7 @@ def update_value(id, key, operation, stars=None):
     elif operation == 'stars':
         if stars != None:
             value = str(int(stars) * 5)
-            update_count = db.update_item(TableName='posts',
+            update_count = db.update_item(TableName=feed,
                                     Key={'email': {'S': id},
                                          'creation_time': {'S': key}
                                     },
