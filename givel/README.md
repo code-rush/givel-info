@@ -143,13 +143,15 @@
   - IMPORTANT: Handle that the users should not be able to create empty post on the client side.
 
 - **edit post**
-  - Path: /api/v1/users/posts/
+  - Path: /api/v1/users/posts/{user_email}
   - Method: **PUT**
   - Content-Type: application/json
   - Data: content, id, key
   - Return: *200 OK* Status Code and message if post edited successfully.
   - Description: Edits post content. Once post is created, only the content is allowed 
-                 to be edited.
+                 to be edited. {user_email} is the email id for the one editing the post.
+                 Only the creator of the post can edit the post. If someone else trys to
+                 edit the post, it raises a BadRequest Exception.
 
 - **get user's posts**
   - Path: /api/v1/users/posts/{user_email}
@@ -173,12 +175,15 @@
                  syntax: "City, State".
 
 - **edit challenge**
-  - Path: /api/v1/users/challenge
+  - Path: /api/v1/users/challenges/{user_email}
   - Method: **PUT**
   - Content-Type: application/json
-  - Data: content, id, key
+  - Data: description, id, key
   - Returns: *200 OK* Status Code and message if challenge edited successfully.
-  - Description: Edits challenge description.
+  - Description: Edits challenge description. {user_email} is the email id for 
+                 the one editing the challenge.
+                 Only the creator of the challenge can edit the challenge. If someone 
+                 else trys to edit the challenge, it raises a BadRequest Exception.
 
 - **get user's challenges**
   - Path: /api/v1/users/{user_email}/challenge
@@ -188,12 +193,15 @@
                 - Use *posted_time* to display time on challenge.
 
 - **delete user's post**
-  - Path: /api/v1/users/posts/
+  - Path: /api/v1/users/posts/{user_email}
   - Method: **DELETE**
   - Required Data: id, key
   - Content-Type: application/json
   - Return: *200 OK* Status code if the post is deleted successfully.
-  - Description: Deletes the user's post.
+  - Description: Deletes the user's post.  {user_email} is the email id for 
+                 the one deleting the post.
+                 Only the creator of the post can delete the post. If someone else trys to
+                 delete the post, it raises a BadRequest Exception.
 
 - **delete user's challenge**
   - Path: /api/v1/users/challenge
@@ -201,7 +209,10 @@
   - Required Data: id, key
   - Content-Type: application/json
   - Returns: *200 OK* Status code if the post is deleted successfully.
-  - Description: Deletes the user's post.
+  - Description: Deletes the user's challenge. {user_email} is the email id for 
+                 the one deleting the challenge.
+                 Only the creator of the challenge can delete the challenge. If someone 
+                 else trys to delete the challenge, it raises a BadRequest Exception.
 
 - **change user's password**
   - Path: /api/v1/user_accounts/{user_email}/password
@@ -236,7 +247,7 @@
                  and location if the location services are on.
 
 - **feed like/unlike**
-  - Path: /api/v1/feeds/likes/{user_email}
+  - Path: /api/v1/feeds/likes/{user_email}/{feed}
   - Method: **PUT**
   - Required Data: id, key, emotion
   - Content-Type: application/json
@@ -247,10 +258,12 @@
                    cannot 'unlike' a feed unless the user has 'liked' it first.
                  - If any other value than 'like' or 'unlike' is sent, it raises a 
                    BadRequest Exception.
-                 - user_email is the email of the user who likes/unlikes the post.
+                 - {user_email} is the email of the user who likes/unlikes the feed.
+                 - {feed} is either *posts* or *challenges*. Any other value raises 
+                   an exception.
 
 - **share stars**
-  - Path: /api/v1/feeds/stars/{user_email}
+  - Path: /api/v1/feeds/stars/{user_email}/{feed}
   - Method: **PUT**
   - Required Data: id, key, stars
   - Content-Type: application/json
@@ -259,5 +272,18 @@
                  - If the stars to be donated are more than what the user have,
                    it raises a BadRequest Exception. (Though this should be handled 
                    on the client side to not go beyond the number of what the user has)
-                 - user_email is the email of the user who donates the stars.
+                 - {user_email} is the email of the user who donates the stars.
+                 - {feed} is either *posts* or *challenges*. Any other value raises 
+                   an exception.
 
+- **post only to followers**
+  - Path: /api/v1/users/accounts/settings/post_only_to_followers/{user_email}
+  - Method: **PUT**
+  - Required Data: value
+  - Content-Type: application/json
+  - Returns: *200 OK* Status code with a message.
+  - Description: If *Post Only to Followers* is turned on, the feeds created from 
+                 now on will only show to the followers, else they will show up 
+                 on both communities and followers.
+                 By default the post shows up to both communities and followers.
+                 The value here is either 'true' or 'false'.
