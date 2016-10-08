@@ -50,6 +50,7 @@ class UserAccount(Resource):
                                  'last_name': {'S': data['last_name']},
                                  'password': {'S': password},
                                  'givel_stars': {'N': '25'},
+                                 'post_only_to_followers': {'BOOL': False}
                                  },
                             ConditionExpression='attribute_not_exists(email)',
                            )
@@ -283,9 +284,36 @@ class ChangePassword(Resource):
             return response, 200
 
 
+class PostOnlyToFollowers(Resource):
+    def put(self, user_email):
+        response = {}
+        data = request.get_json(force=True)
+        value = None
+
+        if data.get('value') != None:
+            if data['value'] == 'true':
+                value = True
+                response['message'] = 'Post will only show up to your followers!'
+            elif data['value'] == 'false':
+                value = False
+                response['message'] = 'Post will show up on communities and to followers!'
+            else:
+                raise BadRequest('The value should be either true or false.')
+            user = db.update_item(TableName='users',
+                        Key={'email': {'S': user_email}},
+                        UpdateExpression='SET post_only_to_followers = :v',
+                        ExpressionAttributeValues={
+                            ':v': {'BOOL': value}
+                        }
+                    )
+            return response, 200
+
+
+
 api.add_resource(UserAccount, '/')
 api.add_resource(UserProfilePicture, '/<user_email>/picture')
 api.add_resource(UserCommunities, '/<user_email>/communities/<community>')
 api.add_resource(UserLogin, '/login')
 api.add_resource(ChangePassword, '/<user_email>/password')
+api.add_resource(PostOnlyToFollowers, '/settings/post_only_to_followers/<user_email>')
 
