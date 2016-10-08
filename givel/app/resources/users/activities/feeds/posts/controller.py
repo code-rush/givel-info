@@ -38,13 +38,13 @@ class UsersPost(Resource):
         response = {}
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         file_id_ex = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        date = date_time.rsplit(' ', 1)[0]
-        time = date_time.rsplit(' ', 1)[1]
 
         if request.form['content'] or ('file_count' in request.form and int(request.form['file_count'])) != 0:
             if int(request.form['file_count']) > 1:
                 raise BadRequest('Only one file is allowed!')
             else:
+                user = db.get_item(TableName='users',
+                                Key={'email': {'S': user_email}})
                 try:
                     post = db.put_item(TableName='posts',
                                     Item={'email': {'S': user_email},
@@ -53,7 +53,9 @@ class UsersPost(Resource):
                                          'likes': {'N': '0'},
                                          'stars': {'N': '0'},
                                          'favorites': {'N': '0'},
-                                         'comments': {'N': '0'}
+                                         'comments': {'N': '0'},
+                                         'only_to_followers': 
+                                             {'BOOL': user['Item']['post_only_to_followers']['BOOL']}
                                     }
                                 )
                     if 'location' in request.form:
@@ -132,12 +134,14 @@ class UsersPost(Resource):
                 return response, 201
 
 
-    def put(self):
+    def put(self, user_email):
         """Edit Post"""
         response = {}
         post_data = request.get_json(force=True)
         if post_data.get('id') == None or post_data.get('key') == None:
             raise BadRequest('Post ID and KEY is required to edit a post')
+        if post_data['id'] != str(user_email):
+            raise BadRequest('Posts can only be edited by the creators!')
         if post_data.get('content') != None:
             try:
                 post = db.update_item(TableName='posts',
@@ -175,11 +179,8 @@ class UsersPost(Resource):
             current_time = current_datetime[1].rsplit(':',2)
             for posts in user_posts['Items']:
                 post_datetime = posts['creation_time']['S'].rsplit(' ',1)
-                print(post_datetime)
                 post_date = post_datetime[0].rsplit('-',2)
-                print(post_date)
                 post_time = post_datetime[1].rsplit(':',2)
-                print(post_time)
                 if post_date[0] == current_date[0]:
                     if post_date[1] == current_date[1]:
                         if post_date[2] == current_date[2]:
@@ -218,12 +219,14 @@ class UsersPost(Resource):
             response['message'] = 'Failed to fetch users posts!'
         return response, 200
 
-    def delete(self):
+    def delete(self, user_email):
         """Deletes User's Post"""
         response={}
         post_data = request.get_json(force=True)
         if post_data.get('id') == None or post_data.get('key') == None:
             raise BadRequest('Please provide required data')
+        if post_data['id'] != str(user_email):
+            raise BadRequest('Posts can only be deleted by the creators!')
         else:
             post = db.get_item(TableName='posts',
                                Key={'email': {'S': post_data['id']},
@@ -254,13 +257,14 @@ class UserRepostFeed(Resource):
         response = {}
         data = request.get_json(force=True)
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        date = date_time.rsplit(' ', 1)[0]
-        time = date_time.rsplit(' ', 1)[1]
 
         try:
             if data.get('id') == None or data.get('key') == None:
                 raise BadRequest('Please provide post ID and Key!')
             else:
+                user = db.get_item(TableName='users',
+                                Key={'email': {'S': user_email}})
+
                 post = db.get_item(TableName='posts',
                                 Key={'email': {'S': data['id']},
                                      'creation_time': {'S': data['key']}
@@ -269,13 +273,13 @@ class UserRepostFeed(Resource):
                 repost = db.put_item(TableName='posts',
                             Item={'email': {'S': user_email},
                                  'creation_time': {'S': date_time},
-                                 'date': {'S': date},
-                                 'time': {'S': time},
                                  'value': {'N': '0'},
                                  'likes': {'N': '0'},
                                  'stars': {'N': '0'},
                                  'favorites': {'N': '0'},
-                                 'comments': {'N': '0'}
+                                 'comments': {'N': '0'},
+                                 'only_to_followers': 
+                                     {'BOOL': user['Item']['post_only_to_followers']['BOOL']}
                             }
                         )
 
@@ -345,7 +349,6 @@ class UserRepostFeed(Resource):
 
 
 
-api.add_resource(UsersPost, '/<user_email>',
-                            '/')
+api.add_resource(UsersPost, '/<user_email>')
 api.add_resource(UserRepostFeed, '/repost/<user_email>')
 
