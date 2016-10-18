@@ -262,19 +262,6 @@
                  - {feed} is either *posts* or *challenges*. Any other value raises 
                    an exception.
 
-- **share stars**
-  - Path: /api/v1/feeds/stars/{user_email}/{feed}
-  - Method: **PUT**
-  - Required Data: id, key, stars
-  - Content-Type: application/json
-  - Returns: *200 OK* Status code with a message if the request is successful
-  - Description: - Adds stars count to the post.
-                 - If the stars to be donated are more than what the user have,
-                   it raises a BadRequest Exception. (Though this should be handled 
-                   on the client side to not go beyond the number of what the user has)
-                 - {user_email} is the email of the user who donates the stars.
-                 - {feed} is either *posts* or *challenges*. Any other value raises 
-                   an exception.
 
 - **post only to followers**
   - Path: /api/v1/users/accounts/settings/post_only_to_followers/{user_email}
@@ -287,3 +274,82 @@
                  on both communities and followers.
                  By default the post shows up to both communities and followers.
                  The value here is either 'true' or 'false'.
+
+
+- **share stars**
+  - Path: /api/v1/feeds/stars/share{user_email}/{feed}
+  - Method: **PUT**
+  - Required Data: id, key, stars
+  - Content-Type: application/json
+  - Returns: *200 OK* Status code with a message if the request is successful
+  - Description: - Adds stars count to the post.
+                 - If the stars to be donated are more than what the user have,
+                   it raises a BadRequest Exception. (Though this should be handled 
+                   on the client side to not go beyond the number of what the user has)
+                 - {user_email} is the email of the user who donates the stars.
+                 - {feed} is either *posts* or *challenges*. Any other value raises 
+                   an exception.
+
+
+- **share stars with followings**
+  - Path: /api/v1/users/accounts/stars/share/{user_email}
+  - Method: **PUT**
+  - Required data: user_id, stars
+  - Content-Type: application/json
+  - Returns: *200 OK* Status code with a message
+  - Description: {user_email} in the url is the email id of the logged in user 
+                 who wants to share stars with others(followings).
+                 The *user_id* is the of the user to whom the user is sharing stars
+                 with and *stars* are the number of stars to be shared. *stars* can 
+                 neither be greater than what the user is capable of sharing nor equal 
+                 zero.
+
+- **comment on feeds**
+  - Path: /api/v1/feeds/comments/{user_email}
+  - Method: **POST**
+  - Required Data: id, key, comment
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code with a message
+  - Description: {user_email} in the url is the email id of the logged in user.
+                 *id* and *key* is the feed id and key which needs to be sent with the 
+                 request else a BadRequest Exception is raised.
+                 If an empty *comment* is sent in the request, it raises BadRequest 
+                 Exception.
+
+- **edit comment*
+  - Path: /api/v1/feeds/comments/{user_email}
+  - Method: **PUT**
+  - Required Data: id, key, comment
+  - Content-Type: application/json
+  - Returns: *200 OK* Status code with a message if comment succesfully edited
+  - Description: Edits users comments if they are the creator of the comment.
+                 {user_email} in the url is the email if of the logged in user.
+                 *id* and *key* here is the comment id and key which needs to be with 
+                 the request else a BadRequest Exception is raised.
+                 If an empty *comment* is sent in the request, it raises BadRequest 
+                 Exception.
+
+- **delete comment**
+  - Path: /api/v1/feeds/comments/{user_email}
+  - Method: **DELETE**
+  - Required Data: id, key
+  - Content-Type: application/json
+  - Returns: *200 OK* Status code with a message if comment succesfully deleted
+  - Description: Deletes users comments if they are the creator of the comment.
+                 {user_email} in the url is the email if of the logged in user.
+                 *id* and *key* here is the comment id and key which needs to be with 
+                 the request else a BadRequest Exception is raised.
+
+- **get comments**
+  - Path: /api/v1/feeds/comments
+  - Method: **POST**
+  - Required Data: id, key
+  - Content-Type: application/json
+  - Returns: List of comments that were made on the feed
+  - Description: Gets all the comments made on the feed. 
+                 *id* and *key* here are the feed id and key which needs to be sent 
+                 with the request to fetch all comments made on that feed.
+
+
+
+
