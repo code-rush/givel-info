@@ -1,3 +1,4 @@
 flask
 flask-restful
 boto3
+Flask-Mail
