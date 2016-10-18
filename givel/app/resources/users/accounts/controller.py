@@ -1,11 +1,16 @@
 import boto3
+import datetime
+import string
+import random
 
-from app import app
+from app.app import app, mail
+
 from flask import Blueprint, request
 from flask_restful import Resource, Api
+from flask_mail import Message
 
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.exceptions import NotFound, BadRequest
+from werkzeug.exceptions import NotFound, BadRequest, RequestTimeout
 
 from app.models import create_users_table
 from app.helper import upload_file, check_if_community_exists
@@ -50,7 +55,9 @@ class UserAccount(Resource):
                                  'last_name': {'S': data['last_name']},
                                  'password': {'S': password},
                                  'givel_stars': {'N': '25'},
-                                 'post_only_to_followers': {'BOOL': False}
+                                 'post_only_to_followers': {'BOOL': False},
+                                 'total_stars_earned': {'N': '25'},
+                                 'total_stars_shared': {'N': '0'}
                                  },
                             ConditionExpression='attribute_not_exists(email)',
                            )
@@ -91,6 +98,8 @@ class UserLogin(Resource):
                                         user_data['password']):
                 response['message'] = 'User successfully Logged In!'
                 response['result'] = user['Item']
+                del response['result']['total_stars_shared']
+                del response['result']['total_stars_earned']
                 return response, 200
             else:
                 response['message'] = 'Incorrect Password!'
@@ -309,6 +318,119 @@ class PostOnlyToFollowers(Resource):
             return response, 200
 
 
+class GiveStarsToFollowings(Resource):
+    def put(self, user_email):
+        response = {}
+        data = request.get_json(force=True)
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        user = db.get_item(TableName='users',
+                        Key={'email': {'S': user_email}})
+
+        if data.get('user_id') == None:
+            raise BadRequest('Select a user to share stars with.')
+        
+        if data.get('stars') != None:
+            if int(data['stars']) == 0:
+                raise BadRequest('Atleast 1 star is needed to be shared')
+            if int(data['stars']) > int(user['Item']['givel_stars']['N']):
+                raise BadRequest('Cannot give stars more than what you have')
+            else:
+                add_entry_to_stars_table = db.put_item(TableName='stars_activity',
+                                        Item={'email': {'S': user_email},
+                                              'shared_time': {'S': date_time},
+                                              'shared_to': {'S': 'user'},
+                                              'shared_id': {'S': data['user_id']},
+                                              'stars': {'N': data['stars']}
+                                        }
+                                    )
+                try:
+                    give_stars = db.update_item(TableName='users',
+                                Key={'email': {'S': data['user_id']}},
+                                UpdateExpression='SET total_stars_earned = total_stars_earned + :stars, \
+                                                  givel_stars = givel_stars + :stars',
+                                ExpressionAttributeValues={
+                                    ':stars' : {'N': str(data['stars'])}
+                                }
+                            )
+                except:
+                    rollback_activity = db.delete_item(TableName='stars_activity',
+                                        Key={'email': {'S': user_email},
+                                             'shared_time': {'S': date_time}
+                                        }
+                                    )
+                    print('caught an exception giving stars')
+                    raise RequestTimeout('Try Again Later')
+
+                try:
+                    deduct_stars = db.update_item(TableName='users',
+                                Key={'email': {'S': user_email}},
+                                UpdateExpression='SET givel_stars = givel_stars - :stars, \
+                                                  total_stars_shared = total_stars_shared + :stars',
+                                ExpressionAttributeValues={
+                                    ':stars': {'N': str(data['stars'])}
+                                }
+                            )
+                    response['message'] = 'Stars successfully shared!'
+                except:
+                    rollback_activity = db.delete_item(TableName='stars_activity',
+                                        Key={'email': {'S': user_email},
+                                             'shared_time': {'S': date_time}
+                                        }
+                                    )
+                    rollback_stars = db.update_item(TableName='users',
+                                Key={'email': {'S': data['user_id']}},
+                                UpdateExpression='SET total_stars_earned = total_stars_earned - :stars, \
+                                                  givel_stars = givel_stars - :stars',
+                                ExpressionAttributeValues={
+                                    ':stars' : {'N': str(data['stars'])}
+                                }
+                            )
+                    print('caught an exception deducting stars!')
+                    raise RequestTimeout('Try again later!')
+
+                return response, 200
+
+
+class ForgotPassword(Resource):
+    def post(self):
+        """Resets password and sends notification email"""
+        response = {}
+        data = request.get_json(force=True)
+
+        if data.get('email') == None:
+            raise BadRequest('Type in your email address')
+        else:
+            chars = string.ascii_lowercase + string.digits
+            pwd_size = 8
+            random_pwd = ''.join((random.choice(chars)) for x in range(pwd_size))
+
+            update_pwd = db.update_item(TableName='users',
+                            Key={'email': {'S': data['email']}},
+                            UpdateExpression='SET password = :pwd',
+                            ExpressionAttributeValues={
+                                ':pwd': {'S': generate_password_hash(random_pwd)}
+                            }
+                        )
+
+            # try:
+            send_mail = Message('Forgot Password',
+                                sender='parikh.japan30@gmail.com',
+                                recipients=['{}'.format(data['email'])]
+                            )
+            send_mail.body = 'New Password = {}'.format(random_pwd)
+            mail.send(send_mail)
+            print (random_pwd)
+            response['message'] = 'Request sent successfully.'
+            # except:
+            #     response['message'] = 'Request Failed!'
+
+            return response, 200
+
+
+
+
+
 
 api.add_resource(UserAccount, '/')
 api.add_resource(UserProfilePicture, '/<user_email>/picture')
@@ -316,4 +438,6 @@ api.add_resource(UserCommunities, '/<user_email>/communities/<community>')
 api.add_resource(UserLogin, '/login')
 api.add_resource(ChangePassword, '/<user_email>/password')
 api.add_resource(PostOnlyToFollowers, '/settings/post_only_to_followers/<user_email>')
+api.add_resource(GiveStarsToFollowings, '/stars/share/<user_email>')
+api.add_resource(ForgotPassword, '/settings/forgot_password')
 
