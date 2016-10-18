@@ -1,7 +1,7 @@
 import boto3
 import datetime
 
-from app import app
+from app.app import app
 
 from flask import Blueprint, request
 from flask_restful import Api, Resource
@@ -25,10 +25,10 @@ try:
     try:
         table_response = db.describe_table(TableName='challenges')
         if table_response['Table']['TableStatus']:
-            print('Challenges Table exists!')
+            print('challenges Table exists!')
     except:
         challenges = create_challenges_table()
-        print('Challenges Table created!')
+        print('challenges Table created!')
 except:
     pass
 
@@ -46,59 +46,69 @@ class UsersChallengePosts(Resource):
             raise BadRequest('Cannot create an empty challenge!')
         else:
             challenge_post = db.put_item(TableName='challenges',
-                                    Item={'email': {'S': user_email},
-                                          'creation_time': {'S': date_time},
-                                          'likes': {'N': '0'},
-                                          'value': {'N': '0'},
-                                          'status': {'S': 'ACTIVE'},
-                                          'comments': {'N': '0'},
-                                          'favorites': {'N': '0'},
-                                          'date': {'S': date},
-                                          'time': {'S': time},
-                                          'stars': {'N': '0'},
-                                          'description': {'S': challenge_data['description']}
-                                    }
-                                )
-            if challenge_data.get('location'):
-                challenge_post = db.update_item(TableName='challenges',
-                                      Key={'email':{'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET #loc = :l',
-                                      ExpressionAttributeNames={
-                                              '#loc': 'location'
-                                          },
-                                      ExpressionAttributeValues={
-                                          ':l': {'S': challenge_data['location']}
-                                      }
-                                  )
-            else:
-                user = db.get_item(TableName='users',
-                                Key={'email': {'S': user_email}
+                                Item={'email': {'S': user_email},
+                                      'creation_time': {'S': date_time},
+                                      'likes': {'N': '0'},
+                                      'value': {'N': '0'},
+                                      'state': {'S': 'ACTIVE'},
+                                      'comments': {'N': '0'},
+                                      'favorites': {'N': '0'},
+                                      'stars': {'N': '0'},
+                                      'description': {'S': challenge_data['description']},
+                                      'creator': {'S': user_email}
                                 }
                             )
-                home_community = user['Item']['home']['S']
-                challenge_post = db.update_item(TableName='challenges',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET #loc = :l',
-                                      ExpressionAttributeNames={
-                                          '#loc': 'location'
-                                      },
-                                      ExpressionAttributeValues={
-                                          ':l': {'S': home_community}
-                                      }
-                                  )
-            response['message'] = 'Challenge successfully created!'
-            return response, 201
+            try:
+                if challenge_data.get('location'):
+                    challenge_post = db.update_item(TableName='challenges',
+                                          Key={'email':{'S': user_email},
+                                               'creation_time': {'S': date_time}
+                                          },
+                                          UpdateExpression='SET #loc = :l',
+                                          ExpressionAttributeNames={
+                                                  '#loc': 'location'
+                                              },
+                                          ExpressionAttributeValues={
+                                              ':l': {'S': challenge_data['location']}
+                                          }
+                                      )
+                else:
+                    user = db.get_item(TableName='users',
+                                    Key={'email': {'S': user_email}
+                                    }
+                                )
+                    home_community = user['Item']['home']['S']
+                    challenge_post = db.update_item(TableName='challenges',
+                                          Key={'email': {'S': user_email},
+                                               'creation_time': {'S': date_time}
+                                          },
+                                          UpdateExpression='SET #loc = :l',
+                                          ExpressionAttributeNames={
+                                              '#loc': 'location'
+                                          },
+                                          ExpressionAttributeValues={
+                                              ':l': {'S': home_community}
+                                          }
+                                      )
+                response['message'] = 'Challenge successfully created!'
+                return response, 201
+            except:
+                rollback_feed = db.delete_item(TableName='challenges',
+                                          Key={'email': {'S': user_email},
+                                               'creation_time': {'S': date_time}
+                                          }
+                                      )
+                raise BadRequest('Request Failed! Please try again later!')
 
-    def put(self):
+    def put(self, user_email):
         """Edit Challenge"""
         response = {}
         challenge_data = request.get_json(force=True)
+
         if challenge_data.get('id') == None or challenge_data.get('key') == None:
-            raise BadRequest('Challenge ID and KEY is required to edit a post')
+            raise BadRequest('Challenge ID and KEY is required to edit a feed')
+        if challenge_data['id'] != str(user_email):
+            raise BadRequest('Challenges can only be edited by the creators!')
         if challenge_data.get('description') != None:
             try:
                 post = db.update_item(TableName='challenges',
@@ -114,7 +124,7 @@ class UsersChallengePosts(Resource):
             except:
                 raise BadRequest('Failed to edit challenge!')
         else:
-            raise BadRequest('Only challenge description is allowed to edit!')
+            raise BadRequest('Cannot post an empty challenge!')
         return response, 200
 
     def get(self, user_email):
@@ -176,21 +186,52 @@ class UsersChallengePosts(Resource):
             response['message'] = 'Failed to fetch users posts!'
         return response, 200
 
-    def delete(self):
-        """Deletes User's Post"""
-        response={}
-        challenge_data = request.get_json(force=True)
-        if challenge_data.get('id') == None or challenge_data.get('key') == None:
-            raise BadRequest('Please provide required data')
-        else:
-            delete_challenge = db.delete_item(TableName='challenges',
-                               Key={'email': {'S': challenge_data['id']},
-                                    'creation_time': {'S': challenge_data['key']}
-                               }
-                           )
+    # def delete(self):
+    #     """Deletes User's Post"""
+    #     response={}
+    #     challenge_data = request.get_json(force=True)
+    #     if challenge_data.get('id') == None or challenge_data.get('key') == None:
+    #         raise BadRequest('Please provide required data')
+    #     else:
+    #         delete_challenge = db.delete_item(TableName='challenges',
+    #                            Key={'email': {'S': challenge_data['id']},
+    #                                 'creation_time': {'S': challenge_data['key']}
+    #                            }
+    #                        )
 
-            response['message'] = 'Challenge deleted!'
-            return response, 200
+    #         response['message'] = 'Challenge deleted!'
+    #         return response, 200
+
+
+# class AcceptChallenge(Resource):
+#     def put(self, user_email):
+#         """Accepts Challenge"""
+#         response = {}
+#         data = request.get_json(force=True)
+#         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+#         if data.get('id') == None and data.get('key') == None:
+#             raise BadRequest('Please provide ID and Key')
+#         else:
+#             challenge = db.get_item(TableName='challenges',
+#                                 Key={'email': {'S': data['id']},
+#                                      'creation_time': {'S': data['key']}
+#                                 }
+#                             )
+
+#             accept_challenge = db.put_item(TableName='challenges',
+#                                 Key={'email': {'S': user_email},
+#                                      'creation_time': {'S': date_time},
+#                                      'creator': {'S': challenge['Item']['creator']['S']},
+#                                      'likes': {'N': '0'},
+#                                      'value': {'N': '0'},
+#                                      'state': {'S': 'ACTIVE'},
+#                                      'comments': {'N': '0'},
+#                                      'favorites': {'N': challenge['Item']['favorites']['N']},
+#                                      'stars': {'N': '0'},
+#                                      'description': {'S': challenge['Item']['description']['S']}
+#                                 }
+#                             )
 
 
 class UsersChallengeRepost(Resource):
@@ -199,8 +240,6 @@ class UsersChallengeRepost(Resource):
         response = {}
         data = request.get_json(force=True)
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        date = date_time.rsplit(' ', 1)[0]
-        time = date_time.rsplit(' ', 1)[1]
 
         try:
             if data.get('id') == None and data.get('key') == None:
@@ -220,8 +259,6 @@ class UsersChallengeRepost(Resource):
                                               'status': {'S': 'ACTIVE'},
                                               'comments': {'N': '0'},
                                               'favorites': {'N': '0'},
-                                              'date': {'S': date},
-                                              'time': {'S': time},
                                               'stars': {'N': '0'}
                                         }
                                     )
@@ -257,10 +294,10 @@ class UsersChallengeRepost(Resource):
                                       )
                 response['message'] = 'Repost successful!'
         except:
-            response['media_file'] = 'Repost failed!'
+            response['message'] = 'Repost failed!'
         return response, 200
 
 
-api.add_resource(UsersChallengePosts, '/<user_email>/challenge', 
-                                 '/challenges')
-api.add_resource(UsersChallengeRepost, '/<user_email>/challenge/repost')
+api.add_resource(UsersChallengePosts, '/<user_email>', 
+                                      '/')
+api.add_resource(UsersChallengeRepost, '/repost/<user_email>')

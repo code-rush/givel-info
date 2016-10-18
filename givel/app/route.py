@@ -12,5 +12,5 @@ def build_route(app):
    app.register_blueprint(community_api_routes, url_prefix='/api/v1/communities')
    app.register_blueprint(user_following_activity_api_routes, url_prefix='/api/v1/users')
    app.register_blueprint(user_post_activity_api_routes, url_prefix='/api/v1/users/posts')
-   app.register_blueprint(user_challenge_activity_api_routes, url_prefix='/api/v1/users')
+   app.register_blueprint(user_challenge_activity_api_routes, url_prefix='/api/v1/users/challenges')
    app.register_blueprint(feed_activity_api_routes, url_prefix='/api/v1/feeds')
