@@ -1,7 +1,7 @@
 import boto3
 import datetime
 
-from app import app
+from app.app import app
 
 from flask import Blueprint, request
 from flask_restful import Api, Resource

@@ -1,6 +1,6 @@
 import boto3
 
-from app import app
+from app.app import app
 
 from flask import Blueprint, request, json
 from flask_restful import Resource, Api
