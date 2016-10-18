@@ -96,14 +96,14 @@ def create_posts_table():
             ],
             GlobalSecondaryIndexes=[
                 {
-                    'IndexName': 'post-email-value',
+                    'IndexName': 'post-value-email',
                     'KeySchema': [
                         {
-                            'AttributeName': 'email',
+                            'AttributeName': 'value',
                             'KeyType': 'HASH'
                         },
                         {
-                            'AttributeName': 'value',
+                            'AttributeName': 'email',
                             'KeyType': 'RANGE'
                         },
                     ],
@@ -160,14 +160,14 @@ def create_challenges_table():
             ],
             GlobalSecondaryIndexes=[
                 {
-                    'IndexName': 'challenge-email-value',
+                    'IndexName': 'challenge-value-email',
                     'KeySchema': [
                         {
-                            'AttributeName': 'email',
+                            'AttributeName': 'value',
                             'KeyType': 'HASH'
                         },
                         {
-                            'AttributeName': 'value',
+                            'AttributeName': 'email',
                             'KeyType': 'RANGE'
                         },
                     ],
@@ -232,28 +232,76 @@ def create_likes_table():
         return 
 
 
-def create_stars_table():
+def create_stars_activity_table():
     try:
         stars_table = dynamodb.create_table(
-            TableName='stars',
+            TableName='stars_activity',
             KeySchema=[
                 {
-                    'AttributeName': 'feed',
+                    'AttributeName': 'email',
                     'KeyType': 'HASH'
                 },
                 {
-                    'AttributeName': 'user',
+                    'AttributeName': 'shared_time',
                     'KeyType': 'RANGE'
                 }
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'user',
+                    'AttributeName': 'email',
                     'AttributeType': 'S'
                 },
                 {
-                    'AttributeName': 'feed',
+                    'AttributeName': 'shared_time',
                     'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'shared_to',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'shared_id',
+                    'AttributeType': 'S'
+                }
+            ],
+            LocalSecondaryIndexes=[
+                {
+                    'IndexName': 'personal-sharing-accounts',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'email',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'shared_to',
+                            'KeyType': 'RANGE'
+                        },
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    }
+                }
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'shared-to-id',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'shared_to',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'shared_id',
+                            'KeyType': 'RANGE'
+                        },
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 10,
+                        'WriteCapacityUnits': 10
+                    }
                 }
             ],
             ProvisionedThroughput={
@@ -263,7 +311,7 @@ def create_stars_table():
         )
     except:
         try:
-            stars_table = dynamodb.Table('stars')
+            stars_table = dynamodb.Table('stars_activity')
         except:
             print('stars table does not exist')
     finally:
@@ -292,6 +340,32 @@ def create_comments_table():
                 {
                     'AttributeName': 'creation_time',
                     'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'feed_id',
+                    'AttributeType': 'S'
+                }
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'comments-feed-email',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'feed_id',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'email',
+                            'KeyType': 'RANGE'
+                        },
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 10,
+                        'WriteCapacityUnits': 10
+                    }
                 }
             ],
             ProvisionedThroughput={
