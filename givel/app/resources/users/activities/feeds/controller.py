@@ -10,6 +10,8 @@ from app.models import create_stars_activity_table
 from app.models import create_comments_table
 
 from app.helper import update_likes, update_value
+from app.helper import get_user_details
+
 from werkzeug.exceptions import BadRequest
 
 feed_activity_api_routes = Blueprint('feed_activity_api', __name__)
@@ -86,22 +88,47 @@ class FeedLikes(Resource):
             except:
                 raise BadRequest('Request Failed!')
 
-    # def post(self):
-    #     response = {}
-    #     data = request.get_json(force=True)
 
-    #     if data.get('id') == None or data.get('key') == None:
-    #         raise BadRequest('feed id and key not provided')
-    #     else:
-    #         try:
-    #             people = db.query(TableName='likes',
-    #                             IndexName='likes-feed-id-key',
-    #                             Select='SPECIFIC_ATTRIBUTES',
-    #                             ProjectionExpression='email'
-    #                         )
+class GetFeedLikes(Resource):
+    def post(self):
+        response = {}
+        data = request.get_json(force=True)
 
-    #             for p in people['Items']:
-    #                 if 
+        if data.get('id') == None or data.get('key') == None:
+            raise BadRequest('feed id and key not provided')
+        else:
+            feed_id = data['id']+'_'+data['key']
+
+            try:
+                likes = db.query(TableName='likes',
+                                Select='ALL_ATTRIBUTES',
+                                KeyConditionExpression='feed = :feed',
+                                ExpressionAttributeValues={
+                                    ':feed': {'S': feed_id}
+                                }
+                            )
+
+                for like in likes['Items']:
+                    email = like['user']['S']
+                    user_name, profile_picture, home = get_user_details(email)
+                    if user_name == None:
+                        del like
+                    else:
+                        like['user'] = {}
+                        like['user']['name'] = {}
+                        like['user']['home'] = {}
+                        like['user']['profile_picture'] = {}
+                        like['user']['name']['S'] = user_name
+                        like['user']['profile_picture']['S'] = profile_picture
+                        like['user']['home']['S'] = home
+                        like['user']['email'] = {}
+                        like['user']['email']['S'] = email
+
+                response['message'] = 'Successfully fetched all likes'
+                response['result'] = likes['Items']
+            except:
+                response['message'] = 'Failed to fetch likes'
+            return response, 200
 
 
 class FeedStars(Resource):
@@ -201,6 +228,50 @@ class FeedStars(Resource):
             return response, 200
 
 
+class GetFeedStars(Resource):
+    def post(self):
+        response = {}
+        data = request.get_json(force=True)
+
+        if data.get('id') == None or data.get('key') == None:
+            raise BadRequest('feed id and key not provided')
+        else:
+            feed_id = data['id']+'_'+data['key']
+
+            try:
+                stars = db.query(TableName='stars_activity',
+                            IndexName='shared-to-id',
+                            Select='SPECIFIC_ATTRIBUTES',
+                            KeyConditionExpression='shared_to = :to \
+                                                 AND shared_id = :id',
+                            ProjectionExpression='email, stars',
+                            ExpressionAttributeValues={
+                                ':to': {'S': 'feed'},
+                                ':id': {'S': feed_id}
+                            }
+                        )
+
+                for star in stars['Items']:
+                    user_name, profile_picture, home = get_user_details(star['email']['S'])
+                    if user_name == None:
+                        del star
+                    else:
+                        star['user'] = {}
+                        star['user']['name'] = {}
+                        star['user']['email'] = {}
+                        star['user']['profile_picture'] = {}
+                        star['user']['name']['S'] = user_name
+                        star['user']['profile_picture']['S'] = profile_picture
+                        star['user']['email']['S'] = star['email']['S']
+                        del star['email']
+
+                response['message'] = 'Successfully fetched all stars'
+                response['result'] = stars['Items']
+            except:
+                response['message'] = 'Failed to fetch stars'
+            return response, 200
+
+
 class FeedComments(Resource):
     def post(self, user_email):
         response = {}
@@ -276,66 +347,43 @@ class GetFeedComments(Resource):
         else:
             feed_id = data['id']+'_'+data['key']
 
-        # try:
-            get_comments = db.query(TableName='comments',
-                            IndexName='comments-feed-email',
-                            Select='ALL_ATTRIBUTES',
-                            KeyConditionExpression='feed_id = :e',
-                            ExpressionAttributeValues={
-                                ':e': {'S': feed_id}
-                            }
-                        )
-            current_datetime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S').rsplit(' ', 1)
-            current_date = current_datetime[0].rsplit('-',2)
-            current_time = current_datetime[1].rsplit(':',2)
-            for comments in get_comments['Items']:
-                comment_datetime = comments['creation_time']['S'].rsplit(' ',1)
-                comment_date = comment_datetime[0].rsplit('-',2)
-                comment_time = comment_datetime[1].rsplit(':',2)
-                if comment_date[0] == current_date[0]:
-                    if comment_date[1] == current_date[1]:
-                        if comment_date[2] == current_date[2]:
-                            if comment_time[0] == current_time[0]:
-                                if comment_time[1] == current_time[1]:
-                                    if comment_time[2] == current_time[2]:
-                                        commented_time = '0s'
-                                    else:
-                                        commented_time = str(int(current_time[2]) - int(comment_time[2])) + 's'
-                                else:
-                                    commented_time = str(int(current_time[1]) - int(comment_time[1])) + 'm'
-                            else:
-                                commented_time = str(int(current_time[0]) - int(comment_time[0])) + 'hr'
-                        else:
-                            pt = int(current_date[2]) - int(comment_date[2])
-                            if pt == 1:
-                                commented_time = 'yesterday'
-                            else:
-                                commented_time = str(pt) + 'd'
+            try:
+                get_comments = db.query(TableName='comments',
+                                IndexName='comments-feed-email',
+                                Select='ALL_ATTRIBUTES',
+                                KeyConditionExpression='feed_id = :e',
+                                ExpressionAttributeValues={
+                                    ':e': {'S': feed_id}
+                                }
+                            )
+                for comments in get_comments['Items']:
+                    user_name, profile_picture, home = get_user_details(comments['email']['S'])
+                    if user_name == None:
+                        del comments
                     else:
-                        commented_time = str(int(current_date[1]) - int(comment_date[1])) + 'M'
-                else:
-                    commented_time = str(int(current_date[0]) - int(comment_date[0])) + 'yr'
-                # comment_time = calculate_comment_deltatime(comments['date'])
-                comments['commented_time'] = {}
-                comments['commented_time']['S'] = commented_time
-                comments['id'] = {}
-                comments['id']['S'] = comments['email']['S']
-                comments['key'] = {}
-                comments['key']['S'] = comments['creation_time']['S']
-                del comments['email']
-                del comments['creation_time']
+                        comments['id'] = {}
+                        comments['id']['S'] = comments['email']['S']
+                        comments['key'] = {}
+                        comments['key']['S'] = comments['creation_time']['S']
+                        comments['user'] = {}
+                        comments['user']['name'] = {}
+                        comments['user']['profile_picture'] = {}
+                        comments['user']['name']['S'] = user_name
+                        comments['user']['profile_picture']['S'] = profile_picture
+                        del comments['email']
 
-            response['message'] = 'Successfully fetched all comments'
-            response['result'] = get_comments['Items']
-            # except:
-            #     response['message'] = 'Failed to fetch comments'
+                response['message'] = 'Successfully fetched all comments'
+                response['result'] = get_comments['Items']
+            except:
+                response['message'] = 'Failed to fetch comments'
             return response, 200
 
 
 
-api.add_resource(FeedLikes, '/likes/<user_email>/<feed>',
-                            '/likes')
+api.add_resource(FeedLikes, '/likes/<user_email>/<feed>')
+api.add_resource(GetFeedLikes,'/likes')
 api.add_resource(FeedStars, '/stars/share/<user_email>/<feed>')
+api.add_resource(GetFeedStars, '/stars')
 api.add_resource(FeedComments, '/comments/<user_email>')
 api.add_resource(GetFeedComments, '/comments')
 
