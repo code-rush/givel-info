@@ -196,3 +196,20 @@ def update_value(feed, id, key, operation, stars=None):
                                     }
                                 )
 
+def get_user_details(user_id):
+    user = db.get_item(TableName='users',
+                    Key={'email': {'S': user_id}})
+    if user.get('Item') == None:
+        return None, None
+    else:
+        profile_picture = None
+        first_name = user['Item']['first_name']['S']
+        last_name = user['Item']['last_name']['S']
+        user_name = first_name + ' ' + last_name
+        home_community = user['Item']['home']['S']
+        if user['Item'].get('profile_picture') != None:
+            profile_picture = user['Item']['profile_picture']['S']
+        return user_name, profile_picture, home_community
+
+
+
