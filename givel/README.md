@@ -351,5 +351,24 @@
                  with the request to fetch all comments made on that feed.
 
 
+- **get feed likes**
+  - Path: /api/v1/feeds/likes
+  - Method: **POST**
+  - Required Data: id, key
+  - Content-Type: application/json
+  - Returns: List of users who liked the post
+  - Description: Gets all users who liked the post.
+                 *id* and *key* here are the feed id and key which needs to be sent 
+                 with the request.
 
+
+- **get feed stars**
+  - Path: /api/v1/feeds/stars
+  - Method: **POST**
+  - Required Data: id, key
+  - Content-Type: application/json
+  - Returns: List of users who gave stars to the post
+  - Description: Gets all users who gave stars to the post.
+                 *id* and *key* here are the feed id and key which needs to be sent 
+                 with the request.
 
