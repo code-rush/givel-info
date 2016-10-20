@@ -174,45 +174,12 @@ class UsersPost(Resource):
                                     ':e': {'S': user_email}
                                 }
                             )
-            current_datetime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S').rsplit(' ', 1)
-            current_date = current_datetime[0].rsplit('-',2)
-            current_time = current_datetime[1].rsplit(':',2)
             for posts in user_posts['Items']:
-                post_datetime = posts['creation_time']['S'].rsplit(' ',1)
-                post_date = post_datetime[0].rsplit('-',2)
-                post_time = post_datetime[1].rsplit(':',2)
-                if post_date[0] == current_date[0]:
-                    if post_date[1] == current_date[1]:
-                        if post_date[2] == current_date[2]:
-                            if post_time[0] == current_time[0]:
-                                if post_time[1] == current_time[1]:
-                                    if post_time[2] == current_time[2]:
-                                        posted_time = '0s'
-                                    else:
-                                        posted_time = str(int(current_time[2]) - int(post_time[2])) + 's'
-                                else:
-                                    posted_time = str(int(current_time[1]) - int(post_time[1])) + 'm'
-                            else:
-                                posted_time = str(int(current_time[0]) - int(post_time[0])) + 'hr'
-                        else:
-                            pt = int(current_date[2]) - int(post_date[2])
-                            if pt == 1:
-                                posted_time = 'yesterday'
-                            else:
-                                posted_time = str(pt) + 'd'
-                    else:
-                        posted_time = str(int(current_date[1]) - int(post_date[1])) + 'M'
-                else:
-                    posted_time = str(int(current_date[0]) - int(post_date[0])) + 'yr'
-                # post_time = calculate_post_deltatime(posts['date'])
-                posts['posted_time'] = {}
-                posts['posted_time']['S'] = posted_time
                 posts['id'] = {}
                 posts['id']['S'] = posts['email']['S']
                 posts['key'] = {}
                 posts['key']['S'] = posts['creation_time']['S']
                 del posts['email']
-                del posts['creation_time']
             response['message'] = 'Successfully fetched users all posts!'
             response['result'] = user_posts['Items']
         except:
