@@ -222,7 +222,8 @@
              'INCOMPLETE' and they are shown *Good Try* message.
            - Until they answer the question that if they have completed the challenge or not,
              the challenge stays in the 'INACTIVE' state even if the clock ticks down to 
-             *'0h 0m'* and it should show *'0h 0m'*.
+             *'0h 0m'*, it should show *'0h 0m'* and not show any message. This means the 
+             user still has to respond to the challenge.
 
 - **create challenge**
   - Path: /api/v1/users/challenges/{user_email}
