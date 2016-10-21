@@ -214,7 +214,7 @@
              for the user who created/accepted the challenge and clock starts ticking from 
              that point. The user now has 48 hrs to complete the challenge. 
            - If the user does not respond in 48 hrs, the challenge becomes 'INACTIVE'. 
-           - Any any point of time during the challenge is 'ACTIVE' or 'INACTIVE, the user 
+           - At any point of time during the challenge is 'ACTIVE' or 'INACTIVE, the user 
              can click the button where the clock is ticking and a question is popped up 
              asking if the user has completed the challenge. If the user selects *YES*,
              then the state of the challenge changes to 'COMPLETE' and they are praised with a 
