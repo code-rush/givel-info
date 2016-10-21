@@ -7,7 +7,12 @@ from flask import Blueprint, request
 from flask_restful import Api, Resource
 
 from app.models import create_challenges_table
-from app.helper import upload_post_file
+from app.helper import upload_post_file, check_challenge_state
+from app.helper import check_if_user_commented
+from app.helper import check_if_user_liked
+from app.helper import check_if_user_starred
+from app.helper import get_user_details
+from app.helper import check_if_taking_off
 
 from werkzeug.exceptions import BadRequest
 
@@ -52,7 +57,6 @@ class UsersChallengePosts(Resource):
                                       'value': {'N': '0'},
                                       'state': {'S': 'ACTIVE'},
                                       'comments': {'N': '0'},
-                                      'favorites': {'N': '0'},
                                       'stars': {'N': '0'},
                                       'description': {'S': challenge_data['description']},
                                       'creator': {'S': user_email}
@@ -120,9 +124,64 @@ class UsersChallengePosts(Resource):
                                         ':c': {'S': challenge_data['description']}
                                     }
                                 )
-                response['message'] = 'Successfully edited!'
+                response['message'] = 'Challenge edited successfully!'
             except:
                 raise BadRequest('Failed to edit challenge!')
+        elif challenge_data.get('state') != None:
+            if challenge_data['state'] == 'inactive':
+                try:
+                    post = db.update_item(TableName='challenges',
+                                        Key={'email': {'S': challenge_data['id']},
+                                             'creation_time': {'S': challenge_data['key']}
+                                        },
+                                        UpdateExpression='SET #s = :st',
+                                        ExpressionAttributeNames={
+                                            '#s': 'state'
+                                        },
+                                        ExpressionAttributeValues={
+                                            ':st': {'S': 'INACTIVE'}
+                                        }
+                                    )
+                    response['message'] = 'Challenge edited successfully!'
+                except:
+                    raise BadRequest('Failed to edit challenge!')
+            elif challenge_data['state'] == 'complete':
+                try:
+                    post = db.update_item(TableName='challenges',
+                                        Key={'email': {'S': challenge_data['id']},
+                                             'creation_time': {'S': challenge_data['key']}
+                                        },
+                                        UpdateExpression='SET #s = :st',
+                                        ExpressionAttributeNames={
+                                            '#s': 'state'
+                                        },
+                                        ExpressionAttributeValues={
+                                            ':st': {'S': 'COMPLETE'}
+                                        }
+                                    )
+                    response['message'] = 'Challenge edited successfully!'
+                except:
+                    raise BadRequest('Failed to edit challenge!')
+            elif challenge_data['state'] == 'incomplete':
+                try:
+                    post = db.update_item(TableName='challenges',
+                                        Key={'email': {'S': challenge_data['id']},
+                                             'creation_time': {'S': challenge_data['key']}
+                                        },
+                                        UpdateExpression='SET #s = :st',
+                                        ExpressionAttributeNames={
+                                            '#s': 'state'
+                                        },
+                                        ExpressionAttributeValues={
+                                            ':st': {'S': 'IMCOMPLETE'}
+                                        }
+                                    )
+                    response['message'] = 'Challenge edited successfully!'
+                except:
+                    raise BadRequest('Failed to edit challenge!')
+            else:
+                raise BadRequest('State can be either \'incomplete\' \
+                                  or \'complete\' or \'inactive\'')
         else:
             raise BadRequest('Cannot post an empty challenge!')
         return response, 200
@@ -133,74 +192,70 @@ class UsersChallengePosts(Resource):
         try:
             user_challenges = db.query(TableName='challenges',
                                 Select='ALL_ATTRIBUTES',
-                                Limit=50,
-                                ConsistentRead=True,
                                 KeyConditionExpression='email = :e',
                                 ExpressionAttributeValues={
                                     ':e': {'S': user_email}
                                 }
                             )
-            current_datetime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S').rsplit(' ', 1)
-            current_date = current_datetime[0].rsplit('-',2)
-            current_time = current_datetime[1].rsplit(':',2)
-            for posts in user_challenges['Items']:
-                post_date = posts['date']['S'].rsplit('-',2)
-                post_time = posts['time']['S'].rsplit(':',2)
-                if post_date[0] == current_date[0]:
-                    if post_date[1] == current_date[1]:
-                        if post_date[2] == current_date[2]:
-                            if post_time[0] == current_time[0]:
-                                if post_time[1] == current_time[1]:
-                                    if post_time[2] == current_time[2]:
-                                        posted_time = '0s'
-                                    else:
-                                        posted_time = str(int(current_time[2]) - int(post_time[2])) + 's'
-                                else:
-                                    posted_time = str(int(current_time[1]) - int(post_time[1])) + 'm'
-                            else:
-                                posted_time = str(int(current_time[0]) - int(post_time[0])) + 'hr'
-                        else:
-                            pt = int(current_date[2]) - int(post_date[2])
-                            if pt == 1:
-                                posted_time = 'yesterday'
-                            else:
-                                posted_time = str(pt) + 'd'
-                    else:
-                        posted_time = str(int(current_date[1]) - int(post_date[1])) + 'M'
+            for challenge in user_challenges['Items']:
+                user_name, profile_picture, home = get_user_details(user_email)
+                if user_name == None:
+                    del challenge
                 else:
-                    posted_time = str(int(current_date[0]) - int(post_date[0])) + 'yr'
-                # post_time = calculate_post_deltatime(posts['date'])
-                posts['posted_time'] = {}
-                posts['posted_time']['S'] = posted_time
-                posts['id'] = {}
-                posts['id']['S'] = posts['email']['S']
-                posts['key'] = {}
-                posts['key']['S'] = posts['creation_time']['S']
-                del posts['email']
-                del posts['creation_time']
-                del posts['date']
-                del posts['time']
+                    feed_id = challenge['email']['S'] + '_' + challenge['creation_time']['S']
+                    liked = check_if_user_liked(feed_id, user_email)
+                    starred = check_if_user_starred(feed_id, user_email)
+                    commented = check_if_user_commented(feed_id, user_email)
+                    state = check_challenge_state(user_email, challenge['creation_time']['S'])
+                    taking_off = check_if_taking_off(feed_id, 'challenges')
+                    challenge['user'] = {}
+                    challenge['user']['name'] = {}
+                    challenge['user']['profile_picture'] = {}
+                    challenge['user']['name']['S'] = user_name
+                    challenge['user']['profile_picture']['S'] = profile_picture
+                    challenge['feed'] = {}
+                    challenge['feed']['id'] = {}
+                    challenge['feed']['key'] = {}
+                    challenge['feed']['id']['S'] = challenge['email']['S']
+                    challenge['feed']['key']['S'] = challenge['creation_time']['S']
+                    challenge['state'] = {}
+                    challenge['state']['S'] = state
+                    challenge['liked'] = {}
+                    challenge['starred'] = {}
+                    challenge['commented'] = {}
+                    challenge['taking_off'] = {}
+                    challenge['taking_off']['BOOL'] = taking_off
+                    challenge['liked']['BOOL'] = liked
+                    challenge['starred']['BOOL'] = starred
+                    challenge['commented']['BOOL'] = commented
+                    del challenge['email']
+                    del challenge['creator']
+                    del challenge['value']
             response['message'] = 'Successfully fetched users all challenges!'
             response['result'] = user_challenges['Items']
         except:
             response['message'] = 'Failed to fetch users posts!'
         return response, 200
 
-    # def delete(self):
-    #     """Deletes User's Post"""
-    #     response={}
-    #     challenge_data = request.get_json(force=True)
-    #     if challenge_data.get('id') == None or challenge_data.get('key') == None:
-    #         raise BadRequest('Please provide required data')
-    #     else:
-    #         delete_challenge = db.delete_item(TableName='challenges',
-    #                            Key={'email': {'S': challenge_data['id']},
-    #                                 'creation_time': {'S': challenge_data['key']}
-    #                            }
-    #                        )
-
-    #         response['message'] = 'Challenge deleted!'
-    #         return response, 200
+    def delete(self, user_email):
+        """Deletes User's Post"""
+        response={}
+        challenge_data = request.get_json(force=True)
+        if challenge_data.get('id') == None or challenge_data.get('key') == None:
+            raise BadRequest('Please provide required data')
+        if challenge_data['id'] != str(user_email):
+            raise BadRequest('Challenges can only be deleted by the creators!')
+        else:
+            try:
+                delete_challenge = db.delete_item(TableName='challenges',
+                                  Key={'email': {'S': challenge_data['id']},
+                                       'creation_time': {'S': challenge_data['key']}
+                                  }
+                              )
+                response['message'] = 'Challenge deleted!'
+            except:
+                response['message'] = 'Failed to delete Challenge. Try again later!'
+            return response, 200
 
 
 # class AcceptChallenge(Resource):
@@ -251,17 +306,17 @@ class UsersChallengeRepost(Resource):
                                 }
                             )
                 repost = db.put_item(TableName='challenges',
-                                        Item={'email': {'S': user_email},
-                                              'creation_time': {'S': date_time},
-                                              'description': {'S': post['Item']['description']['S']},
-                                              'likes': {'N': '0'},
-                                              'value': {'N': '0'},
-                                              'status': {'S': 'ACTIVE'},
-                                              'comments': {'N': '0'},
-                                              'favorites': {'N': '0'},
-                                              'stars': {'N': '0'}
-                                        }
-                                    )
+                                Item={'email': {'S': user_email},
+                                      'creation_time': {'S': date_time},
+                                      'description': {'S': post['Item']['description']['S']},
+                                      'likes': {'N': '0'},
+                                      'value': {'N': '0'},
+                                      'state': {'S': 'ACTIVE'},
+                                      'comments': {'N': '0'},
+                                      'stars': {'N': '0'},
+                                      'creator': {'N': user_email}
+                                }
+                            )
                 if data.get('location') != None:
                     repost = db.update_item(TableName='challenges',
                                           Key={'email':{'S': user_email},
@@ -298,6 +353,5 @@ class UsersChallengeRepost(Resource):
         return response, 200
 
 
-api.add_resource(UsersChallengePosts, '/<user_email>', 
-                                      '/')
+api.add_resource(UsersChallengePosts, '/<user_email>')
 api.add_resource(UsersChallengeRepost, '/repost/<user_email>')
