@@ -1,6 +1,8 @@
 # API Documentation
 
 ## Endpoints:
+
+### USER APIS
 - **create a user account**
   - Path: /api/v1/users/accounts/
   - Method: **POST**
@@ -32,14 +34,6 @@
                  If the user does not exist, BadRequest exception is raised with a 
                  message "User does not exist!"
 
-- **get all communities**
-  - Path: /api/v1/communities/
-  - Method: **GET**
-  - Returns: results as an array of communities with city, state 
-             member counts.
-  - Description: Returns all communities in a dictionary with key city, state and members.
-                 States are abbreviated. The client needs to sort them in the alphabetical 
-                 order.
 
 - **get user's profile picture**
   - Path: /api/v1/users/accounts/{user_email}/picture
@@ -86,6 +80,33 @@
                  to *home* community. If a request is sent to delete a community that does 
                  not exists then a BadRequest Exception is raised.
 
+- **change user's password**
+  - Path: /api/v1/user_accounts/{user_email}/password
+  - Method: **PUT**
+  - Required Data: current_password, new_password
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code if the password changed successfully.
+  - Description: Changes user's password. Current password is required to authenticate 
+                 user and then the password is changed to the new password. 
+                 Raises exception if any data is not provided.
+                 Results in failure if the current password does not match user's current 
+                 password.
+  -IMPORTANT: Check if new_password and confirm_password matches on the front end 
+              before sending the new password.
+
+
+### COMMUNITY APIS
+- **get all communities**
+  - Path: /api/v1/communities/
+  - Method: **GET**
+  - Returns: results as an array of communities with city, state 
+             member counts.
+  - Description: Returns all communities in a dictionary with key city, state and members.
+                 States are abbreviated. The client needs to sort them in the alphabetical 
+                 order.
+
+
+### USERS ACTIVITY APIS
 - **follow a user**
   - Path: /api/v1/users/{user_email}/following
   - Method: **PUT**
@@ -118,6 +139,9 @@
   - Returns: List of all followers if any with a success message and *200 OK* Status Code.
   - Description: Returns all users followers as results with a message.
 
+
+
+### USERS POSTS APIS
 - **create post**
   - Path: /api/v1/users/posts/{user_email}
   - Method: **POST**
@@ -160,38 +184,6 @@
   - Description: Gets all users posts. 
                 - Use *posted_time* to display time on post.
 
-- **create challenge**
-  - Path: /api/v1/users/{user_email}/challenge
-  - Method: **POST**
-  - Content-Type: application/json
-  - Required Data: description
-  - Optional Data: location
-  - Returns: *201 OK* Status Code and message if challenge created succesfully.
-  - Description: Creates challenge. To create a challenge, description is required.
-                 If it does not contain any description, it will raise a BadRequest
-                 Exception with a message.
-                 Provide location only when the user have their location services on
-                 for the application. The location should be a string in the following 
-                 syntax: "City, State".
-
-- **edit challenge**
-  - Path: /api/v1/users/challenges/{user_email}
-  - Method: **PUT**
-  - Content-Type: application/json
-  - Data: description, id, key
-  - Returns: *200 OK* Status Code and message if challenge edited successfully.
-  - Description: Edits challenge description. {user_email} is the email id for 
-                 the one editing the challenge.
-                 Only the creator of the challenge can edit the challenge. If someone 
-                 else trys to edit the challenge, it raises a BadRequest Exception.
-
-- **get user's challenges**
-  - Path: /api/v1/users/{user_email}/challenge
-  - Method: **GET**
-  - Returns: *200 OK* Status Code and message if fetched challenges successfully.
-  - Description: Gets all users challenges. 
-                - Use *posted_time* to display time on challenge.
-
 - **delete user's post**
   - Path: /api/v1/users/posts/{user_email}
   - Method: **DELETE**
@@ -201,32 +193,7 @@
   - Description: Deletes the user's post.  {user_email} is the email id for 
                  the one deleting the post.
                  Only the creator of the post can delete the post. If someone else trys to
-                 delete the post, it raises a BadRequest Exception.
-
-- **delete user's challenge**
-  - Path: /api/v1/users/challenge
-  - Method: **DELETE**
-  - Required Data: id, key
-  - Content-Type: application/json
-  - Returns: *200 OK* Status code if the post is deleted successfully.
-  - Description: Deletes the user's challenge. {user_email} is the email id for 
-                 the one deleting the challenge.
-                 Only the creator of the challenge can delete the challenge. If someone 
-                 else trys to delete the challenge, it raises a BadRequest Exception.
-
-- **change user's password**
-  - Path: /api/v1/user_accounts/{user_email}/password
-  - Method: **PUT**
-  - Required Data: current_password, new_password
-  - Content-Type: application/json
-  - Returns: *200 OK* Status Code if the password changed successfully.
-  - Description: Changes user's password. Current password is required to authenticate 
-                 user and then the password is changed to the new password. 
-                 Raises exception if any data is not provided.
-                 Results in failure if the current password does not match user's current 
-                 password.
-  -IMPORTANT: Check if new_password and confirm_password matches on the front end 
-              before sending the new password.
+                 delete the post, it raises a BadRequest Exception.                        
 
 - **repost feed post**
   - Path: /api/v1/users/posts/repost/{user_email}
@@ -237,15 +204,91 @@
   - Description: Reposts users feed post. The client should send key and id for the post 
                  and location if the location services are on.
 
-- **repost challenge**
+
+
+### USERS CHALLENGES APIS
+
+**Note** : - There are *FOUR STATES* in challenges.
+             - ACTIVE, INACTIVE, COMPLETE, INCOMPLETE
+           - When a user creates a new challenge, the challenge becomes 'ACTIVE' for 
+             for the user who created/accepted the challenge and clock starts ticking from 
+             that point. The user now has 48 hrs to complete the challenge. 
+           - If the user does not respond in 48 hrs, the challenge becomes 'INACTIVE'. 
+           - Any any point of time during the challenge is 'ACTIVE' or 'INACTIVE, the user 
+             can click the button where the clock is ticking and a question is popped up 
+             asking if the user has completed the challenge. If the user selects *YES*,
+             then the state of the challenge changes to 'COMPLETE' and they are praised with a 
+             *Good Job* message. If the user selects *NO*, then the state changes to 
+             'INCOMPLETE' and they are shown *Good Try* message.
+           - Until they answer the question that if they have completed the challenge or not,
+             the challenge stays in the 'INACTIVE' state and shows *'0h 0m'*.
+
+- **create challenge**
+  - Path: /api/v1/users/challenges/{user_email}
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: description
+  - Optional Data: location
+  - Returns: *201 OK* Status Code and message if challenge created succesfully.
+  - Description: - Creates a new challenge. To create a challenge, description is required.
+                 - If it does not contain any description, it will raise a BadRequest
+                   Exception with a message.
+                 - Provide location only when the user have their location services on
+                   for the application. The location should be a string in the following 
+                   syntax: "City, State".
+
+
+- **edit challenge**
+  - Path: /api/v1/users/challenges/{user_email}
+  - Method: **PUT**
+  - Content-Type: application/json
+  - Data: description, state, id, key
+  - Returns: *200 OK* Status Code and message if challenge edited successfully.
+  - Description: - Edits challenge description. {user_email} is the email id for 
+                   the one editing the challenge.
+                 - Only the creator of the challenge can edit the challenge. If someone 
+                   else trys to edit the challenge, it raises a BadRequest Exception.
+                 - Either only description or state is sent in the request.
+                 - state can either be 'incomplete', 'complete' or 'inactive'
+                 - if the challenge has been created 48 hrs ago, the client should send 
+                   a request to change the state of the challenge to 'inactive'.
+                 - 'complete' and 'incomplete' states are the events occured only when 
+                   the user interacts with it.
+
+- **get user's challenges**
+  - Path: /api/v1/users/challenges/{user_email}
+  - Method: **GET**
+  - Returns: *200 OK* Status Code and message if fetched challenges successfully.
+  - Description: Gets all users challenges. 
+                - Use *creation_time* to calculate time to display on challenge.
+
+
+
+- **delete user's challenge**
+  - Path: /api/v1/users/challenge/{user_email}
+  - Method: **DELETE**
+  - Required Data: id, key
+  - Content-Type: application/json
+  - Returns: *200 OK* Status code if the post is deleted successfully.
+  - Description: - Deletes the user's challenge. {user_email} is the email id for 
+                   the one deleting the challenge.
+                 - Only the creator of the challenge can delete the challenge. If someone 
+                   else trys to delete the challenge, it raises a BadRequest Exception.
+
+
+<!-- Doesn't work for now -->
+<!-- - **repost challenge**
   - Path: /api/v1/users/{user_email}/challenge/repost
   - Method: **POST**
   - Data: id, key, location(optional)
   - Content-Type: application/json
   - Returns: *200 OK* Status Code if repost is successful
   - Description: Reposts users challenge. The client should send key and id for the post 
-                 and location if the location services are on.
+                 and location if the location services are on. -->
 
+
+
+### USERS FEED ACTIVITIES APIS
 - **feed like/unlike**
   - Path: /api/v1/feeds/likes/{user_email}/{feed}
   - Method: **PUT**
