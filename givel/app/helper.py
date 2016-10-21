@@ -1,4 +1,6 @@
 import boto3
+import datetime
+
 from werkzeug.utils import secure_filename
 
 s3 = boto3.client('s3')
@@ -211,5 +213,99 @@ def get_user_details(user_id):
             profile_picture = user['Item']['profile_picture']['S']
         return user_name, profile_picture, home_community
 
+
+def check_if_user_liked(feed_id, user_id):
+    liked = False
+    user_like = db.get_item(TableName='likes',
+                Key={'feed': {'S': feed_id},
+                     'user': {'S': user_id}
+                }
+            )
+    if user_like.get('Item') != None:
+        liked = True
+    return liked
+
+def check_if_user_starred(feed_id, user_id):
+    starred = False
+    user_starred = db.query(TableName='stars_activity',
+                IndexName='stars-activity-email-id',
+                KeyConditionExpression='email = :e AND shared_id = :id',
+                ExpressionAttributeValues={
+                    ':e': {'S': user_id},
+                    ':id': {'S': feed_id}
+                }
+            )
+    if user_starred.get('Item') != None:
+        starred = True
+    return starred
+
+def check_if_user_commented(feed_id, user_id):
+    commented = False
+    user_commented = db.query(TableName='comments',
+                    IndexName='comments-feed-email',
+                    KeyConditionExpression='feed_id = :id AND email = :e',
+                    ExpressionAttributeValues={
+                        ':id': {'S': feed_id},
+                        ':e': {'S': user_id}
+                    }
+                )
+    if user_commented.get('Item') != None:
+        commented = True
+    return commented
+
+def check_challenge_state(id, key):
+    challenge = db.get_item(TableName='challenges',
+                        Key={'email': {'S': id},
+                             'creation_time': {'S': key}
+                        }
+                    )
+    if challenge['Item']['state']['S'] == 'COMPLETE':
+        state = 'COMPLETE'
+        return state
+    elif challenge['Item']['state']['S'] == 'INCOMPLETE':
+        state = 'INCOMPLETE'
+        return state
+    elif challenge['Item']['state']['S'] == 'ACTIVE':
+        current_time = datetime.datetime.now()
+        creation_time = datetime.datetime.strptime(key, "%Y-%m-%d %H:%M:%S")
+        diff = current_time - creation_time
+        str_diff = str(diff).rsplit(' ', 2)[0]
+        try:
+            if int(str_diff) >= 2:
+                change_state = db.update_item(TableName='challenges',
+                                        Key={'email': {'S': id},
+                                             'creation_time': {'S': key}
+                                        },
+                                        UpdateExpression='SET #s = :st',
+                                        ExpressionAttributeNames={
+                                            '#s': 'state'
+                                        },
+                                        ExpressionAttributeValues={
+                                            ':st': {'S': 'INACTIVE'}
+                                        }
+                                    )
+                state = 'INACTIVE'
+                return state
+        except:
+            state = 'ACTIVE'
+            return state
+    elif challenge['Item']['state']['S'] == 'INACTIVE':
+        state = 'INACTIVE'
+        return state
+
+def check_if_taking_off(feed_id, feed):
+    id = feed_id.rsplit('_', 1)[0]
+    key = feed_id.rsplit('_', 1)[1]
+    feed = db.get_item(TableName=feed,
+                    Key={'email': {'S': id},
+                         'creation_time': {'S': key}
+                    }
+                )
+    value = feed['Item']['value']['N']
+    if int(value) >= 50:
+        taking_off = True
+    else:
+        taking_off = False
+    return taking_off
 
 
