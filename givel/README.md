@@ -221,7 +221,8 @@
              *Good Job* message. If the user selects *NO*, then the state changes to 
              'INCOMPLETE' and they are shown *Good Try* message.
            - Until they answer the question that if they have completed the challenge or not,
-             the challenge stays in the 'INACTIVE' state and shows *'0h 0m'*.
+             the challenge stays in the 'INACTIVE' state even if the clock ticks down to 
+             *'0h 0m'* and it should show *'0h 0m'*.
 
 - **create challenge**
   - Path: /api/v1/users/challenges/{user_email}
