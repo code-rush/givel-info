@@ -8,6 +8,11 @@ from flask_restful import Api, Resource
 
 from app.models import create_posts_table
 from app.helper import upload_post_file
+from app.helper import check_if_user_liked
+from app.helper import check_if_user_starred
+from app.helper import check_if_user_commented
+from app.helper import get_user_details
+from app.helper import check_if_taking_off
 
 from werkzeug.exceptions import BadRequest
 
@@ -175,11 +180,35 @@ class UsersPost(Resource):
                                 }
                             )
             for posts in user_posts['Items']:
-                posts['id'] = {}
-                posts['id']['S'] = posts['email']['S']
-                posts['key'] = {}
-                posts['key']['S'] = posts['creation_time']['S']
-                del posts['email']
+                user_name, profile_picture, home = get_user_details(user_email)
+                if user_name == None:
+                    del posts
+                else:
+                    feed_id = posts['email']['S'] + '_' + posts['creation_time']['S']
+                    liked = check_if_user_liked(feed_id, user_email)
+                    starred = check_if_user_starred(feed_id, user_email)
+                    commented = check_if_user_commented(feed_id, user_email)
+                    taking_off = check_if_taking_off(feed_id, 'posts')
+                    posts['user'] = {}
+                    posts['user']['name'] = {}
+                    posts['user']['profile_picture'] = {}
+                    posts['user']['name']['S'] = user_name
+                    posts['user']['profile_picture']['S'] = profile_picture
+                    posts['feed'] = {}
+                    posts['feed']['id'] = {}
+                    posts['feed']['id']['S'] = posts['email']['S']
+                    posts['feed']['key'] = {}
+                    posts['feed']['key']['S'] = posts['creation_time']['S']
+                    posts['liked'] = {}
+                    posts['starred'] = {}
+                    posts['commented'] = {}
+                    posts['taking_off'] = {}
+                    posts['taking_off']['BOOL'] = taking_off
+                    posts['liked']['BOOL'] = liked
+                    posts['starred']['BOOL'] = starred
+                    posts['commented']['BOOL'] = commented
+                    del posts['email']
+                    del posts['value']
             response['message'] = 'Successfully fetched users all posts!'
             response['result'] = user_posts['Items']
         except:
