@@ -46,7 +46,7 @@ try:
     try:
         table_response = db.describe_table(TableName='comments')
         if table_response['Table']['TableStatus'] == 'ACTIVE':
-            print('comments table created')
+            print('comments table exists')
     except:
         comments = create_comments_table()
         print('comments table created!')
@@ -147,6 +147,8 @@ class FeedStars(Resource):
             raise BadRequest('You have no stars left to donate.')
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('feed id and key not provided')
+        if data.get('id') == user_email:
+            raise BadRequest('You cannot give stars to your own post!')
         else:
             if int(data['stars']) == 0:
                 raise BadRequest('Cannot donate less than 1 star.')
