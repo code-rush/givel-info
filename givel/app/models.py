@@ -275,10 +275,26 @@ def create_stars_activity_table():
                         {
                             'AttributeName': 'shared_to',
                             'KeyType': 'RANGE'
-                        },
+                        }
                     ],
                     'Projection': {
                         'ProjectionType': 'ALL'
+                    }
+                },
+                {
+                    'IndexName': 'stars-activity-email-id',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'email',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'shared_id',
+                            'KeyType': 'RANGE'
+                        }
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'KEYS_ONLY'
                     }
                 }
             ],
