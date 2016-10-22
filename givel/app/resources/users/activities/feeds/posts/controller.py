@@ -7,6 +7,8 @@ from flask import Blueprint, request
 from flask_restful import Api, Resource
 
 from app.models import create_posts_table
+from app.models import create_favorite_posts_table
+
 from app.helper import upload_post_file
 from app.helper import check_if_user_liked
 from app.helper import check_if_user_starred
@@ -33,6 +35,17 @@ try:
     except:
         posts = create_posts_table()
         print('Posts Table created!')
+except:
+    pass
+
+try: 
+    try:
+        table_response = db.describe_table(TableName='favorites')
+        if table_response['Table']['TableStatus'] == 'ACTIVE':
+            print('favorites Table exists!')
+    except:
+        favorites = create_favorite_posts_table()
+        print('favorites Table created!')
 except:
     pass
 
@@ -344,7 +357,74 @@ class UserRepostFeed(Resource):
         return response, 200
 
 
+class UsersFavoritePosts(Resource):
+    def put(self, user_email):
+        response = {}
+        data = request.get_json(force=True)
+
+        if date.get('id') == None or data.get('key') == None:
+            raise BadRequest('Provide feed id and key to add to the favorites')
+        else:
+            feed_id = str(data['id']) + '_' + str(data['key'])
+            try:
+                add_to_fav = db.put_item(TableName='favorites',
+                                Item={'email': {'S': user_email},
+                                      'feed_id': {'S': feed_id}
+                                }
+                            )
+                response['message'] = 'Post added to your favorites'
+            except:
+                response['message'] = 'Try again later'
+            return response, 200
+
+    def delete(self, user_email):
+        response = {}
+        data = request.get_json(force=True)
+
+        if date.get('id') == None or data.get('key') == None:
+            raise BadRequest('Provide feed id and key to delete post')
+        else:
+            feed_id = str(data['id']) + '_' + str(data['key'])
+            try:
+                delete_fav = db.delete_item(TableName='favorites',
+                                Key={'email': {'S': user_email},
+                                     'feed_id': {'S': feed_id}
+                                }
+                            )
+                response['message'] = 'Post deleted from your favorites'
+            except:
+                response['message'] = 'Try again later'
+            return response, 200
+
+    # def get(self, user_email):
+    #     response = {}
+
+    #     favorite_posts = db.query(TableName='favorites',
+    #                     Select='ALL_ATTRIBUTES'
+    #                     KeyConditionExpression='email = :e',
+    #                     ExpressionAttributeValues={
+    #                         ':e': {'S': user_email}
+    #                     }
+    #                 )
+
+    #     if favorite_posts.get('Items') == None:
+    #         response['message'] = 'You have no favorite posts!'
+    #     else:
+    #         try:
+    #             for post in favorite_posts['Items']:
+    #                 p_id = post['feed_id'].rsplit('_',1)[0]
+    #                 p_key = post['feed_id'].rsplit('_',1)[1]
+    #                 p = db.get_item(TableName='posts',
+    #                         Key={'email': {'S': p_id},
+    #                              'creation_time': {'S': p_key}
+    #                         }
+    #                     )
+    #                 post = p['Item']
+
+
+
 
 api.add_resource(UsersPost, '/<user_email>')
 api.add_resource(UserRepostFeed, '/repost/<user_email>')
+api.add_resource(UsersFavoritePosts, '/favorites/<user_email>')
 
