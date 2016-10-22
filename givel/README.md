@@ -264,8 +264,6 @@
   - Description: Gets all users challenges. 
                 - Use *creation_time* to calculate time to display on challenge.
 
-
-
 - **delete user's challenge**
   - Path: /api/v1/users/challenge/{user_email}
   - Method: **DELETE**
@@ -277,16 +275,34 @@
                  - Only the creator of the challenge can delete the challenge. If someone 
                    else trys to delete the challenge, it raises a BadRequest Exception.
 
-
-<!-- Doesn't work for now -->
-<!-- - **repost challenge**
-  - Path: /api/v1/users/{user_email}/challenge/repost
+- **repost challenge**
+  - Path: /api/v1/users/challenges/repost/{user_email}
   - Method: **POST**
-  - Data: id, key, location(optional)
+  - Required Data: id, key 
+  - Optional Data: location
   - Content-Type: application/json
   - Returns: *200 OK* Status Code if repost is successful
   - Description: Reposts users challenge. The client should send key and id for the post 
-                 and location if the location services are on. -->
+                 and location if the location services are on.
+
+- **post challenge as own**
+  - Path: /api/v1/users/challenges/post/{user_email}
+  - Method: **POST**
+  - Required Data: id, key 
+  - Optional Data: location
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code if repost is successful
+  - Description: Makes other user challenges as their own. The client should send 
+                 key and id for the challenge in the request and location if the location 
+                 services are on.
+
+- **accept challenge**
+  - Path: /api/v1/users/challenges/accept/{user_email}
+  - Method: **PUT**
+  - Required Data: id, key
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code if repost is successful
+  - Description: Accepts challenges for the user.
 
 
 
@@ -417,3 +433,20 @@
                  *id* and *key* here are the feed id and key which needs to be sent 
                  with the request.
 
+
+### USERS FAVORITES POSTS APIS
+- **add post to favorites**
+  - Path: /api/v1/users/posts/favorites/{user_email}
+  - Method: **PUT**
+  - Required Data: id, key
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code if the post successfully added to the favorites
+  - Description: Adds posts to users favorites.
+
+- **delete post from favorites**
+  - Path: /api/v1/users/posts/favorites/{user_email}
+  - Method: **DELETE**
+  - Required Data: id, key
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code if the post successfully deleted from the favorites
+  - Description: Deletes posts from the users favorites
