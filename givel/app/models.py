@@ -18,6 +18,49 @@ def create_users_table():
                    'AttributeType': 'S'
                }
            ],
+           GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'users-in-home-community',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'home',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'email',
+                            'KeyType': 'RANGE'
+                        },
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'KEYS_ONLY'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 10,
+                        'WriteCapacityUnits': 10
+                    }
+                },
+                {
+                    'IndexName': 'users-in-home-away-community',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'home_away',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'email',
+                            'KeyType': 'RANGE'
+                        },
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'KEYS_ONLY'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 10,
+                        'WriteCapacityUnits': 10
+                    }
+                }
+
+            ],
            ProvisionedThroughput={
                 'ReadCapacityUnits': 10,
                 'WriteCapacityUnits': 10
@@ -396,3 +439,41 @@ def create_comments_table():
             print('Comments Table does not exist')
     finally:
         return comments_table
+
+
+def create_favorite_posts_table():
+    try:
+        favorites_table = dynamodb.create_table(
+            TableName='favorites',
+            KeySchema=[
+                {
+                    'AttributeName': 'email',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'feed_id',
+                    'KeyType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'email',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'feed_id',
+                    'AttributeType': 'S'
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 10
+            }
+        )
+    except:
+        try:
+            favorites_table = dynamodb.Table('favorites')
+        except:
+            print('Favorites Table does not exists')
+    finally:
+        return favorites_table
