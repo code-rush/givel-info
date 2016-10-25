@@ -16,6 +16,14 @@ def create_users_table():
                {
                    'AttributeName': 'email',
                    'AttributeType': 'S'
+               },
+               {
+                   'AttributeName': 'home',
+                   'AttributeType': 'S'
+               },
+               {
+                   'AttributeName': 'home_away',
+                   'AttributeType': 'S'
                }
            ],
            GlobalSecondaryIndexes=[
@@ -25,11 +33,7 @@ def create_users_table():
                         {
                             'AttributeName': 'home',
                             'KeyType': 'HASH'
-                        },
-                        {
-                            'AttributeName': 'email',
-                            'KeyType': 'RANGE'
-                        },
+                        }
                     ],
                     'Projection': {
                         'ProjectionType': 'KEYS_ONLY'
@@ -45,11 +49,7 @@ def create_users_table():
                         {
                             'AttributeName': 'home_away',
                             'KeyType': 'HASH'
-                        },
-                        {
-                            'AttributeName': 'email',
-                            'KeyType': 'RANGE'
-                        },
+                        }
                     ],
                     'Projection': {
                         'ProjectionType': 'KEYS_ONLY'
@@ -477,3 +477,4 @@ def create_favorite_posts_table():
             print('Favorites Table does not exists')
     finally:
         return favorites_table
+
