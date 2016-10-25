@@ -7,13 +7,18 @@ from flask_restful import Resource, Api
 
 from app.models import create_community_table
 
+from app.helper import check_if_taking_off, check_if_user_liked
+from app.helper import check_if_user_starred, check_if_user_commented
+from app.helper import get_user_details
+
 db = boto3.client('dynamodb')
 
 try:
-    table_response = db.describe_table(TableName='communities')
-    if table_response['Table']['TableStatus'] == 'ACTIVE':
-        print('Communities Table exists!')
-    else:
+    try:
+        table_response = db.describe_table(TableName='communities')
+        if table_response['Table']['TableStatus'] == 'ACTIVE':
+            print('Communities Table exists!')
+    except:
         communities = create_community_table()
         print('Communities table created!')
 except:
@@ -70,17 +75,164 @@ class Communities(Resource):
         response['results'] = items
         return response, 200
 
-# class CommunityPosts(Resource):
-#     def get(self, user_email):
-#         """Returns all posts from users communities"""
-#         user_communities = db.get_item(TableName='users',
-#                                Key={'email': {'S': user_email}},
-#                                ProjectionExpression='home, home_away'
-#                            )
-#         community_posts = db.scan(TableName='posts',
-#                                FilterExpression
-#                            )
+class CommunityPosts(Resource):
+    def get(self, user_email):
+        """Returns all posts from users communities"""
+        response = {}
+        user_communities = db.get_item(TableName='users',
+                               Key={'email': {'S': user_email}},
+                               ProjectionExpression='home, home_away'
+                           )
+        users = []
+        home_users = db.query(TableName='users',
+                            IndexName='users-in-home-community',
+                            KeyConditionExpression='home = :h',
+                            ExpressionAttributeValues={
+                                ':h': {'S': user_communities['Item']['home']['S']}
+                            }
+                        )
+        users = home_users['Items']
 
+        if user_communities['Items'].get('home_away') != None:
+            home_away_users = db.query(TableName='users',
+                                IndexName='users-in-home-away-community',
+                                KeyConditionExpression='home_away = :h',
+                                ExpressionAttributeValues={
+                                    ':h': {'S': user_communities['Item']['home_away']['S']}
+                                }
+                            )
+
+            users = users + home_users['Items']
+
+        feeds = []
+        for user in users:
+            try:
+                community_posts = db.query(TableName='posts',
+                                       KeyConditionExpression='email = :e',
+                                       ExpressionAttributeValues={
+                                           ':e': {'S': user['email']['S']}
+                                       }
+                                   )
+                for post in community_posts['Items']:
+                    user_name, profile_picture, home = get_user_details(post['email']['S'])
+                    if user_name == None:
+                        del post
+                    else:
+                        feed_id = post['email']['S'] + '_' + post['creation_time']['S']
+                        liked = check_if_user_liked(feed_id, user_email)
+                        starred = check_if_user_starred(feed_id, user_email)
+                        commented = check_if_user_commented(feed_id, user_email)
+                        taking_off = check_if_taking_off(feed_id, 'posts')
+                        post['user'] = {}
+                        post['user']['name'] = {}
+                        post['user']['profile_picture'] = {}
+                        post['user']['name']['S'] = user_name
+                        post['user']['profile_picture']['S'] = profile_picture
+                        post['feed'] = {}
+                        post['feed']['id'] = {}
+                        post['feed']['id']['S'] = post['email']['S']
+                        post['feed']['key'] = {}
+                        post['feed']['key']['S'] = post['creation_time']['S']
+                        post['liked'] = {}
+                        post['starred'] = {}
+                        post['commented'] = {}
+                        post['taking_off'] = {}
+                        post['taking_off']['BOOL'] = taking_off
+                        post['liked']['BOOL'] = liked
+                        post['starred']['BOOL'] = starred
+                        post['commented']['BOOL'] = commented
+                        del post['email']
+                        del post['value']
+                        feeds.append(post)
+                response['message'] = 'Successfully fetched all community posts!'
+                response['results'] = feeds
+            except:
+                response['message'] = 'Failed to fetch community posts!'
+
+        return response, 200
+
+
+class CommunityChallenges(Resource):
+    def get(self, user_email):
+        """Returns all challenges in users community"""
+        response = {}
+        user_communities = db.get_item(TableName='users',
+                               Key={'email': {'S': user_email}},
+                               ProjectionExpression='home, home_away'
+                           )
+        users = []
+        home_users = db.query(TableName='users',
+                            IndexName='users-in-home-community',
+                            KeyConditionExpression='home = :h',
+                            ExpressionAttributeValues={
+                                ':h': {'S': user_communities['Item']['home']['S']}
+                            }
+                        )
+        users = home_users['Items']
+
+        if user_communities['Items'].get('home_away') != None:
+            home_away_users = db.query(TableName='users',
+                                IndexName='users-in-home-away-community',
+                                KeyConditionExpression='home_away = :h',
+                                ExpressionAttributeValues={
+                                    ':h': {'S': user_communities['Item']['home_away']['S']}
+                                }
+                            )
+
+            users = users + home_users['Items']
+
+        feeds = []
+        for user in users:
+            try:
+                community_challenges = db.query(TableName='challenges',
+                                       KeyConditionExpression='email = :e',
+                                       ExpressionAttributeValues={
+                                           ':e': {'S': user['email']['S']}
+                                       }
+                                   )
+                for challenge in community_challenges['Items']:
+                    user_name, profile_picture, home = get_user_details(challenge['creator']['S'])
+                    if user_name == None:
+                        del challenge
+                    else:
+                        feed_id = challenge['email']['S'] + '_' + challenge['creation_time']['S']
+                        liked = check_if_user_liked(feed_id, user_email)
+                        starred = check_if_user_starred(feed_id, user_email)
+                        commented = check_if_user_commented(feed_id, user_email)
+                        state = check_challenge_state(user_email, challenge['creation_time']['S'])
+                        taking_off = check_if_taking_off(feed_id, 'challenges')
+                        challenge['user'] = {}
+                        challenge['user']['name'] = {}
+                        challenge['user']['profile_picture'] = {}
+                        challenge['user']['name']['S'] = user_name
+                        challenge['user']['profile_picture']['S'] = profile_picture
+                        challenge['feed'] = {}
+                        challenge['feed']['id'] = {}
+                        challenge['feed']['key'] = {}
+                        challenge['feed']['id']['S'] = challenge['email']['S']
+                        challenge['feed']['key']['S'] = challenge['creation_time']['S']
+                        challenge['state'] = {}
+                        challenge['state']['S'] = state
+                        challenge['liked'] = {}
+                        challenge['starred'] = {}
+                        challenge['commented'] = {}
+                        challenge['taking_off'] = {}
+                        challenge['taking_off']['BOOL'] = taking_off
+                        challenge['liked']['BOOL'] = liked
+                        challenge['starred']['BOOL'] = starred
+                        challenge['commented']['BOOL'] = commented
+                        del challenge['email']
+                        del challenge['creator']
+                        del challenge['value']
+                        feeds.append(challenge)
+                response['message'] = 'Successfully fetched all community challenges!'
+                response['results'] = feeds
+            except:
+                response['message'] = 'Failed to fetch users challenges!'
+        return response, 200
 
 
 api.add_resource(Communities, '/')
+api.add_resource(CommunityPosts, '/posts/<user_email>')
+api.add_resource(CommunityChallenges, '/challenges/<user_email>')
+
