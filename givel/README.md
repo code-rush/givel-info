@@ -323,7 +323,6 @@
                  - {feed} is either *posts* or *challenges*. Any other value raises 
                    an exception.
 
-
 - **post only to followers**
   - Path: /api/v1/users/accounts/settings/post_only_to_followers/{user_email}
   - Method: **PUT**
@@ -335,7 +334,6 @@
                  on both communities and followers.
                  By default the post shows up to both communities and followers.
                  The value here is either 'true' or 'false'.
-
 
 - **share stars**
   - Path: /api/v1/feeds/stars/share{user_email}/{feed}
@@ -350,7 +348,6 @@
                  - {user_email} is the email of the user who donates the stars.
                  - {feed} is either *posts* or *challenges*. Any other value raises 
                    an exception.
-
 
 - **share stars with followings**
   - Path: /api/v1/users/accounts/stars/share/{user_email}
@@ -411,7 +408,6 @@
                  *id* and *key* here are the feed id and key which needs to be sent 
                  with the request to fetch all comments made on that feed.
 
-
 - **get feed likes**
   - Path: /api/v1/feeds/likes
   - Method: **POST**
@@ -422,7 +418,6 @@
                  *id* and *key* here are the feed id and key which needs to be sent 
                  with the request.
 
-
 - **get feed stars**
   - Path: /api/v1/feeds/stars
   - Method: **POST**
@@ -432,6 +427,31 @@
   - Description: Gets all users who gave stars to the post.
                  *id* and *key* here are the feed id and key which needs to be sent 
                  with the request.
+
+- **get community posts(feed)**
+  - Path: /api/v1/communities/posts/{user_email}
+  - Method: **GET**
+  - Returns: Posts feeds in the community
+  - Description: Gets the users feeds that are in the community of the logged in user.
+
+- **get community challenges(feed)**
+  - Path: /api/v1/communities/challenges/{user_email}
+  - Method: **GET**
+  - Returns: Challenges feeds in the community
+  - Description: Gets the users post feeds that are in the community of the logged in user.
+
+- **get following posts(feed)**
+  - Path: /api/v1/users/following/posts/{user_email}
+  - Method: **GET**
+  - Returns: Posts feeds in the following.
+  - Description: Returns all the posts of the followings.
+
+- **get following challenges(feed)**
+  - Path: /api/v1/users/following/challenges/{user_email}
+  - Method: **GET**
+  - Returns: Challenges feeds in the following.
+  - Description: Returns all the challenges of the followings.
+
 
 
 ### USERS FAVORITES POSTS APIS
