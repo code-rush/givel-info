@@ -29,14 +29,16 @@ s3 = boto3.client('s3')
 
 # Connect to database and create table if not already created else return Table
 try:
-    table_response = db.describe_table(TableName='users')
-    if table_response['Table']['TableStatus'] == 'ACTIVE':
-        print('Users Table exists!')
-    else:
+    try:
+        table_response = db.describe_table(TableName='users')
+        if table_response['Table']['TableStatus'] == 'ACTIVE':
+            print('Users Table exists!')
+    except:
         users = create_users_table()
         print('Users Table created!')
 except:
     pass
+
 
 
 class UserAccount(Resource):
@@ -413,17 +415,17 @@ class ForgotPassword(Resource):
                             }
                         )
 
-            # try:
-            send_mail = Message('Forgot Password',
-                                sender='parikh.japan30@gmail.com',
-                                recipients=['{}'.format(data['email'])]
-                            )
-            send_mail.body = 'New Password = {}'.format(random_pwd)
-            mail.send(send_mail)
-            print (random_pwd)
-            response['message'] = 'Request sent successfully.'
-            # except:
-            #     response['message'] = 'Request Failed!'
+            try:
+                send_mail = Message('Forgot Password',
+                                    sender='parikh.japan30@gmail.com',
+                                    recipients=['{}'.format(data['email'])]
+                                )
+                send_mail.body = 'New Password = {}'.format(random_pwd)
+                mail.send(send_mail)
+                print (random_pwd)
+                response['message'] = 'Request sent successfully.'
+            except:
+                response['message'] = 'Request Failed!'
 
             return response, 200
 
