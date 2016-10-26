@@ -478,3 +478,82 @@ def create_favorite_posts_table():
     finally:
         return favorites_table
 
+
+def create_report_table():
+    try:
+        reports_table = dynamodb.create_table(
+            TableName='reports',
+            KeySchema=[
+                {
+                    'AttributeName': 'feed_id',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'reported_by',
+                    'KeyType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'feed_id',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'reported_by',
+                    'AttributeType': 'S'
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 10
+            }
+        )
+    except:
+        try:
+            reports_table = dynamodb.Table('reports')
+        except:
+            print('reports Table does not exists')
+    finally:
+        return reports_table
+
+
+def create_notification_table():
+    try:
+        notification_table = dynamodb.create_table(
+            TableName='notifications',
+            KeySchema=[
+                {
+                    'AttributeName': 'email',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'create_time',
+                    'KeyType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'email',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'creation_time',
+                    'AttributeType': 'S'
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 10
+            }
+         )
+    except:
+        try:
+            notification_table = dynamodb.Table('notifications')
+        except:
+            print('notifications Table does not exists')
+    finally:
+        return notification_table        
+
+
+
+
