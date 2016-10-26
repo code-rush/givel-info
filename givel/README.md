@@ -452,6 +452,18 @@
   - Returns: Challenges feeds in the following.
   - Description: Returns all the challenges of the followings.
 
+- **report post**
+  - Path: /api/v1/reports/{feed}/{user_email}
+  - Method: **POST**
+  - Required Data: id, key
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code and a message if the post reported successfully
+  - Description:  - Reports a feed. If the user on givel felt that this post is 
+                    not appropriate and choose to report it, this api reports the post to 
+                    the company. 
+                  - The client needs to send 'id' and 'key' of the post with the request.
+                  - value for {feed} is either 'posts' or 'challenges'.
+
 
 
 ### USERS FAVORITES POSTS APIS
