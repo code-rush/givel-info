@@ -482,3 +482,12 @@
   - Content-Type: application/json
   - Returns: *200 OK* Status Code if the post successfully deleted from the favorites
   - Description: Deletes posts from the users favorites
+
+- **get all favorite posts**
+  - Path: /api/v1/users/posts/favorites/{user_email}
+  - Method: **GET**
+  - Returns: List of all user's favorites posts if any.
+  - Description: Gets user's all favorites posts. If there aren't any favorite posts 
+                 then the response will consist of just a message and no results.
+
+
