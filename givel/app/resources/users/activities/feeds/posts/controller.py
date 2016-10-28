@@ -362,7 +362,7 @@ class UsersFavoritePosts(Resource):
         response = {}
         data = request.get_json(force=True)
 
-        if date.get('id') == None or data.get('key') == None:
+        if data.get('id') == None or data.get('key') == None:
             raise BadRequest('Provide feed id and key to add to the favorites')
         else:
             feed_id = str(data['id']) + '_' + str(data['key'])
@@ -381,7 +381,7 @@ class UsersFavoritePosts(Resource):
         response = {}
         data = request.get_json(force=True)
 
-        if date.get('id') == None or data.get('key') == None:
+        if data.get('id') == None or data.get('key') == None:
             raise BadRequest('Provide feed id and key to delete post')
         else:
             feed_id = str(data['id']) + '_' + str(data['key'])
@@ -396,30 +396,61 @@ class UsersFavoritePosts(Resource):
                 response['message'] = 'Try again later'
             return response, 200
 
-    # def get(self, user_email):
-    #     response = {}
+    def get(self, user_email):
+        response = {}
+        favorites = []
+        favorite_posts = db.query(TableName='favorites',
+                        Select='ALL_ATTRIBUTES',
+                        KeyConditionExpression='email = :e',
+                        ExpressionAttributeValues={
+                            ':e': {'S': user_email}
+                        }
+                    )
 
-    #     favorite_posts = db.query(TableName='favorites',
-    #                     Select='ALL_ATTRIBUTES'
-    #                     KeyConditionExpression='email = :e',
-    #                     ExpressionAttributeValues={
-    #                         ':e': {'S': user_email}
-    #                     }
-    #                 )
+        if favorite_posts.get('Items') == []:
+            response['message'] = 'You have no favorite posts!'
+        else:
+            try:
+                for feed in favorite_posts['Items']:
+                    p_id = feed['feed_id']['S'].rsplit('_',1)[0]
+                    p_key = feed['feed_id']['S'].rsplit('_',1)[1]
+                    p = db.get_item(TableName='posts',
+                            Key={'email': {'S': p_id},
+                                 'creation_time': {'S': p_key}
+                            }
+                        )
+                    user_name, profile_picture, home = get_user_details(p_id)
+                    liked = check_if_user_liked(feed['feed_id']['S'], user_email)
+                    starred = check_if_user_starred(feed['feed_id']['S'], user_email)
+                    commented = check_if_user_commented(feed['feed_id']['S'], user_email)
+                    taking_off = check_if_taking_off(feed['feed_id']['S'], 'posts')
+                    post = p['Item']
+                    post['user'] = {}
+                    post['user']['name'] = {}
+                    post['user']['profile_picture'] = {}
+                    post['user']['name']['S'] = user_name
+                    post['user']['profile_picture']['S'] = profile_picture
+                    post['feed'] = {}
+                    post['feed']['id'] = p['Item']['email']
+                    post['feed']['key'] = p['Item']['creation_time']
+                    post['liked'] = {}
+                    post['starred'] = {}
+                    post['commented'] = {}
+                    post['taking_off'] = {}
+                    post['taking_off']['BOOL'] = taking_off
+                    post['liked']['BOOL'] = liked
+                    post['starred']['BOOL'] = starred
+                    post['commented']['BOOL'] = commented
+                    del post['email']
+                    del post['creation_time']
+                    del post['value']
+                    favorites.append(post)
+                response['message'] = 'Successfully fetched all favorites'
+                response['result'] = favorites
+            except:
+                response['message'] = 'Request Failed! Try again later'
 
-    #     if favorite_posts.get('Items') == None:
-    #         response['message'] = 'You have no favorite posts!'
-    #     else:
-    #         try:
-    #             for post in favorite_posts['Items']:
-    #                 p_id = post['feed_id'].rsplit('_',1)[0]
-    #                 p_key = post['feed_id'].rsplit('_',1)[1]
-    #                 p = db.get_item(TableName='posts',
-    #                         Key={'email': {'S': p_id},
-    #                              'creation_time': {'S': p_key}
-    #                         }
-    #                     )
-    #                 post = p['Item']
+        return response, 200
 
 
 
