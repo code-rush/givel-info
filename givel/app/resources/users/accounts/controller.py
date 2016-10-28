@@ -432,8 +432,6 @@ class ForgotPassword(Resource):
 
 
 
-
-
 api.add_resource(UserAccount, '/')
 api.add_resource(UserProfilePicture, '/<user_email>/picture')
 api.add_resource(UserCommunities, '/<user_email>/communities/<community>')
