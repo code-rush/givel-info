@@ -491,3 +491,20 @@
                  then the response will consist of just a message and no results.
 
 
+### REPORT API
+- **report post**
+  - Path: api/v1/reports/{feed}/{user_email}
+  - Method: **POST**
+  - Required Data: id, key
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code and a message if the post reported successfully.
+  - Description: Reports users post. 
+                 - The {feed} in the url is either 'posts' or 'challenges'.
+                 - The {user_email} in the url is the email for the user who is reporting
+                   the post.
+                 - The client needs to send the *id* and *key* to report a post else a 
+                   BadRequest Exception is raised.
+
+
+
+
