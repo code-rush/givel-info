@@ -40,35 +40,38 @@ class ReportFeeds(Resource):
             date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             feed_id = str(data['id']) + '_' + str(data['key'])
 
-            report = db.get_item(TableName='reports',
-                            Key={'feed_id': {'S': feed_id},
-                                 'reported_by': {'S': user_email}
-                            }
-                        )
-
-            if report.get('Item') == None:
-                report = db.put_item(TableName='reports',
-                                Item={'feed_id': {'S': feed_id},
-                                      'reported_by': {'S': user_email},
-                                      'creation_time': {'S': date_time},
-                                      'times': {'N': '1'},
-                                      'feed': {'S': str(feed)}
+            try:
+                report = db.get_item(TableName='reports',
+                                Key={'feed_id': {'S': feed_id},
+                                     'reported_by': {'S': user_email}
                                 }
                             )
-            else:
-                report = db.update_item(TableName='reports',
-                            Key={'feed_id': {'S': feed_id},
-                                 'reported_by': {'S': user_email}
-                            },
-                            UpdateExpression='SET #t = #t + :i',
-                            ExpressionAttributeNames={
-                                '#t': 'times'
-                            },
-                            ExpressionAttributeValues={
-                                ':i': {'N': '1'}
-                            }
-                        )
-            response['message'] = 'Post Reported!'
+
+                if report.get('Item') == None:
+                    report = db.put_item(TableName='reports',
+                                    Item={'feed_id': {'S': feed_id},
+                                          'reported_by': {'S': user_email},
+                                          'creation_time': {'S': date_time},
+                                          'times': {'N': '1'},
+                                          'feed': {'S': str(feed)}
+                                    }
+                                )
+                else:
+                    report = db.update_item(TableName='reports',
+                                Key={'feed_id': {'S': feed_id},
+                                     'reported_by': {'S': user_email}
+                                },
+                                UpdateExpression='SET #t = #t + :i',
+                                ExpressionAttributeNames={
+                                    '#t': 'times'
+                                },
+                                ExpressionAttributeValues={
+                                    ':i': {'N': '1'}
+                                }
+                            )
+                response['message'] = 'Post Reported!'
+            except:
+                response['message'] = 'Request failed! Try again later.'
 
             return response, 200
 
