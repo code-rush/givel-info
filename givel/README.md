@@ -506,5 +506,38 @@
                    BadRequest Exception is raised.
 
 
+### ORGANIZATION'S APIS
+- **register organization**
+  - Path: /api/v1/organizations/register
+  - Method: **POST**
+  - Required Data: - name: must be a unique name
+                   - description: no more than 2 lines (client should handle this)
+                   - type: either 'b-corp' or 'non-profit'
+                   - global: *true* if global else *false*
+                   - location: city, country
+                   - admin_email
+                   - password
+  - Optional Data: picture
+  - Allowed Extensions: 'jpg', 'png', 'jpeg'
+  - Content-Type: multipart/form-data
+  - Returns: *201 CREATED* Status Code if the organization succesfully created
+  - Description: Registers organization on the application and adds it to the database.
+                 The name of the organization should be unique.
+                 There can be only two types of organizations: 'b-corp' or 'non-profit'.
+                 'b-corp' is the social good type of organization.
 
+- **organization login**
+  - Path: /api/v1/organizations/login
+  - Method: **POST**
+  - Required Data: email, password
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code if the login is successful
+  - Description: Allows the admin to login into the organizations account.
 
+- **uplift feed**
+  - Path: /api/v1/organizations/uplift/{organization_type}
+  - Method: **GET**
+  - Returns: List of all the organization in the category
+  - Description: Gets organizations of type 'social_good' and/or 'non-profit'.
+                 {organization_type} in the url can be either 'social_good' or 
+                 'non-profit'. 
