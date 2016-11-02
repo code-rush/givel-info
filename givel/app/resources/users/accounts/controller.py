@@ -100,6 +100,7 @@ class UserLogin(Resource):
                                         user_data['password']):
                 response['message'] = 'User successfully Logged In!'
                 response['result'] = user['Item']
+                del response['result']['password']
                 del response['result']['total_stars_shared']
                 del response['result']['total_stars_earned']
                 return response, 200
