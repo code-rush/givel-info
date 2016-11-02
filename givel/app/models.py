@@ -555,5 +555,93 @@ def create_notification_table():
         return notification_table        
 
 
+def create_organizations_table():
+    try:
+        organization_table = dynamodb.create_table(
+            TableName='organizations',
+            KeySchema=[
+                {
+                    'AttributeName': 'name',
+                    'KeyType': 'HASH'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'name',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'admin_email',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'type',
+                    'AttributeType': 'S'
+                }
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'organizations-admin',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'admin_email',
+                            'KeyType': 'HASH'
+                        }
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'INCLUDE',
+                        'NonKeyAttributes': [
+                            'password',
+                        ]
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 10,
+                        'WriteCapacityUnits': 10
+                    }
+                },
+                {
+                    'IndexName': 'organizations-type-name',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'type',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'name',
+                            'KeyType': 'RANGE'
+                        }
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL',
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 10,
+                        'WriteCapacityUnits': 10
+                    }
+                }
+            ]
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 10
+            }
+         )
+    except:
+        try:
+            organization_table = dynamodb.Table('organizations')
+        except:
+            print('organizations Table does not exists')
+    finally:
+        return organization_table
 
+
+# def create_organization_comments_table():
+#     try:
+#         org_comments_table = dynamodb.create_table(
+#             TableName='organizations_comments',
+#             KeySchema=[
+#                 {
+#                     'AttributeName': 'email'
+#                 }
+#             ]
+#         )
 
