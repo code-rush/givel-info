@@ -619,7 +619,7 @@ def create_organizations_table():
                         'WriteCapacityUnits': 10
                     }
                 }
-            ]
+            ],
             ProvisionedThroughput={
                 'ReadCapacityUnits': 10,
                 'WriteCapacityUnits': 10

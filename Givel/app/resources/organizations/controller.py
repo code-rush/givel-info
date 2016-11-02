@@ -57,7 +57,7 @@ class OrganizationRegistration(Resource):
                                         Item={'name': {'S': organization_name},
                                               'description': {'S': request.form['description']},
                                               'type': {'S': request.form['type']},
-                                              'global': {'BOOL': request.form['global']}
+                                              'global': {'BOOL': request.form['global']},
                                               'location': {'S': request.form['location']},
                                               'admin_email': {'S': request.form['admin']},
                                               'password': {'S': generate_password_hash(request.form['password'])},
