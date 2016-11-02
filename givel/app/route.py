@@ -6,6 +6,8 @@ from app.resources.users.activities.feeds.posts.controller import user_post_acti
 from app.resources.users.activities.feeds.challenges.controller import user_challenge_activity_api_routes
 from app.resources.users.activities.feeds.controller import feed_activity_api_routes
 from app.resources.reports.controller import report_activity_api_routes
+from app.resources.organizations.controller import organizations_api_routes
+from app.resources.organizations.uplift.controller import organizations_uplift_api_routes
 
 def build_route(app):
    app.register_blueprint(hw_bp)
@@ -16,3 +18,5 @@ def build_route(app):
    app.register_blueprint(user_challenge_activity_api_routes, url_prefix='/api/v1/users/challenges')
    app.register_blueprint(feed_activity_api_routes, url_prefix='/api/v1/feeds')
    app.register_blueprint(report_activity_api_routes, url_prefix='/api/v1/reports')
+   app.register_blueprint(organizations_api_routes, url_prefix='/api/v1/organizations')
+   app.register_blueprint(organizations_uplift_api_routes, url_prefix='/api/v1/organizations/uplift')
