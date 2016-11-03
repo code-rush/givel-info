@@ -25,8 +25,20 @@ class UserFollowing(Resource):
                     Key={'email': {'S': user_email}}
                 )
         if user['Item'].get('following') != None:
+            followings = []
+            for following in user['Item']['following']['SS']:
+                user_name, profile_picture, home = get_user_details(following)
+                f = {}
+                f['user'] = {}
+                f['user']['name'] = {}
+                f['user']['home_community'] = {}
+                f['user']['profile_picture'] = {}
+                f['user']['name']['S'] = user_name
+                f['user']['home_community'] = home
+                f['user']['profile_picture'] = profile_picture
+                followings.append(f)
             response['message'] = 'Success!'
-            response['result'] = user['Item']['following']
+            response['result'] = followings
         else:
             response['message'] = 'Success!'
             response['result'] = 'You have no followings!'
@@ -104,8 +116,20 @@ class UserFollowers(Resource):
                         Key={'email': {'S': user_email}}
                     )
         if user['Item'].get('followers') != None:
+            followers = []
+            for following in user['Item']['following']['SS']:
+                user_name, profile_picture, home = get_user_details(following)
+                f = {}
+                f['user'] = {}
+                f['user']['name'] = {}
+                f['user']['home_community'] = {}
+                f['user']['profile_picture'] = {}
+                f['user']['name']['S'] = user_name
+                f['user']['home_community'] = home
+                f['user']['profile_picture'] = profile_picture
+                followers.append(f)
             response['message'] = 'Success!'
-            response['result'] = user['Item']['followers']
+            response['result'] = followers
         else:
             response['message'] = 'Success!'
             response['message'] = 'You have no followers!'
