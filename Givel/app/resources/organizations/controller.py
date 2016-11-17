@@ -61,7 +61,10 @@ class OrganizationRegistration(Resource):
                                               'location': {'S': request.form['location']},
                                               'admin_email': {'S': request.form['admin']},
                                               'password': {'S': generate_password_hash(request.form['password'])},
-                                              'stars': {'N': '0'}
+                                              'stars': {'N': '0'},
+                                              'feed_stars': {'N': '0'},
+                                              'comments': {'N': '0'},
+                                              'likes': {'N': '0'}
                                         }
                                     )
                     response['message'] = 'Congratulations! Organization registered!'
@@ -240,6 +243,143 @@ class OrganizationLogin(Resource):
             response['message'] = 'Login failed! Try again later!'
 
         return response, 200
+
+
+class OrganizationUpliftBillboard(Resource):
+    def get(self, organization):
+        response = {}
+        
+        organization = db.get_item(TableName='organizations',
+                            Key={'name': {'S': str(organization)}})
+
+        if organization.get('Item') != None:
+            org = {}
+            org['picture'] = organization['picture']['S']
+            org['description'] = organization['description']['S']
+            org['name'] = organization['name']['S']
+            org['stars'] = organization['stars']
+            if organization['global']['BOOL'] == False:
+                org['location'] = {}
+                org['location']['S'] = 'global'
+            else:
+                org['location'] = organization['location']
+            if organization['type']['S'] == 'b-corp':
+                org['type']['S'] = 'social good'
+            else:
+                org['type'] = organization['type']
+
+            response['results'] = org
+            response['message'] = 'Successful fetched organizations uplift billboard!'
+        else:
+            response['message'] = 'Organization does not exist!'
+
+        return response, 200
+
+
+class OrganizationFeedBillboard(Resource):
+    def get(self, organizations):
+        response = {}
+
+        organization = db.get_item(TableName='organizations',
+                            Key={'name': {'S': str(organization)}})
+
+        if organization.get('Item') != None:
+            org = {}
+            org['picture'] = organization['picture']['S']
+            org['description'] = organization['description']['S']
+            org['name'] = organization['name']['S']
+            if organization['global']['BOOL'] == False:
+                org['location'] = {}
+                org['location']['S'] = 'global'
+            else:
+                org['location'] = organization['location']
+            if organization['type']['S'] == 'b-corp':
+                org['type']['S'] = 'social good'
+            else:
+                org['type'] = organization['type']
+            org['comments'] = organization['comments']
+            org['likes'] = organization['likes']
+            org['stars'] = organization['feed_stars']
+
+            response['results'] = org
+            response['message'] = 'Successful fetched organizations uplift billboard!'
+        else:
+            response['message'] = 'Organization does not exist!'
+
+        return response, 200
+
+
+class OrganizationUpliftStats(Resource):
+    def get(self, organization):
+        response = {}
+
+        organization = db.get_item(TableName='organizations',
+                            Key={'name': {'S': str(organization)}})
+
+        all_organizations_stars = db.scan(TableName='organizations',
+                                    ProjectionExpression='stars')
+
+        total_organization_stars = 0
+
+        for stars in all_organizations_stars['Items']:
+            total_organization_stars += int(stars['stars']['N'])
+
+        avg_stars_of_other_organizations = (total_organization_stars / \
+                                            int(all_organizations_stars['count']))
+
+        org_stats = (int(organization['stars']['N']) / \
+                      avg_stars_of_other_organizations + \
+                      int(organization['stars']['N'])) * 100
+
+        other_org_stats = (avg_stars_of_other_organizations / \
+                           avg_stars_of_other_organizations + \
+                           int(organization['stars']['N'])) * 100
+
+
+        response['message'] = 'Request successful!'
+        response['result'] = {}
+        response['result']['organization_stars_percentage'] = {}
+        response['result']['other_organizations_stars_percentage'] = {}
+        response['result']['organization_stars_percentage']['S'] = str(org_percent_stats)
+        response['result']['other_organizations_stars_percentage']['S'] = str(other_org_stats)
+
+        return response, 200
+
+
+class OrganizationFeedStats(Resource):
+    def get(self, organization):
+        response = {}
+
+        organization = db.get_item(TableName='organizations',
+                            Key={'name': {'S': str(organization)}})
+
+        all_organizations_feed_stars = db.scan(TableName='organizations',
+                                          ProjectionExpression='feed_stars')
+
+        total_org_feed_stars = 0
+
+        for stars in all_organizations_feed_stars['Items']:
+            total_org_feed_stars += int(stars ['feed_stars']['N'])
+
+        avg_stars_of_other_org = (total_org_feed_stars / \
+                                  int(all_organizations_stars['count']))
+
+        org_stats = (int(organization['feed_stars']['N'])/ \
+                     avg_stars_of_other_org + \
+                      int(organization['feed_stars']['N'])) * 100
+
+        other_org_stats = (avg_stars_of_other_org / \
+                           avg_stars_of_other_org + \
+                           int(organization['feed_stars']['N'])) * 100
+
+        response['message'] = 'Request successful!'
+        response['result'] = {}
+        response['result']['organization_stars_percentage'] = {}
+        response['result']['other_organizations_stars_percentage'] = {}
+        response['result']['organization_stars_percentage']['S'] = str(org_stats)
+        response['result']['other_organizations_stars_percentage']['S'] = str(other_org_stats)
+        return response, 200
+
 
 
 api.add_resource(OrganizationRegistration, '/register')
