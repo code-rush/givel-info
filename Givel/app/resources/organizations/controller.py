@@ -166,7 +166,7 @@ class ChangeOrganizationDetails(Resource):
                                             Key={'name': {'S': data['name']}},
                                             UpdateExpression='SET global = :g',
                                             ExpressionAttributeValues={
-                                                ':g': {'S': data['global']}
+                                                ':g': {'BOOL': data['global']}
                                             }
                                         )
 
@@ -387,3 +387,5 @@ api.add_resource(OrganizationLogin, '/login')
 api.add_resource(ChangeOrganizationDetails, '/settings/details')
 api.add_resource(ChangeOrganizationName, '/settings/name')
 api.add_resource(OrganizationPicture, '/settings/picture')
+api.add_resource(OrganizationUpliftBillboard, '/billboard/uplift/<organization>')
+api.add_resource(OrganizationFeedBillboard, '/billboard/feed/<organization>')
