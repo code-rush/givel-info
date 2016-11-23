@@ -314,7 +314,7 @@
   - Content-Type: application/json
   - Returns: *200 OK* Status Code with a message if request is successful
   - Description: - Adds user's likes to a feed(post/challenge). 
-                 - Provide id and key of the feed to be liked. 
+                 - Provide id and key of the feed to be liked.
                  - *emotion* can be either 'like' or 'unlike'. A user 
                    cannot 'unlike' a feed unless the user has 'liked' it first.
                  - If any other value than 'like' or 'unlike' is sent, it raises a 
@@ -541,3 +541,59 @@
   - Description: Gets organizations of type 'social_good' and/or 'non-profit'.
                  {organization_type} in the url can be either 'social_good' or 
                  'non-profit'. 
+
+- **give stars to organization on uplift**
+  - Path: /api/v1/organizations/uplift/stars/share/{user_email}
+  - Method: *POST*
+  - Required Data: organizations_name, stars
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code with a message and *400 Bad Request* if failed
+  - Description: - Allows users to give stars to organizations on uplift.
+                 - {user_email} is the the email for the user who is giving stars.
+
+- **organizations's uplift billboard**
+  - Path: /api/v1/organizations/billboard/uplift/{organization's_name}
+  - Method: *GET*
+  - Returns: Organization's details with a success message and *200 OK* Status Code
+  - Description: Gets organization's details to create billboard.
+
+- **organizations's feed billboard**
+  - Path: /api/v1/organizations/billboard/uplift/{organization's_name}
+  - Method: *GET*
+  - Returns: Organization's details with a success message and *200 OK* Status Code 
+  - Description: Gets organization's details to create billboard.
+                 - It also gets comments, likes and stars numbers.
+
+
+
+### API's not to be implemented by the client currently
+- **edit organization's name**
+  - Path: /api/v1/organizations/settings/name
+  - Method: **PUT**  
+  - Required Data: current_name, new_name
+  - Content-Type: application/json
+  - Returns: *200 OK* Status code and a message if the name changed successfully
+  - Description: Changes the organization's name.
+
+- **edit organization's details**
+  - Path: /api/v1/organizations/settings/details
+  - Method: **PUT**
+  - Required Data: name
+  - Data(to edit): - type: either 'b-corp' or 'non-profit'
+                   - description:  no more than 2 lines (client should handle this)
+                   - global: *true* if global else *false*
+                   - location: city, country
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code if details successfully edited
+  - Description: - Edits organization's details.
+                 - *name* is organization's name which is required to start editing.
+
+- **add/change organization's picture**
+  - Path: /api/v1/organizations/settings/picture
+  - Method: **PUT**
+  - Required Data: name
+  - File: picture
+  - Content-Type: multipart/form-data
+  - Returns: *200 OK* Status Code and a message if the picture changed successfully
+  - Description: Changes organization's profile picture.
+
