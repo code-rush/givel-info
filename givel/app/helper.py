@@ -133,58 +133,70 @@ def update_member_counts(city, state, operation):
 
 
 def update_likes(feed, id, key, operation):
-    if operation == 'like':
-        update_count = db.update_item(TableName=feed,
-                                Key={'email': {'S': id},
-                                     'creation_time': {'S': key}
-                                },
+    if id == 'organization':
+        if operation == 'like':
+            update_count = db.update_item(TableName='organizations',
+                                Key={'name': {'S': key}},
                                 UpdateExpression='SET likes = likes + :l',
                                 ExpressionAttributeValues={
                                     ':l': {'N': '1'}
                                 }
                             )
-    elif operation == 'unlike':
-        update_count = db.update_item(TableName=feed,
-                                Key={'email': {'S': id},
-                                     'creation_time': {'S': key}
-                                },
+        elif operation == 'unlike':
+            update_count = db.update_item(TableName='organizations',
+                                Key={'name': {'S': key}},
                                 UpdateExpression='SET likes = likes - :l',
                                 ExpressionAttributeValues={
                                     ':l': {'N': '1'}
                                 }
                             )
+    else:
+        if operation == 'like':
+            update_count = db.update_item(TableName=feed,
+                                    Key={'email': {'S': id},
+                                         'creation_time': {'S': key}
+                                    },
+                                    UpdateExpression='SET likes = likes + :l',
+                                    ExpressionAttributeValues={
+                                        ':l': {'N': '1'}
+                                    }
+                                )
+        elif operation == 'unlike':
+            update_count = db.update_item(TableName=feed,
+                                    Key={'email': {'S': id},
+                                         'creation_time': {'S': key}
+                                    },
+                                    UpdateExpression='SET likes = likes - :l',
+                                    ExpressionAttributeValues={
+                                        ':l': {'N': '1'}
+                                    }
+                                )
+
+def update_stars_count(feed, id, key, stars=None):
+    if id == 'organization':
+        update_count = db.update_item(TableName=feed,
+                        Key={'name': {'S': key}},
+                        UpdateExpression='SET feed_stars = feed_stars + :s',
+                        ExpressionAttributeValues={
+                           ':s': {'N': stars}
+                        }
+                    )
+    else:
+        update_count = db.update_item(TableName=feed,
+                        Key={'email': {'S': id},
+                             'creation_time': {'S': key}},
+                        UpdateExpression='SET stars = stars + :s',
+                        ExpressionAttributeValues={
+                           ':s': {'N': stars}
+                        }
+                    )
 
 
 def update_value(feed, id, key, operation, stars=None):
-    if operation == 'like':
-        update_count = db.update_item(TableName=feed,
-                                Key={'email': {'S': id},
-                                     'creation_time': {'S': key}
-                                },
-                                UpdateExpression='SET #val = #val + :v',
-                                ExpressionAttributeNames={
-                                    '#val': 'value'
-                                },
-                                ExpressionAttributeValues={
-                                    ':v': {'N': '1'}
-                                }
-                            )
-    elif operation == 'unlike':
-        update_count = db.update_item(TableName=feed,
-                                Key={'email': {'S': id},
-                                     'creation_time': {'S': key}
-                                },
-                                UpdateExpression='SET #val = #val - :v',
-                                ExpressionAttributeNames={
-                                    '#val': 'value'
-                                },
-                                ExpressionAttributeValues={
-                                    ':v': {'N': '1'}
-                                }
-                            )
-    elif operation == 'stars':
-        if stars != None:
-            value = str(int(stars) * 5)
+    if id == 'organization':
+        return
+    else:
+        if operation == 'like':
             update_count = db.update_item(TableName=feed,
                                     Key={'email': {'S': id},
                                          'creation_time': {'S': key}
@@ -194,9 +206,37 @@ def update_value(feed, id, key, operation, stars=None):
                                         '#val': 'value'
                                     },
                                     ExpressionAttributeValues={
-                                        ':v': {'N': value}
+                                        ':v': {'N': '1'}
                                     }
                                 )
+        elif operation == 'unlike':
+            update_count = db.update_item(TableName=feed,
+                                    Key={'email': {'S': id},
+                                         'creation_time': {'S': key}
+                                    },
+                                    UpdateExpression='SET #val = #val - :v',
+                                    ExpressionAttributeNames={
+                                        '#val': 'value'
+                                    },
+                                    ExpressionAttributeValues={
+                                        ':v': {'N': '1'}
+                                    }
+                                )
+        elif operation == 'stars':
+            if stars != None:
+                value = str(int(stars) * 5)
+                update_count = db.update_item(TableName=feed,
+                                        Key={'email': {'S': id},
+                                             'creation_time': {'S': key}
+                                        },
+                                        UpdateExpression='SET #val = #val + :v',
+                                        ExpressionAttributeNames={
+                                            '#val': 'value'
+                                        },
+                                        ExpressionAttributeValues={
+                                            ':v': {'N': value}
+                                        }
+                                    )
 
 def get_user_details(user_id):
     user = db.get_item(TableName='users',
