@@ -9,7 +9,7 @@ from app.models import create_likes_table
 from app.models import create_stars_activity_table
 from app.models import create_comments_table
 
-from app.helper import update_likes, update_value
+from app.helper import update_likes, update_value, update_stars_count
 from app.helper import get_user_details
 
 from werkzeug.exceptions import BadRequest
@@ -64,7 +64,12 @@ class FeedLikes(Resource):
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('feed id and key not provided')
         else:
-            feed_id = data['id']+'_'+data['key']
+            feed_id = None
+            if str(data['id']) == 'organization':
+                feed_id = str(data['key'])
+            else:
+                feed_id = data['id']+'_'+data['key']
+
             if data['emotion'] != 'like' and data['emotion'] != 'unlike':
                 raise BadRequest('emotion can only be either like or unlike')
             try:
@@ -97,7 +102,11 @@ class GetFeedLikes(Resource):
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('feed id and key not provided')
         else:
-            feed_id = data['id']+'_'+data['key']
+            feed_id = None
+            if str(data['id']) == 'organization':
+                feed_id = str(data['key'])
+            else:
+                feed_id = data['id']+'_'+data['key']
 
             try:
                 likes = db.query(TableName='likes',
@@ -155,19 +164,33 @@ class FeedStars(Resource):
             if int(users_stars['Item']['givel_stars']['N']) < int(data['stars']):
                 raise BadRequest('You don\'t have enough stars to donate.')
 
-            feed_id = data['id']+'_'+data['key']
+            feed_id = None
+            if str(data['id']) == 'organization':
+                feed_id = str(data['key'])
+            else:
+                feed_id = data['id']+'_'+data['key']
             date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
 
             if data.get('stars') != None:
                 try:
-                    star_post = db.put_item(TableName='stars_activity',
-                                    Item={'email': {'S': user_email},
-                                          'shared_time': {'S': date_time},
-                                          'stars': {'N': str(data['stars'])},
-                                          'shared_to': {'S': 'feed'},
-                                          'shared_id': {'S': feed_id}
-                                    }
-                                )
+                    if str(data['id']) == 'organization':
+                        star_post = db.put_item(TableName='stars_activity',
+                                        Item={'email': {'S': user_email},
+                                              'shared_time': {'S': date_time},
+                                              'stars': {'N': str(data['stars'])},
+                                              'shared_to': {'S': 'organizations_feed'},
+                                              'shared_id': {'S': feed_id}
+                                        }
+                                    )
+                    else:
+                        star_post = db.put_item(TableName='stars_activity',
+                                        Item={'email': {'S': user_email},
+                                              'shared_time': {'S': date_time},
+                                              'stars': {'N': str(data['stars'])},
+                                              'shared_to': {'S': 'feed'},
+                                              'shared_id': {'S': feed_id}
+                                        }
+                                    )
                 except:
                     raise BadRequest('Request Failed!')
 
@@ -186,6 +209,32 @@ class FeedStars(Resource):
                                          'shared_time': {'S': date_time}
                                     }
                                 )
+                    raise BadRequest('Request Failed! Try again later!')
+
+                try:
+                    if str(data['id']) == 'organization':
+                        org = db.update_item(TableName='organizations',
+                                    Key={'name': {'S': str(data['key'])}}
+                                    UpdateExpression='SET feed_stars = feed_stars + :s',
+                                    ExpressionAttributeValues={
+                                        ':s': {'N': str(data['stars'])}
+                                    }
+                                )
+                    else:
+                        post_owner = db.update_item(TableName='users',
+                                    Key={'email': {'S': data['id']}},
+                                    UpdateExpression='SET givel_stars = givel_stars + :s, \
+                                                      total_stars_earned = total_stars_earned + :s',
+                                    ExpressionAttributeValues={
+                                        ':s': {'N': str(data['stars'])}
+                                    }
+                                )
+                except:
+                    rollback_post = db.delete_item(TableName='stars_activity',
+                                    Key={'email': {'S': user_email},
+                                         'shared_time': {'S': date_time}
+                                    }
+                                )
                     rollback_transaction = db.update_item(TableName='users',
                                     Key={'email': {'S': user_email}},
                                     UpdateExpression='SET givel_stars = givel_stars + :s, \
@@ -196,36 +245,8 @@ class FeedStars(Resource):
                                 )
                     raise BadRequest('Request Failed! Try again later!')
 
-                try:
-                    post_owner = db.update_item(TableName='users',
-                                    Key={'email': {'S': data['id']}},
-                                    UpdateExpression='SET givel_stars = givel_stars + :s, \
-                                                      total_stars_earned = total_stars_earned + :s',
-                                    ExpressionAttributeValues={
-                                        ':s': {'N': str(data['stars'])}
-                                    }
-                                )
-                except:
-                    rollback_post = db.update_item(TableName='users',
-                                    Key={'email': {'S': user_email}},
-                                    UpdateExpression='SET givel_stars = givel_stars + :s, \
-                                                      total_stars_earned = total_stars_earned - :s',
-                                    ExpressionAttributeValues={
-                                        ':s': {'N': str(data['stars'])}
-                                    }
-                                )
-                    raise BadRequest('Request Failed! Try again later!')
-
-                update_stars_count = db.update_item(TableName=str(feed),
-                                Key={'email': {'S': data['id']},
-                                     'creation_time': {'S': data['key']}
-                                },
-                                UpdateExpression='SET stars = stars + :s',
-                                ExpressionAttributeValues={
-                                    ':s': {'N': str(data['stars'])}
-                                }
-                            )
-                update_value(str(feed), data['id'], data['key'], 'stars', data['stars'])
+                update_stars_count(str(feed), str(data['id']), str(data['key']), str(data['stars']))
+                update_value(str(feed), data['id'], data['key'], 'stars', str(data['stars']))
                 response['message'] = 'Successfully donated stars!'
             return response, 200
 
@@ -238,7 +259,14 @@ class GetFeedStars(Resource):
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('feed id and key not provided')
         else:
-            feed_id = data['id']+'_'+data['key']
+            feed_id = None
+            shared_to = None
+            if str(data['id']) == 'organization':
+                feed_id = str(data['key'])
+                shared_to = 'organization'
+            else:
+                feed_id = data['id']+'_'+data['key']
+                shared_to = 'feed'
 
             try:
                 stars = db.query(TableName='stars_activity',
@@ -248,7 +276,7 @@ class GetFeedStars(Resource):
                                                  AND shared_id = :id',
                             ProjectionExpression='email, stars',
                             ExpressionAttributeValues={
-                                ':to': {'S': 'feed'},
+                                ':to': {'S': shared_to},
                                 ':id': {'S': feed_id}
                             }
                         )
@@ -284,7 +312,11 @@ class FeedComments(Resource):
         if data.get('comment') == None:
             raise BadRequest('Cannot create an empty comment!')
         else:
-            feed_id = data['id']+'_'+data['key']
+            feed_id = None
+            if data['id'] == 'organization':
+                feed_id = data['key']
+            else:
+                feed_id = data['id']+'_'+data['key']
             date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             add_comment = db.put_item(TableName='comments',
@@ -347,7 +379,11 @@ class GetFeedComments(Resource):
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('feed id and key not provided')
         else:
-            feed_id = data['id']+'_'+data['key']
+            feed_id = None
+            if str(data['id']) == 'organization':
+                feed_id = str(data['key'])
+            else:
+                feed_id = data['id']+'_'+data['key']
 
             try:
                 get_comments = db.query(TableName='comments',
