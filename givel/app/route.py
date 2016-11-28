@@ -8,6 +8,7 @@ from app.resources.users.activities.feeds.controller import feed_activity_api_ro
 from app.resources.reports.controller import report_activity_api_routes
 from app.resources.organizations.controller import organizations_api_routes
 from app.resources.organizations.uplift.controller import organizations_uplift_api_routes
+from app.resources.search.controller import search_api_routes
 
 def build_route(app):
    app.register_blueprint(hw_bp)
@@ -20,3 +21,4 @@ def build_route(app):
    app.register_blueprint(report_activity_api_routes, url_prefix='/api/v1/reports')
    app.register_blueprint(organizations_api_routes, url_prefix='/api/v1/organizations')
    app.register_blueprint(organizations_uplift_api_routes, url_prefix='/api/v1/organizations/uplift')
+   app.register_blueprint(search_api_routes, url_prefix='/api/v1/search')
