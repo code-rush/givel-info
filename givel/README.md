@@ -565,6 +565,17 @@
                  - It also gets comments, likes and stars numbers.
 
 
+### Search Givel users API
+
+- **search users**
+  - Path: /api/v1/search/users/{user_email}
+  - Method: **GET**
+  - Required Data: search_for
+  - Content-Type: application/json
+  - Returns: *200 Ok* Status Code with a list of givel users if request is successful
+  - Description: Searches for givel users. The {user_email} is the email for the user
+                 who is searching for the user.
+
 
 ### API's not to be implemented by the client currently
 - **edit organization's name**
