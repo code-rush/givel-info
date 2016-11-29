@@ -464,6 +464,19 @@
                   - The client needs to send 'id' and 'key' of the post with the request.
                   - value for {feed} is either 'posts' or 'challenges'.
 
+- **share feed with someone**
+  - Path: /api/v1/feeds/share/{feed}/{user_email}
+  - Method: **PUT**
+  - Required Data: id, key, shared_to
+  - Content-Type: application/json
+  - Returns: *200 OK* Status Code if the feed shared successfully
+  - Description: Allows user to share with someone. {user_email} in the url 
+                 is the email address for the user who is sharing the post.
+                 Send the email address of the user in *shared_to* in data with whom 
+                 the feed is being shared with.
+                 {feed} in url is either *post* or *challenge*. Any other value would 
+                 raise BadRequest Exception.
+
 
 
 ### USERS FAVORITES POSTS APIS
