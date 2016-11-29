@@ -8,6 +8,7 @@ from flask_restful import Api, Resource
 from app.models import create_likes_table
 from app.models import create_stars_activity_table
 from app.models import create_comments_table
+from app.models import create_shared_feeds_table
 
 from app.helper import update_likes, update_value, update_stars_count
 from app.helper import get_user_details
@@ -50,6 +51,17 @@ try:
     except:
         comments = create_comments_table()
         print('comments table created!')
+except:
+    pass
+
+try:
+    try:
+        table_response = db.describe_table(TableName='shared_feeds')
+        if table_response['Table']['TableStatus'] == 'ACTIVE':
+            print('shared_feeds table exists')
+    except:
+        shared_feeds = create_shared_feeds_table()
+        print('shared_feeds table created!')
 except:
     pass
 
@@ -214,7 +226,7 @@ class FeedStars(Resource):
                 try:
                     if str(data['id']) == 'organization':
                         org = db.update_item(TableName='organizations',
-                                    Key={'name': {'S': str(data['key'])}}
+                                    Key={'name': {'S': str(data['key'])}},
                                     UpdateExpression='SET feed_stars = feed_stars + :s',
                                     ExpressionAttributeValues={
                                         ':s': {'N': str(data['stars'])}
@@ -417,6 +429,40 @@ class GetFeedComments(Resource):
             return response, 200
 
 
+class ShareFeeds(Resource):
+    """Share feeds with a user on Givel"""
+    def put(self, user_email, feed):
+        response = {}
+        data = request.get_json(force=True)
+
+        if data.get('id') == None and data.get('key') == None:
+            raise BadRequest('Please provide ID and KEY to share the feed')
+        if data.get('shared_to') == None:
+            raise BadRequest('Please provide the user with whom you are \
+                             sharing the feed with')
+        if str(feed) != 'post' and str(feed) != 'challenge':
+            raise BadRequest('feed can be either challenge or post')
+        else:
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            feed_id = data['id']+'_'+data['key']
+
+            try:
+                share_feed = db.put_item(TableName='shared_feeds',
+                                        Item={'email': {'S': user_email},
+                                              'creation_time': {'S': date_time},
+                                              'feed_type': {'S': str(feed)},
+                                              'shared_to': {'S': data['shared_to']},
+                                              'feed_id': {'S': feed_id}
+                                             }
+                                      )
+
+                response['message'] = 'Post successfully shared!'
+            except:
+                response['message'] = 'Request failed! Try again later'
+
+            return response, 200
+
+
 
 api.add_resource(FeedLikes, '/likes/<user_email>/<feed>')
 api.add_resource(GetFeedLikes,'/likes')
@@ -424,7 +470,5 @@ api.add_resource(FeedStars, '/stars/share/<user_email>/<feed>')
 api.add_resource(GetFeedStars, '/stars')
 api.add_resource(FeedComments, '/comments/<user_email>')
 api.add_resource(GetFeedComments, '/comments')
-
-
-
+api.add_resource(ShareFeeds, '/share/<feed>/<user_email>')
 
