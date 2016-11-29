@@ -634,14 +634,63 @@ def create_organizations_table():
         return organization_table
 
 
-# def create_organization_comments_table():
-#     try:
-#         org_comments_table = dynamodb.create_table(
-#             TableName='organizations_comments',
-#             KeySchema=[
-#                 {
-#                     'AttributeName': 'email'
-#                 }
-#             ]
-#         )
 
+def create_shared_feeds_table():
+    try:
+        shared_feeds_table = dynamodb.create_table(
+            TableName='shared_feeds',
+            KeySchema=[
+                {
+                    'AttributeName': 'email',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'creation_time',
+                    'KeyType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'email',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'creation_time',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'shared_to',
+                    'AttributeType': 'S'
+                }
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'share-feeds-shared-to-id',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'shared_to',
+                            'KeyType': 'HASH'
+                        }
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL',
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 10,
+                        'WriteCapacityUnits': 10
+                    }
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 10
+            }
+        )
+    except:
+        try:
+            shared_feeds_table = dynamodb.Table('shared_feeds')
+        except:
+            print('shared_feeds Table does not exists')
+    finally:
+        return shared_feeds_table
+    
