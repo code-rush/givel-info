@@ -661,6 +661,10 @@ def create_shared_feeds_table():
                 {
                     'AttributeName': 'shared_to',
                     'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'feed_type',
+                    'AttributeType': 'S'
                 }
             ],
             GlobalSecondaryIndexes=[
@@ -668,8 +672,12 @@ def create_shared_feeds_table():
                     'IndexName': 'share-feeds-shared-to-id',
                     'KeySchema': [
                         {
-                            'AttributeName': 'shared_to',
+                            'AttributeName': 'feed_type',
                             'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'shared_to',
+                            'KeyType': 'RANGE'
                         }
                     ],
                     'Projection': {
