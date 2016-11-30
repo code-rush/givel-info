@@ -41,6 +41,20 @@ STATES = {
     'WI': 'Wisconsin',
 }
 
+pacific_states = ['California', 'Oregon', 'Washington']
+southwest_states = ['Arizona', 'Texas', 'Oklahoma', 'New Mexico']
+rocky_mountain_states = ['Nevada', 'Utah', 'Colorado', \
+                        'Idaho', 'Montana', 'Wyoming']
+mid_west_states = ['North Dakota', 'South Dakota', 'Nebraska', 'Kansas', \
+                   'Minnesota', 'Missouri', 'Iowa', 'Wisconsin', 'Illinois',\
+                   'Indiana', 'Michigan', 'Ohio']
+southeast_states = ['Tennessee', 'Arkansas', 'Louisiana', 'Kentucky', \
+                    'Mississippi', 'Alabama', 'Georgia', 'West Virginia', \
+                    'Virginia', 'North Carolina', 'South Carolina', 'Florida']
+northeast_states = ['Pennsylvania', 'New York', 'Maryland', 'Vermont', \
+                    'New Hampshire', 'Maine', 'Massachusetts', 'Connecticut', \
+                    'Rhode Island', 'New Jersey']
+
 def check_if_user_exists(user_id):
     user = db.get_item(TableName='users',
                       Key={'email': {'S': user_id}})
