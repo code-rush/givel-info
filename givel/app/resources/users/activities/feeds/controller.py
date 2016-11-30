@@ -251,7 +251,7 @@ class FeedStars(Resource):
                                                       SET #rs = #rs + :s',
                                     ExpressionAttributeNames={
                                         '#rs': region
-                                    }
+                                    },
                                     ExpressionAttributeValues={
                                         ':s': {'N': str(data['stars'])}
                                     }
