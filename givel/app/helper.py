@@ -41,6 +41,14 @@ STATES = {
     'WI': 'Wisconsin',
 }
 
+def check_if_user_exists(user_id):
+    user = db.get_item(TableName='users',
+                      Key={'email': {'S': user_id}})
+    if user['Item'] != None:
+        return True
+    else:
+        return False
+
 def upload_file(file, bucket, key, extensions):
     if file and allowed_file(file.filename, extensions):
         filename = str(bucket)+'.s3.amazonaws.com/'+str(key)
