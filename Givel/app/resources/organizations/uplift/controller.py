@@ -8,6 +8,9 @@ from flask_restful import Api, Resource
 
 from werkzeug.exceptions import BadRequest
 
+from app.helper import STATES, mid_west_states, southeast_states, northeast_states
+from app.helper import pacific_states, southwest_states, rocky_mountain_states
+
 organizations_uplift_api_routes = Blueprint('uplift_api_routes', __name__)
 api = Api(organizations_uplift_api_routes)
 
@@ -56,20 +59,36 @@ class GiveStarsOnUplift(Resource):
         response = {}
         data = request.get_json(force=True)
 
-        user_stars = db.get_item(TableName='users',
+        user = db.get_item(TableName='users',
                         Key={'email': {'S': user_email}},
-                        ConsistentRead=True,
-                        ProjectionExpression='givel_stars')
+                        ConsistentRead=True
+                    )
 
-        if int(users_stars['Item']['givel_stars']['N']) == 0:
+        if int(user['Item']['givel_stars']['N']) == 0:
             raise BadRequest('You have no stars left to donate.')
         else:
             if int(data['stars']) == 0:
                 raise BadRequest('Cannot donate less than 1 star.')
-            if int(users_stars['Item']['givel_stars']['N']) < int(data['stars']):
+            if int(user['Item']['givel_stars']['N']) < int(data['stars']):
                 raise BadRequest('You don\'t have enough stars to donate.')
             if data.get('organizations_name') == None:
                 raise BadRequest('Please provide organizations name to give stars to.')
+
+            st = user['Item']['home']['S'].rsplit(' ', 1)[1]
+            region = None
+
+            if STATES[st] in pacific_states:
+                region = 'pacific_region_stars'
+            elif STATES[st] in southwest_states:
+                region = 'south_west_region_stars'
+            elif STATES[st] in mid_west_states:
+                region = 'mid_west_region_stars'
+            elif STATES[st] in rocky_mountain_states:
+                region = 'rocky_mountain_region_stars'
+            elif STATES[st] in southeast_states:
+                region = 'south_east_region_stars'
+            elif STATES[st] in northeast_states:
+                region = 'north_east_region_stars'
 
             date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -89,7 +108,11 @@ class GiveStarsOnUplift(Resource):
                 try:
                     add_stars_to_organization = db.update_item(TableName='organizations',
                                         Key={'name': {'S': data['organizations_name']}},
-                                        UpdateExpression='SET stars = stars + :s',
+                                        UpdateExpression='SET stars = stars + :s, \
+                                                          SET #rs = #rs + :s',
+                                        ExpressionAttributeNames={
+                                            '#rs': region
+                                        }
                                         ExpressionAttributeValues={
                                             ':s': {'N': str(data['stars'])}
                                         }

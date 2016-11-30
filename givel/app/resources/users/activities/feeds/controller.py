@@ -11,7 +11,10 @@ from app.models import create_comments_table
 from app.models import create_shared_feeds_table
 
 from app.helper import update_likes, update_value, update_stars_count
-from app.helper import get_user_details
+from app.helper import get_user_details, STATES
+
+from app.helper import mid_west_states, southeast_states, northeast_states
+from app.helper import pacific_states, southwest_states, rocky_mountain_states
 
 from werkzeug.exceptions import BadRequest
 
@@ -157,14 +160,14 @@ class FeedStars(Resource):
         response = {}
         data = request.get_json(force=True)
 
-        users_stars = db.get_item(TableName='users',
+        user = db.get_item(TableName='users',
                         Key={'email': {'S': user_email}},
-                        ConsistentRead=True,
-                        ProjectionExpression='givel_stars')
+                        ConsistentRead=True
+                    )
 
         if str(feed) != 'posts' and str(feed) != 'challenges':
             raise BadRequest('Value of feed can only be either posts or challenges!')
-        if int(users_stars['Item']['givel_stars']['N']) == 0:
+        if int(user['Item']['givel_stars']['N']) == 0:
             raise BadRequest('You have no stars left to donate.')
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('feed id and key not provided')
@@ -173,14 +176,31 @@ class FeedStars(Resource):
         else:
             if int(data['stars']) == 0:
                 raise BadRequest('Cannot donate less than 1 star.')
-            if int(users_stars['Item']['givel_stars']['N']) < int(data['stars']):
+            if int(user['Item']['givel_stars']['N']) < int(data['stars']):
                 raise BadRequest('You don\'t have enough stars to donate.')
 
             feed_id = None
+            region = None
+            st = user['Item']['home']['S'].rsplit(' ', 1)[1]
+
             if str(data['id']) == 'organization':
                 feed_id = str(data['key'])
+                if STATES[st] in pacific_states:
+                    region = 'pacific_region_feed_stars'
+                elif STATES[st] in southwest_states:
+                    region = 'south_west_region_feed_stars'
+                elif STATES[st] in mid_west_states:
+                    region = 'mid_west_region_feed_stars'
+                elif STATES[st] in rocky_mountain_states:
+                    region = 'rocky_mountain_region_feed_stars'
+                elif STATES[st] in southeast_states:
+                    region = 'south_east_region_feed_stars'
+                elif STATES[st] in northeast_states:
+                    region = 'north_east_region_feed_stars'
             else:
                 feed_id = data['id']+'_'+data['key']
+
+
             date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
 
             if data.get('stars') != None:
@@ -227,7 +247,11 @@ class FeedStars(Resource):
                     if str(data['id']) == 'organization':
                         org = db.update_item(TableName='organizations',
                                     Key={'name': {'S': str(data['key'])}},
-                                    UpdateExpression='SET feed_stars = feed_stars + :s',
+                                    UpdateExpression='SET feed_stars = feed_stars + :s, \
+                                                      SET #rs = #rs + :s',
+                                    ExpressionAttributeNames={
+                                        '#rs': region
+                                    }
                                     ExpressionAttributeValues={
                                         ':s': {'N': str(data['stars'])}
                                     }
