@@ -14,7 +14,7 @@ from werkzeug.exceptions import NotFound, BadRequest, RequestTimeout
 
 from app.models import create_users_table
 from app.helper import upload_file, check_if_community_exists
-from app.helper import update_member_counts
+from app.helper import update_member_counts, check_if_user_exists
 
 user_account_api_routes = Blueprint('account_api', __name__)
 api = Api(user_account_api_routes)
@@ -75,8 +75,22 @@ class UserAccount(Resource):
         user = db.get_item(TableName='users', 
                         Key={'email': {'S': user_data['email']}})
         response = {}
+
         try:
             if user and check_password_hash(user['Item']['password']['S'], user_data['password']):
+                # updates member counts in communities
+                if user['Item']['home'] != None:
+                    comm = user['Item']['home']['S'].rsplit(' ', 1)
+                    state = comm[1]
+                    city = comm[0][:-1]
+                    update_member_counts(city, state, 'remove')
+                if user['Item']['home_away'] != None:
+                    comm = user['Item']['home']['S'].rsplit(' ', 1)
+                    state = comm[1]
+                    city = comm[0][:-1]
+                    update_member_counts(city, state, 'remove')
+
+                # deletes the user
                 delete_user = db.delete_item(TableName='users', 
                                 Key={'email': {'S': user_data['email']}})
                 response['message'] = 'User deleted!'
@@ -117,13 +131,18 @@ class UserProfilePicture(Resource):
         """Returns Users Profile Picture"""
         response = {}
         try:
-            user = db.get_item(TableName='users',
-                            Key={'email': {'S': user_email}},
-                            ProjectionExpression='profile_picture',
-                        )
-            response['message'] = 'Success!'
-            response['result'] = user['Item']
-            return response, 200
+            user_exists = check_if_user_exists(user_email)
+            if user_exists == True:
+                user = db.get_item(TableName='users',
+                                Key={'email': {'S': user_email}},
+                                ProjectionExpression='profile_picture',
+                            )
+                response['message'] = 'Success!'
+                response['result'] = user['Item']
+                return response, 200
+            else:
+                response['message'] = 'User not found!'
+                return response, 404
         except:
             raise NotFound('Picture not found!')
 
@@ -132,37 +151,47 @@ class UserProfilePicture(Resource):
         picture = request.files['picture']
         response = {}
         try:
-            picture_file = upload_file(picture, BUCKET_NAME, user_email, ALLOWED_EXTENSIONS)
-            if picture_file != None:
-                user = db.update_item(TableName='users',
-                                    Key={'email': {'S': user_email}},
-                                    UpdateExpression='SET profile_picture = :picture',
-                                    ExpressionAttributeValues={
-                                             ':picture': {'S': picture_file}}
-                                )
-                response['message'] = 'File uploaded!'
+            user_exists = check_if_user_exists(user_email)
+            if user_exists == True:
+                picture_file = upload_file(picture, BUCKET_NAME, user_email, ALLOWED_EXTENSIONS)
+                if picture_file != None:
+                    user = db.update_item(TableName='users',
+                                        Key={'email': {'S': user_email}},
+                                        UpdateExpression='SET profile_picture = :picture',
+                                        ExpressionAttributeValues={
+                                                 ':picture': {'S': picture_file}}
+                                    )
+                    response['message'] = 'File uploaded!'
+                else:
+                    response ['message'] = 'File not allowed!'
+                return response, 200
             else:
-                response ['message'] = 'File not allowed!'
-            return response, 200
+                response['message'] = 'User not found!'
+                return response, 404              
         except:
             raise BadRequest('Invalid Operation!')
 
     def delete(self, user_email):
         """Removes Users Profile Picture"""
         response = {}
-        user = db.get_item(TableName='users',
-                            Key={'email': {'S': user_email}}
-                        )
+        user_exists = check_if_user_exists(user_email)
+        if user_exists == True:
+            user = db.get_item(TableName='users',
+                                Key={'email': {'S': user_email}}
+                            )
 
-        if user['Item'].get('profile_picture') != None:
-            user = db.update_item(TableName='users',
-                               Key={'email': {'S': user_email}},
-                               UpdateExpression='REMOVE profile_picture')
-            s3.delete_object(Bucket=BUCKET_NAME, Key=user_email)
-            response['message'] = 'File deleted!'
-            return response, 200
+            if user['Item'].get('profile_picture') != None:
+                user = db.update_item(TableName='users',
+                                   Key={'email': {'S': user_email}},
+                                   UpdateExpression='REMOVE profile_picture')
+                s3.delete_object(Bucket=BUCKET_NAME, Key=user_email)
+                response['message'] = 'File deleted!'
+                return response, 200
+            else:
+                raise BadRequest('Picture not found!')
         else:
-            raise BadRequest('Picture not found!')
+            response['message'] = 'User not found!'
+            return response, 404
 
 
 class UserCommunities(Resource):
