@@ -577,6 +577,24 @@
   - Description: Gets organization's details to create billboard.
                  - It also gets comments, likes and stars numbers.
 
+- **organization's uplift stats**
+  - Path: /api/v1/organizations/stats/uplift/{organization's_name}
+  - Method: *GET*
+  - Returns: All organization's stats based on stars in percentages
+  - Description: Organization's stars is compared with the average 
+                 of all the other organizations stars on uplift and the 
+                 result is sent in percentages. Also, the stats of where the stars 
+                 are coming from is shown in percentages for total 6 regions in US.
+
+- **organization's feed stats**
+  - Path: /api/v1/organizations/stats/feed/{organization's_name}
+  - Method: *GET*
+  - Returns: All organization's stats based on stars in percentages
+  - Description: Organization's stars is compared with the average 
+                 of all the other organizations stars on feed and the 
+                 result is sent in percentages. Also, the stats of where the stars 
+                 are coming from is shown in percentages for total 6 regions in US.
+
 
 ### Search Givel users API
 
