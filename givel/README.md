@@ -265,7 +265,7 @@
                 - Use *creation_time* to calculate time to display on challenge.
 
 - **delete user's challenge**
-  - Path: /api/v1/users/challenge/{user_email}
+  - Path: /api/v1/users/challenges/{user_email}
   - Method: **DELETE**
   - Required Data: id, key
   - Content-Type: application/json

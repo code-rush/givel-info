@@ -117,8 +117,8 @@ class UserFollowers(Resource):
                     )
         if user['Item'].get('followers') != None:
             followers = []
-            for following in user['Item']['following']['SS']:
-                user_name, profile_picture, home = get_user_details(following)
+            for follower in user['Item']['followers']['SS']:
+                user_name, profile_picture, home = get_user_details(follower)
                 f = {}
                 f['user'] = {}
                 f['user']['name'] = {}

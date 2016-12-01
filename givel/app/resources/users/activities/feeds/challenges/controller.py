@@ -414,9 +414,9 @@ class UsersChallengeRepost(Resource):
                                       'state': {'S': 'ACTIVE'},
                                       'comments': {'N': '0'},
                                       'stars': {'N': '0'},
-                                      'creator': {'N': user_email},
+                                      'creator': {'S': user_email},
                                       'only_to_followers': 
-                                         {'BOOL': user['Item']['post_only_to_followers']['BOOL']}
+                                          {'BOOL': user['Item']['post_only_to_followers']['BOOL']}
                                 }
                             )
                 if data.get('location') != None:
