@@ -8,7 +8,7 @@ from flask_restful import Api, Resource
 
 from app.helper import check_if_taking_off, check_if_user_liked
 from app.helper import check_if_user_starred, check_if_user_commented
-from app.helper import get_user_details
+from app.helper import get_user_details, check_challenge_state
 
 user_following_activity_api_routes = Blueprint('following_activity_api', __name__)
 api = Api(user_following_activity_api_routes)
@@ -153,7 +153,7 @@ class UserFollowingPostsFeeds(Resource):
                     following_posts = db.query(TableName='posts',
                                            KeyConditionExpression='email = :e',
                                            ExpressionAttributeValues={
-                                               ':e': {'S': user['email']['S']}
+                                               ':e': {'S': user}
                                            }
                                        )
                     for post in following_posts['Items']:
@@ -187,10 +187,10 @@ class UserFollowingPostsFeeds(Resource):
                             del post['email']
                             del post['value']
                             feeds.append(post)
-                    response['message'] = 'Successfully fetched all community posts!'
+                    response['message'] = 'Successfully fetched all following posts!'
                     response['results'] = feeds
                 except:
-                    response['message'] = 'Failed to fetch community posts!'
+                    response['message'] = 'Failed to fetch following posts!'
 
             return response, 200
 
@@ -212,7 +212,7 @@ class UserFollowingChallengesFeeds(Resource):
                     community_challenges = db.query(TableName='challenges',
                                            KeyConditionExpression='email = :e',
                                            ExpressionAttributeValues={
-                                               ':e': {'S': user['email']['S']}
+                                               ':e': {'S': user}
                                            }
                                        )
                     for challenge in community_challenges['Items']:
@@ -224,7 +224,7 @@ class UserFollowingChallengesFeeds(Resource):
                             liked = check_if_user_liked(feed_id, user_email)
                             starred = check_if_user_starred(feed_id, user_email)
                             commented = check_if_user_commented(feed_id, user_email)
-                            state = check_challenge_state(user_email, challenge['creation_time']['S'])
+                            state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
                             taking_off = check_if_taking_off(feed_id, 'challenges')
                             challenge['user'] = {}
                             challenge['user']['name'] = {}
@@ -250,10 +250,10 @@ class UserFollowingChallengesFeeds(Resource):
                             del challenge['creator']
                             del challenge['value']
                             feeds.append(challenge)
-                    response['message'] = 'Successfully fetched all community challenges!'
+                    response['message'] = 'Successfully fetched all following\'s challenges!'
                     response['results'] = feeds
                 except:
-                    response['message'] = 'Failed to fetch users challenges!'
+                    response['message'] = 'Failed to fetch following\'s challenges!'
             return response, 200
 
 
