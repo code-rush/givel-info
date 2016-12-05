@@ -332,23 +332,22 @@ def check_challenge_state(id, key):
         creation_time = datetime.datetime.strptime(key, "%Y-%m-%d %H:%M:%S")
         diff = current_time - creation_time
         str_diff = str(diff).rsplit(' ', 2)[0]
-        try:
-            if int(str_diff) >= 2:
-                change_state = db.update_item(TableName='challenges',
-                                        Key={'email': {'S': id},
-                                             'creation_time': {'S': key}
-                                        },
-                                        UpdateExpression='SET #s = :st',
-                                        ExpressionAttributeNames={
-                                            '#s': 'state'
-                                        },
-                                        ExpressionAttributeValues={
-                                            ':st': {'S': 'INACTIVE'}
-                                        }
-                                    )
-                state = 'INACTIVE'
-                return state
-        except:
+        if int(str_diff) >= 2:
+            change_state = db.update_item(TableName='challenges',
+                                    Key={'email': {'S': id},
+                                         'creation_time': {'S': key}
+                                    },
+                                    UpdateExpression='SET #s = :st',
+                                    ExpressionAttributeNames={
+                                        '#s': 'state'
+                                    },
+                                    ExpressionAttributeValues={
+                                        ':st': {'S': 'INACTIVE'}
+                                    }
+                                )
+            state = 'INACTIVE'
+            return state
+        else:
             state = 'ACTIVE'
             return state
     elif challenge['Item']['state']['S'] == 'INACTIVE':
