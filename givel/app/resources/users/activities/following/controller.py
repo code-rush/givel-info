@@ -59,6 +59,7 @@ class UserFollowings(Resource):
             raise BadRequest('Please provide user_id in follow_user ' \
                              + 'to follow.')
         try:
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             following_user = check_if_user_exists(data['follow_user'])
             user_exists = check_if_user_exists(user_email)
             if following_user and user_exists:
@@ -77,6 +78,15 @@ class UserFollowings(Resource):
                             UpdateExpression='ADD followers :follower',
                             ExpressionAttributeValues={
                                 ':follower': {'SS': [user_email]}
+                            }
+                        )
+                notification = db.put_item(TableName='notifications',
+                            Item={'notify_to': {'S': data['follow_user']},
+                                  'creation_time': {'S': date_time},
+                                  'email': {'S': user_email},
+                                  'from': {'S': 'user'},
+                                  'notify_for': {'S': 'following'},
+                                  'checked': {'BOOL': False}
                             }
                         )
                 response['message'] = 'Successfully following the user!'
