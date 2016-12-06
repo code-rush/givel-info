@@ -111,7 +111,7 @@
   - Path: /api/v1/users/{user_email}/following
   - Method: **PUT**
   - Content-Type: application/json
-  - Data: follow_user
+  - Required_Data: follow_user
   - Returns: *200 OK* Status Code with a success message.
   - Description: Following a user. It adds the user to the following list and 
                  adds this user to the following users followers list.
@@ -127,7 +127,7 @@
   - Path: /api/v1/users/{user_email}/following
   - Method: **DELETE**
   - Content-Type: application/json
-  - Data: unfollow_user
+  - Required_Data: unfollow_user
   - Returns: *200 OK* Status Code with a success message.
   - Description: Removes the unfollowed user from the followings list and removes 
                  this user from followers list from the unfollowed user. Returns a message 
