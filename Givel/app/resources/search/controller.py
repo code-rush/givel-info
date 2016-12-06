@@ -20,7 +20,7 @@ dynamo = boto3.resource('dynamodb')
 
 users_table = dynamo.Table('users')
 
-class SearchFollowings(Resource):
+class SearchUsersOnGivel(Resource):
     def post(self, user_email):
         response = {}
         data = request.get_json(force=True)
@@ -52,4 +52,4 @@ class SearchFollowings(Resource):
         return response, 200
 
 
-api.add_resource(SearchFollowings, '/users/<user_email>')
+api.add_resource(SearchUsersOnGivel, '/users/<user_email>')
