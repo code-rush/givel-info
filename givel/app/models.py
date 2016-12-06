@@ -514,45 +514,7 @@ def create_report_table():
         except:
             print('reports Table does not exists')
     finally:
-        return reports_table
-
-
-def create_notification_table():
-    try:
-        notification_table = dynamodb.create_table(
-            TableName='notifications',
-            KeySchema=[
-                {
-                    'AttributeName': 'email',
-                    'KeyType': 'HASH'
-                },
-                {
-                    'AttributeName': 'create_time',
-                    'KeyType': 'RANGE'
-                }
-            ],
-            AttributeDefinitions=[
-                {
-                    'AttributeName': 'email',
-                    'AttributeType': 'S'
-                },
-                {
-                    'AttributeName': 'creation_time',
-                    'AttributeType': 'S'
-                }
-            ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
-            }
-         )
-    except:
-        try:
-            notification_table = dynamodb.Table('notifications')
-        except:
-            print('notifications Table does not exists')
-    finally:
-        return notification_table        
+        return reports_table      
 
 
 def create_organizations_table():
@@ -701,4 +663,42 @@ def create_shared_feeds_table():
             print('shared_feeds Table does not exists')
     finally:
         return shared_feeds_table
-    
+
+
+def create_notifications_table():
+    try:
+        notifications_table = dynamodb.create_table(
+            TableName='notifications',
+            KeySchema=[
+                {
+                    'AttributeName': 'notify_to',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'creation_time',
+                    'KeyType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'creation_time',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'notify_to',
+                    'AttributeType': 'S'
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 10
+            }
+         )
+    except:
+        try:
+            notifications_table = dynamodb.Table('notifications')
+        except:
+            print('notifications Table does not exists')
+    finally:
+        return notifications_table 
+
