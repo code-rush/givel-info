@@ -58,7 +58,7 @@ northeast_states = ['Pennsylvania', 'New York', 'Maryland', 'Vermont', \
 def check_if_user_exists(user_id):
     user = db.get_item(TableName='users',
                       Key={'email': {'S': user_id}})
-    if user['Item'] != None:
+    if user.get('Item') != None:
         return True
     else:
         return False
