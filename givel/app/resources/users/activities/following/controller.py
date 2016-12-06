@@ -16,7 +16,7 @@ api = Api(user_following_activity_api_routes)
 db = boto3.client('dynamodb')
 
 
-class UserFollowing(Resource):
+class UserFollowings(Resource):
     def get(self, user_email):
         """Returns list of users followings"""
         response = {}
@@ -30,9 +30,11 @@ class UserFollowing(Resource):
                 user_name, profile_picture, home = get_user_details(following)
                 f = {}
                 f['user'] = {}
+                f['user']['id'] = {}
                 f['user']['name'] = {}
                 f['user']['home_community'] = {}
                 f['user']['profile_picture'] = {}
+                f['user']['id']['S'] = following
                 f['user']['name']['S'] = user_name
                 f['user']['home_community'] = home
                 f['user']['profile_picture'] = profile_picture
@@ -122,9 +124,11 @@ class UserFollowers(Resource):
                 f = {}
                 f['user'] = {}
                 f['user']['name'] = {}
+                f['user']['id'] = {}
                 f['user']['home_community'] = {}
                 f['user']['profile_picture'] = {}
                 f['user']['name']['S'] = user_name
+                f['user']['id']['S'] = follower
                 f['user']['home_community'] = home
                 f['user']['profile_picture'] = profile_picture
                 followers.append(f)
@@ -167,15 +171,14 @@ class UserFollowingPostsFeeds(Resource):
                             commented = check_if_user_commented(feed_id, user_email)
                             taking_off = check_if_taking_off(feed_id, 'posts')
                             post['user'] = {}
+                            post['user']['id'] = post['email']
                             post['user']['name'] = {}
                             post['user']['profile_picture'] = {}
                             post['user']['name']['S'] = user_name
                             post['user']['profile_picture']['S'] = profile_picture
                             post['feed'] = {}
-                            post['feed']['id'] = {}
-                            post['feed']['id']['S'] = post['email']['S']
-                            post['feed']['key'] = {}
-                            post['feed']['key']['S'] = post['creation_time']['S']
+                            post['feed']['id'] = post['email']
+                            post['feed']['key'] = post['creation_time']
                             post['liked'] = {}
                             post['starred'] = {}
                             post['commented'] = {}
@@ -192,7 +195,7 @@ class UserFollowingPostsFeeds(Resource):
                 except:
                     response['message'] = 'Failed to fetch following posts!'
 
-            return response, 200
+        return response, 200
 
 
 class UserFollowingChallengesFeeds(Resource):
@@ -227,15 +230,14 @@ class UserFollowingChallengesFeeds(Resource):
                             state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
                             taking_off = check_if_taking_off(feed_id, 'challenges')
                             challenge['user'] = {}
+                            challenge['user']['id'] = challenge['email']
                             challenge['user']['name'] = {}
                             challenge['user']['profile_picture'] = {}
                             challenge['user']['name']['S'] = user_name
                             challenge['user']['profile_picture']['S'] = profile_picture
                             challenge['feed'] = {}
-                            challenge['feed']['id'] = {}
-                            challenge['feed']['key'] = {}
-                            challenge['feed']['id']['S'] = challenge['email']['S']
-                            challenge['feed']['key']['S'] = challenge['creation_time']['S']
+                            challenge['feed']['id'] = challenge['email']
+                            challenge['feed']['key'] = challenge['creation_time']
                             challenge['state'] = {}
                             challenge['state']['S'] = state
                             challenge['liked'] = {}
@@ -254,10 +256,10 @@ class UserFollowingChallengesFeeds(Resource):
                     response['results'] = feeds
                 except:
                     response['message'] = 'Failed to fetch following\'s challenges!'
-            return response, 200
+        return response, 200
 
 
-api.add_resource(UserFollowing, '/<user_email>/following')
+api.add_resource(UserFollowings, '/<user_email>/following')
 api.add_resource(UserFollowers, '/<user_email>/followers')
 api.add_resource(UserFollowingPostsFeeds, '/following/posts/<user_email>')
 api.add_resource(UserFollowingChallengesFeeds, '/following/challenges/<user_email>')
