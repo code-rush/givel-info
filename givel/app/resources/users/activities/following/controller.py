@@ -102,7 +102,7 @@ class UserFollowings(Resource):
         try:
             unfollow_user = check_if_user_exists(data['unfollow_user'])
             user_exists = check_if_user_exists(user_email)
-            if following_user and user_exists:
+            if unfollow_user and user_exists:
                 user = db.update_item(
                             TableName='users',
                             Key={'email': {'S': user_email}},
