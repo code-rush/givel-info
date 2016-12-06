@@ -9,6 +9,9 @@ from flask_restful import Api, Resource
 from app.helper import check_if_taking_off, check_if_user_liked
 from app.helper import check_if_user_starred, check_if_user_commented
 from app.helper import get_user_details, check_challenge_state
+from app.helper import check_if_user_exists
+
+from werkzeug.exceptions import BadRequest
 
 user_following_activity_api_routes = Blueprint('following_activity_api', __name__)
 api = Api(user_following_activity_api_routes)
@@ -51,8 +54,14 @@ class UserFollowings(Resource):
         """Adds a user to the following and followers list"""
         data = request.get_json(force=True)
         response = {}
+
+        if data['follow_user'] == None:
+            raise BadRequest('Please provide user_id in follow_user ' \
+                             + 'to follow.')
         try:
-            if data['follow_user']:
+            following_user = check_if_user_exists(data['follow_user'])
+            user_exists = check_if_user_exists(user_email)
+            if following_user and user_exists:
                 user = db.update_item(
                             TableName='users',
                             Key={'email': {'S': user_email}},
@@ -72,6 +81,12 @@ class UserFollowings(Resource):
                         )
                 response['message'] = 'Successfully following the user!'
                 response['result'] = user['Attributes']
+            else:
+                if user_exists == False:
+                    response['message'] = 'User does not exist!'
+                if following_user == False:
+                    response['message'] = 'The user you are trying to '\
+                                          +'follow does not exist!'
         except:
             response['message'] = 'Failed to follow user!'
         return response, 200
@@ -80,8 +95,14 @@ class UserFollowings(Resource):
         """Unfollows a user"""
         data = request.get_json(force=True)
         response = {}
+
+        if data['unfollow_user'] == None:
+            raise BadRequest('Please provide user_id in follow_user ' \
+                             + 'to follow.')
         try:
-            if data['unfollow_user']:
+            unfollow_user = check_if_user_exists(data['unfollow_user'])
+            user_exists = check_if_user_exists(user_email)
+            if following_user and user_exists:
                 user = db.update_item(
                             TableName='users',
                             Key={'email': {'S': user_email}},
@@ -104,6 +125,12 @@ class UserFollowings(Resource):
                     response['result'] = user['Attributes']
                 else:
                     response['result'] = 'You have no Followings!'
+            else:
+                if user_exists == False:
+                    response['message'] = 'User does not exist!'
+                if unfollow_user == False:
+                    response['message'] = 'The user you are trying to '\
+                                          +'unfollow does not exist!'
         except:
             response['message'] = 'Request Failed.'
         return response, 200
