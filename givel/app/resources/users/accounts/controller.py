@@ -12,7 +12,7 @@ from flask_mail import Message
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import NotFound, BadRequest, RequestTimeout
 
-from app.models import create_users_table
+from app.models import create_users_table, create_notifications_table
 from app.helper import upload_file, check_if_community_exists
 from app.helper import update_member_counts, check_if_user_exists
 
@@ -39,6 +39,16 @@ try:
 except:
     pass
 
+try:
+    try:
+        table_response = db.describe_table(TableName='notifications')
+        if table_response['Table']['TableStatus'] == 'ACTIVE':
+            print('notifications Table exists!')
+    except:
+        notifications = create_notifications_table()
+        print('notifications Table created!')
+except:
+    pass
 
 
 class UserAccount(Resource):
@@ -199,100 +209,110 @@ class UserCommunities(Resource):
         """Updates User Communities"""
         data = request.get_json(force=True)
         response = {}
-        user = db.get_item(TableName='users',
-                            Key={'email': {'S': user_email}}
-                        )
 
-        if community == 'home':
-            city, state, exists = check_if_community_exists(data['community'])
-            if exists == True:
-                try:
-                    user_home = db.update_item(TableName='users',
-                                    Key={'email': {'S': user_email}},
-                                    UpdateExpression='SET home = :p',
-                                    ExpressionAttributeValues={
-                                             ':p': {'S': data['community']}}
-                                )
-                    update_member_counts(city, state, 'add')
-                    response['message'] = 'home community successfully added!'
-                    return response, 200
-                except:
-                    raise BadRequest('Failed to add community!')
-            else:
-                raise BadRequest('{} community does not exist!'.format(data['community']))
-
-
-        if community == 'home_away':
-            if user['Item'].get('home') == None:
-                raise BadRequest('To add a home_away community, you ' + \
-                            'need to add a home community first')
-            else:
+        user_exists = check_if_user_exists(user_email)
+        if user_exists == True:
+            user = db.get_item(TableName='users',
+                                Key={'email': {'S': user_email}}
+                            )
+            if community == 'home':
                 city, state, exists = check_if_community_exists(data['community'])
                 if exists == True:
                     try:
-                        user_home_away = db.update_item(TableName='users',
-                                            Key={'email': {'S': user_email}},
-                                            UpdateExpression='SET home_away = :p',
-                                            ExpressionAttributeValues={
-                                                     ':p': {'S': data['community']}}
-                                        )
+                        user_home = db.update_item(TableName='users',
+                                        Key={'email': {'S': user_email}},
+                                        UpdateExpression='SET home = :p',
+                                        ExpressionAttributeValues={
+                                                 ':p': {'S': data['community']}}
+                                    )
                         update_member_counts(city, state, 'add')
-                        response['message'] = 'home_away community successfully added!'
+                        response['message'] = 'home community successfully added!'
                         return response, 200
                     except:
                         raise BadRequest('Failed to add community!')
                 else:
                     raise BadRequest('{} community does not exist!'.format(data['community']))
 
+
+            if community == 'home_away':
+                if user['Item'].get('home') == None:
+                    raise BadRequest('To add a home_away community, you ' + \
+                                'need to add a home community first')
+                else:
+                    city, state, exists = check_if_community_exists(data['community'])
+                    if exists == True:
+                        try:
+                            user_home_away = db.update_item(TableName='users',
+                                                Key={'email': {'S': user_email}},
+                                                UpdateExpression='SET home_away = :p',
+                                                ExpressionAttributeValues={
+                                                         ':p': {'S': data['community']}}
+                                            )
+                            update_member_counts(city, state, 'add')
+                            response['message'] = 'home_away community successfully added!'
+                            return response, 200
+                        except:
+                            raise BadRequest('Failed to add community!')
+                    else:
+                        raise BadRequest('{} community does not exist!'.format(data['community']))
+        else:
+            raise BadRequest('Request Failed! User not found. Check if ' \
+                             + 'user_email is correct and try again later.')
+
     def delete(self, user_email, community):
         """Unfollow Community"""
-        user = db.get_item(TableName='users',
-                        Key={'email': {'S': user_email}}
-                    )
         response = {}
 
-        if user['Item'].get(community) == None:
-            raise BadRequest('Community not found!')
-        elif community == 'home':
-            comm = user['Item']['home']['S'].rsplit(' ', 1)
-            state = comm[1]
-            city = comm[0][:-1]
-            try:
-                if user['Item'].get('home_away') != None:
-                    home = db.update_item(TableName='users',
-                                    Key={'email': {'S': user_email}},
-                                    UpdateExpression='SET home = :home',
-                                    ExpressionAttributeValues={
-                                        ':home': {'S': user['Item']['home_away']['S']}
-                                    }
-                                )
-                    delete_home_away = db.update_item(TableName='users',
-                                    Key={'email': {'S': user_email}},
-                                    UpdateExpression='REMOVE home_away'
-                                )
-                else:
-                    delete_home = db.update_item(TableName='users',
+        user_exists = check_if_user_exists(user_email)
+        if user_exists == True:
+            user = db.get_item(TableName='users',
+                                Key={'email': {'S': user_email}}
+                            )
+            if user['Item'].get(community) == None:
+                raise BadRequest('Community not found!')
+            elif community == 'home':
+                comm = user['Item']['home']['S'].rsplit(' ', 1)
+                state = comm[1]
+                city = comm[0][:-1]
+                try:
+                    if user['Item'].get('home_away') != None:
+                        home = db.update_item(TableName='users',
                                         Key={'email': {'S': user_email}},
-                                        UpdateExpression='REMOVE home'
+                                        UpdateExpression='SET home = :home',
+                                        ExpressionAttributeValues={
+                                            ':home': {'S': user['Item']['home_away']['S']}
+                                        }
                                     )
-                update_member_counts(city, state, 'remove')
-                response['message'] = 'Successfully deleted home community!'
-            except:
-                raise BadRequest('Failed to add community!')
-        elif community == 'home_away':
-            comm = user['Item']['home_away']['S'].rsplit(' ', 1)
-            state = comm[1]
-            city = comm[0][:-1]
-            try:
-                delete_home_away = db.update_item(TableName='users',
-                                    Key={'email': {'S': user_email}},
-                                    UpdateExpression='REMOVE home_away'
-                                )
-                update_member_counts(city, state, 'remove')
-                response['message'] = 'Successfully deleted home community!'
-            except:
-                raise BadRequest('Failed to add community!')
-        return response, 200
+                        delete_home_away = db.update_item(TableName='users',
+                                        Key={'email': {'S': user_email}},
+                                        UpdateExpression='REMOVE home_away'
+                                    )
+                    else:
+                        delete_home = db.update_item(TableName='users',
+                                            Key={'email': {'S': user_email}},
+                                            UpdateExpression='REMOVE home'
+                                        )
+                    update_member_counts(city, state, 'remove')
+                    response['message'] = 'Successfully deleted home community!'
+                except:
+                    raise BadRequest('Failed to add community!')
+            elif community == 'home_away':
+                comm = user['Item']['home_away']['S'].rsplit(' ', 1)
+                state = comm[1]
+                city = comm[0][:-1]
+                try:
+                    delete_home_away = db.update_item(TableName='users',
+                                        Key={'email': {'S': user_email}},
+                                        UpdateExpression='REMOVE home_away'
+                                    )
+                    update_member_counts(city, state, 'remove')
+                    response['message'] = 'Successfully deleted home community!'
+                except:
+                    raise BadRequest('Failed to add community!')
+            return response, 200
+        else:
+            raise BadRequest('Request Failed! User not found. Check if ' \
+                             + 'user_email is correct and try again later.')
 
 
 class ChangePassword(Resource):
@@ -385,6 +405,15 @@ class GiveStarsToFollowings(Resource):
                                     ':stars' : {'N': str(data['stars'])}
                                 }
                             )
+                    notification = db.put_item(TableName='notifications',
+                                            Item={'notify_to': {'S': data['user_id']},
+                                                  'creation_time': {'S': date_time},
+                                                  'email': {'S': user_email},
+                                                  'notify_for': {'S': 'stars'},
+                                                  'from': {'S': 'follower'},
+                                                  'checked': {'BOOL': False}
+                                            }
+                                        )
                 except:
                     rollback_activity = db.delete_item(TableName='stars_activity',
                                         Key={'email': {'S': user_email},
@@ -418,6 +447,11 @@ class GiveStarsToFollowings(Resource):
                                     ':stars' : {'N': str(data['stars'])}
                                 }
                             )
+                    rollback_notification = db.delete_item(TableName='notifications',
+                                            Key={'notify_to': {'S': data['user_id']},
+                                                 'creation_time': {'S': date_time}
+                                            }
+                                        )
                     print('caught an exception deducting stars!')
                     raise RequestTimeout('Try again later!')
 
