@@ -506,7 +506,7 @@
 
 ### REPORT API
 - **report post**
-  - Path: api/v1/reports/{feed}/{user_email}
+  - Path: /api/v1/reports/{feed}/{user_email}
   - Method: **POST**
   - Required Data: id, key
   - Content-Type: application/json
