@@ -32,7 +32,7 @@ class ReportFeeds(Resource):
         response = {}
         data = request.get_json(force=True)
 
-        if str(feed) != 'posts' or str(feed) != 'challenges':
+        if str(feed) != 'posts' and str(feed) != 'challenges':
             raise BadRequest('Feed can either be posts or challenges')
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('Provide ID and Key of the feed to report')
