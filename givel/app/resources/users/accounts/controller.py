@@ -13,6 +13,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import NotFound, BadRequest, RequestTimeout
 
 from app.models import create_users_table, create_notifications_table
+
 from app.helper import upload_file, check_if_community_exists
 from app.helper import update_member_counts, check_if_user_exists
 
@@ -36,17 +37,6 @@ try:
     except:
         users = create_users_table()
         print('Users Table created!')
-except:
-    pass
-
-try:
-    try:
-        table_response = db.describe_table(TableName='notifications')
-        if table_response['Table']['TableStatus'] == 'ACTIVE':
-            print('notifications Table exists!')
-    except:
-        notifications = create_notifications_table()
-        print('notifications Table created!')
 except:
     pass
 
@@ -393,7 +383,7 @@ class GiveStarsToFollowings(Resource):
                                               'shared_time': {'S': date_time},
                                               'shared_to': {'S': 'user'},
                                               'shared_id': {'S': data['user_id']},
-                                              'stars': {'N': data['stars']}
+                                              'stars': {'N': str(data['stars'])}
                                         }
                                     )
                 try:
@@ -411,7 +401,8 @@ class GiveStarsToFollowings(Resource):
                                                   'email': {'S': user_email},
                                                   'notify_for': {'S': 'stars'},
                                                   'from': {'S': 'follower'},
-                                                  'checked': {'BOOL': False}
+                                                  'checked': {'BOOL': False},
+                                                  'stars': {'N': str(data['stars'])}
                                             }
                                         )
                 except:
