@@ -639,3 +639,82 @@
   - Returns: *200 OK* Status Code and a message if the picture changed successfully
   - Description: Changes organization's profile picture.
 
+
+### Notifications API's
+
+- **get user's all notifications**
+  - Path: /api/v1/notifications/{user_email}
+  - Method: **GET**
+  - Returns: Lists of dictionaries with all the user's notifications
+  - Description: Gets all the users notifications. {user_email} is the email id for 
+                 the user who's is logged in.
+  - WHAT DOES EVERY NOTIFICATION CONTAIN:
+    - checked: denotes that the notification is seen OR not seen by the user.
+      - 2 possible boolean values: True OR False.
+    - activity: says what is the notification about.
+      - Possible values: 'like', 'share', 'stars', 'comment', 'following', 'tagging'.
+    - where: denotes where did the activity took place.
+      - Possible values: 'post', 'challenge'.
+    - tagged_where: the value denotes where the user was tagged.
+                    The values could be either *post* OR *comment*
+      - Possible values: 'post', 'comment'.
+    - stars: represents how many stars where shared on the **activity**
+    - comment: dictionary with keys *id* and *content*. *id* holds the comment_id as 
+               its value and *content* holds the comment as its value.
+    - notification: dictionary which holds the notification's *id* and *key*.
+    - user: dictionary which holds user's *id*, *name* and *profile_picture*.
+    - feed: dictionary which holds feed'd *id*, *type* and *content*.
+    - creation_time: denotes when the notification was created.
+
+  - **Note**: *checked*, *activity*, *creation_time*, *user* and *notification* occurs 
+          always. All other keys occur according to the notification. Except the value 
+          "following" for *activity*, for all the values there will be key *where*.
+          Only the value *stars* for *activity* may or may not have key *where*. 
+          When the *where* does not occur, the notification is always meant to be for the 
+          user directly.
+          There are two such notifications: 1) User started following you.
+                                            2) User gave you stars for being awesome.
+
+  ## HOW TO PUT THE NOTIFICATION:
+    - If the value of the *activity* is "following", the notification would be 
+      **"*user_name* started following you."**
+    - If the value of the *activity* is "stars" and there does not exists key *where*, 
+      the notification would be **"*user_name* gave you *stars* stars for being 
+      awesome."**
+    - If the value of the *activity* is "stars" and there does exists key *where*, 
+      the notification would be **"*user_name* gave you *stars* stars for the *where* 
+      *feed_content*"**.
+    - If the value of the *activity* is "like", the notification would be **"*user_name* 
+      liked your *where* *feed_content*"**.
+    - If the value of the *activity* is "share", the notification would be **"*user_name* 
+      shared your *where* *feed_content*"**.
+    - If the value of the *activity* is "comment", the notification would be **"*user_name* 
+      commented on your *where* *feed_content*"**.
+    - If the value of the *activity* is "tagging" and the value of *tagged_where* is "post", 
+      the notification would be **"*user_name* tagged you in a *tagged_where* 
+      *feed_content*"**.
+    - If the value of the *activity* is "tagging" and the value of *tagged_where* is "comment", 
+      the notification would be **"*user_name* tagged you in a *tagged_where* 
+      *comment_content"**.
+
+
+- **changed notification's status**
+  - Path: /api/v1/notifications/{user_email}
+  - Method: **PUT**
+  - Content-Type: application/json
+  - Required Data: id, key, checked
+  - Returns: *200 OK* Status Code with a message if request is successful
+  - Description: Changes the state of the notification to "seen" once the user taps and checks 
+                 the notification. *id* and *key* are the notification's id and key which is 
+                 required to for the request to be successful else it will raise a BadRequest 
+                 exception. *checked* should be (true) bool value, if the notification is 
+                 checked else do not call this api.
+
+- **get notification's contents**
+  - Path: /api/v1/notifications/{user_email}
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: feed_id, feed_type
+  - Returns: *200 OK* Status Code with a success message if request is successful
+  - Description: Gets the content of the notification.
+  
