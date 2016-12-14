@@ -216,13 +216,12 @@ class UsersChallengePosts(Resource):
                     challenge['user'] = {}
                     challenge['user']['name'] = {}
                     challenge['user']['profile_picture'] = {}
+                    challenge['user']['id'] = challenge['creator']
                     challenge['user']['name']['S'] = user_name
                     challenge['user']['profile_picture']['S'] = profile_picture
                     challenge['feed'] = {}
-                    challenge['feed']['id'] = {}
-                    challenge['feed']['key'] = {}
-                    challenge['feed']['id']['S'] = challenge['email']['S']
-                    challenge['feed']['key']['S'] = challenge['creation_time']['S']
+                    challenge['feed']['id'] = challenge['email']
+                    challenge['feed']['key'] = challenge['creation_time']
                     challenge['state'] = {}
                     challenge['state']['S'] = state
                     challenge['liked'] = {}
@@ -298,6 +297,18 @@ class AcceptChallenge(Resource):
                                          'location': {'S': challenge['Item']['location']['S']}
                                     }
                                 )
+                
+                notification = db.put_item(TableName='notifications',
+                                Item={'notify_to': {'S': data['id']},
+                                      'creation_time': {'S': date_time},
+                                      'email': {'S': user_email},
+                                      'from': {'S': 'feed'},
+                                      'feed_id': 
+                                          {'S': str(data['id'])+'_'+str(data['key'])},
+                                      'checked': {'BOOL': False},
+                                      'notify_for': {'S': 'accepting challenge'}
+                                }
+                            )
                 response['message'] = 'Challenge Accepted!'
             except:
                 response['message'] = 'Try again later'

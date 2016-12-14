@@ -117,6 +117,28 @@ class UsersPost(Resource):
                                           ':d': {'S': request.form['content']}
                                       }
                                   )
+                    if request.form['tags'] != None:
+                        post = db.update_item(TableName='posts',
+                                    Key={'email': {'S': user_email},
+                                         'creation_time': {'S': date_time}
+                                    },
+                                    UpdateExpression='ADD tagged :t',
+                                    ExpressionAttributeValues={
+                                        ':t': {'SS': request.form['tags']}
+                                    }
+                                )
+                        for i in range(0, len(request.form['tags'])):
+                            tag_notification = db.put_item(TableName='notifications',
+                                    Item={'notify_to': {'S': request.form['tags'][i]['user_id']},
+                                          'creation_time': {'S': date_time},
+                                          'email': {'S': user_email},
+                                          'from': {'S': 'feed'},
+                                          'feed_id': {'S': feed_id},
+                                          'checked': {'BOOL': False},
+                                          'notify_for': {'S': 'tagging'},
+                                          'tagged_where': {'S': 'post'}
+                                    }
+                                )
                     if 'file_count' in request.form and int(request.form['file_count']) == 1:
                         f = request.files['file']
                         media_file, file_type = upload_post_file(f, BUCKET_NAME,
@@ -426,6 +448,7 @@ class UsersFavoritePosts(Resource):
                     taking_off = check_if_taking_off(feed['feed_id']['S'], 'posts')
                     post = p['Item']
                     post['user'] = {}
+                    post['user']['id'] = p_id
                     post['user']['name'] = {}
                     post['user']['profile_picture'] = {}
                     post['user']['name']['S'] = user_name

@@ -85,6 +85,8 @@ class FeedLikes(Resource):
             else:
                 feed_id = data['id']+'_'+data['key']
 
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
             if data['emotion'] != 'like' and data['emotion'] != 'unlike':
                 raise BadRequest('emotion can only be either like or unlike')
             try:
@@ -94,6 +96,18 @@ class FeedLikes(Resource):
                                                   'user': {'S': user_email}
                                             }
                                         )
+                    if data['id'] != 'organization':
+                        notification = db.put_item(TableName='notifications',
+                                Item={'notify_to': {'S': data['id']},
+                                      'creation_time': {'S': date_time},
+                                      'email': {'S': user_email},
+                                      'from': {'S': 'feed'},
+                                      'feed_id': {'S': feed_id},
+                                      'checked': {'BOOL': False},
+                                      'notify_for': {'S': 'like'},
+                                      'feed_type': {'S': str(feed)}
+                                }
+                            )
                     response['message'] = 'Success! Feed liked!'
                 elif data.get('emotion') == 'unlike':
                     unlike_post = db.delete_item(TableName='likes',
@@ -145,8 +159,8 @@ class GetFeedLikes(Resource):
                         like['user']['name']['S'] = user_name
                         like['user']['profile_picture']['S'] = profile_picture
                         like['user']['home']['S'] = home
-                        like['user']['email'] = {}
-                        like['user']['email']['S'] = email
+                        like['user']['id'] = {}
+                        like['user']['id']['S'] = email
 
                 response['message'] = 'Successfully fetched all likes'
                 response['result'] = likes['Items']
@@ -183,7 +197,7 @@ class FeedStars(Resource):
             region = None
             st = user['Item']['home']['S'].rsplit(' ', 1)[1]
 
-            if str(data['id']) == 'organization':
+            if data['id'] == 'organization':
                 feed_id = str(data['key'])
                 if STATES[st] in pacific_states:
                     region = 'pacific_region_feed_stars'
@@ -223,6 +237,19 @@ class FeedStars(Resource):
                                               'shared_id': {'S': feed_id}
                                         }
                                     )
+
+                        notifications = db.put_item(TableName='notifications',
+                                        Item={'notify_to': {'S': data['id']},
+                                              'creation_time': {'S': date_time},
+                                              'email': {'S': user_email},
+                                              'from': {'S': 'feed'},
+                                              'feed_id': {'S': feed_id},
+                                              'checked': {'BOOL': False},
+                                              'notify_for': {'S': 'stars'},
+                                              'feed_type': {'S': str(feed)},
+                                              'stars': {'N': str(data['stars'])}
+                                        }
+                                    )
                 except:
                     raise BadRequest('Request Failed!')
 
@@ -239,6 +266,11 @@ class FeedStars(Resource):
                     rollback_post = db.delete_item(TableName='stars_activity',
                                     Key={'email': {'S': user_email},
                                          'shared_time': {'S': date_time}
+                                    }
+                                )
+                    rollback_notifcation = db.delete_item(TableName='notifications',
+                                    Key={'notify_to': {'S': data['id']},
+                                         'creation_time': {'S': date_time}
                                     }
                                 )
                     raise BadRequest('Request Failed! Try again later!')
@@ -277,6 +309,11 @@ class FeedStars(Resource):
                                                       total_stars_shared = total_stars_shared - :s',
                                     ExpressionAttributeValues={
                                         ':s': {'N': str(data['stars'])}
+                                    }
+                                )
+                    rollback_notifcation = db.delete_item(TableName='notifications',
+                                    Key={'notify_to': {'S': data['id']},
+                                         'creation_time': {'S': date_time}
                                     }
                                 )
                     raise BadRequest('Request Failed! Try again later!')
@@ -324,11 +361,10 @@ class GetFeedStars(Resource):
                     else:
                         star['user'] = {}
                         star['user']['name'] = {}
-                        star['user']['email'] = {}
                         star['user']['profile_picture'] = {}
                         star['user']['name']['S'] = user_name
                         star['user']['profile_picture']['S'] = profile_picture
-                        star['user']['email']['S'] = star['email']['S']
+                        star['user']['id'] = star['email']
                         del star['email']
 
                 response['message'] = 'Successfully fetched all stars'
@@ -353,15 +389,55 @@ class FeedComments(Resource):
                 feed_id = data['key']
             else:
                 feed_id = data['id']+'_'+data['key']
+
             date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            add_comment = db.put_item(TableName='comments',
+            if data.get('tags') != None:
+                add_comment = db.put_item(TableName='comments',
+                            Item={'email': {'S': user_email},
+                                  'creation_time': {'S': date_time},
+                                  'feed_id': {'S': feed_id},
+                                  'comment': {'S': data['comment']},
+                                  'tagged': {'SS': data['tags']}
+                            }
+                        )
+                for i in range(0, len(data['tags'])):
+                    tag_notification = db.put_item(TableName='notifications',
+                            Item={'notify_to': {'S': data['tags'][i]['user_id']},
+                                  'creation_time': {'S': date_time},
+                                  'email': {'S': user_email},
+                                  'from': {'S': 'feed'},
+                                  'feed_id': {'S': feed_id},
+                                  'checked': {'BOOL': False},
+                                  'notify_for': {'S': 'tagging'},
+                                  'tagged_where': {'S': 'comment'},
+                                  'comment_id': 
+                                      {'S': user_email + '_' + date_time} 
+                            }
+                        )
+            else:
+                add_comment = db.put_item(TableName='comments',
                             Item={'email': {'S': user_email},
                                   'creation_time': {'S': date_time},
                                   'feed_id': {'S': feed_id},
                                   'comment': {'S': data['comment']}
                             }
                         )
+
+            if data['id'] != 'organization':
+                notification = db.put_item(TableName='notifications',
+                            Item={'notify_to': {'S': data['id']},
+                                  'creation_time': {'S': date_time},
+                                  'email': {'S': user_email},
+                                  'from': {'S': 'feed'},
+                                  'feed_id': {'S': feed_id},
+                                  'checked': {'BOOL': False},
+                                  'notify_for': {'S': 'comment'},
+                                  'comment_id': 
+                                      {'S': user_email + '_' + date_time}
+                            }
+                        )
+
             response['message'] = 'Comment successfully created!'
             return response, 200
 
@@ -430,21 +506,22 @@ class GetFeedComments(Resource):
                                     ':e': {'S': feed_id}
                                 }
                             )
-                for comments in get_comments['Items']:
-                    user_name, profile_picture, home = get_user_details(comments['email']['S'])
+                for comment in get_comments['Items']:
+                    user_name, profile_picture, home = get_user_details(comment['email']['S'])
                     if user_name == None:
-                        del comments
+                        del comment
                     else:
-                        comments['id'] = {}
-                        comments['id']['S'] = comments['email']['S']
-                        comments['key'] = {}
-                        comments['key']['S'] = comments['creation_time']['S']
-                        comments['user'] = {}
-                        comments['user']['name'] = {}
-                        comments['user']['profile_picture'] = {}
-                        comments['user']['name']['S'] = user_name
-                        comments['user']['profile_picture']['S'] = profile_picture
-                        del comments['email']
+                        comment['id'] = {}
+                        comment['id']['S'] = comment['email']['S']
+                        comment['key'] = {}
+                        comment['key']['S'] = comment['creation_time']['S']
+                        comment['user'] = {}
+                        comment['user']['name'] = {}
+                        comment['user']['profile_picture'] = {}
+                        comment['user']['name']['S'] = user_name
+                        comment['user']['profile_picture']['S'] = profile_picture
+                        comment['user']['id'] = comment['email'] 
+                        del comment['email']
 
                 response['message'] = 'Successfully fetched all comments'
                 response['result'] = get_comments['Items']
@@ -479,6 +556,19 @@ class ShareFeeds(Resource):
                                               'feed_id': {'S': feed_id}
                                              }
                                       )
+
+                if data['id'] != 'organization':
+                    notification = db.put_item(TableName='notifications',
+                                    Item={'notify_to': {'S': data['id']},
+                                          'creation_time': {'S': date_time},
+                                          'email': {'S': user_email},
+                                          'from': {'S': 'feed'},
+                                          'notify_for': {'S': 'share'},
+                                          'feed_id': {'S': feed_id},
+                                          'checked': {'BOOL': False},
+                                          'feed_type': {'S': str(feed)+'s'}
+                                    }
+                                )
 
                 response['message'] = 'Post successfully shared!'
             except:
