@@ -375,9 +375,10 @@ def check_if_user_following_user(user1_id, user2_id):
                Key={'email': {'S': user1_id}})
 
     following = False
-    for user in user1['Item']['following']['SS']:
-        if user == user2_id:
-            following = True
+    if user1['Item'].get('following') != None:
+        for user in user1['Item']['following']['SS']:
+            if user == user2_id:
+                following = True
 
     return following
 
