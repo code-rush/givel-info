@@ -226,7 +226,9 @@ class UsersPost(Resource):
                     taking_off = check_if_taking_off(feed_id, 'posts')
                     posts['user'] = {}
                     posts['user']['name'] = {}
+                    posts['user']['id'] = {}
                     posts['user']['profile_picture'] = {}
+                    posts['user']['id']['S'] = user_email
                     posts['user']['name']['S'] = user_name
                     posts['user']['profile_picture']['S'] = profile_picture
                     posts['feed'] = {}
