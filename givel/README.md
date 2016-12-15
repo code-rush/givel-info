@@ -718,3 +718,26 @@
   - Returns: *200 OK* Status Code with a success message if request is successful
   - Description: Gets the content of the notification.
   
+
+### Get User's Profile Page (Following, Followers, Badges, Activity)
+
+- **get user's profile**
+  - Path: /api/v1/profile/users/{user_email}
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id
+  - Returns: List of followings and followers and badges if the request is successful.
+  - Description: Gets user's profile page with results consisting of the user's followers,
+                 following and badges. {user_email} is the email of the user who is logged 
+                 in to the application.
+                 The *following* Key has a boolean value for the user_email following the 
+                 user_id and the *following* Key in the following and followers list has a 
+                 boolean value for the user_email following the user in the list.
+
+- **get user's post and challenges on profile**
+  - Path: /api/v1/profile/users/feeds/{user_email}
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id
+  - Returns: List of posts and challenges if request successful
+  - Description: Gets user's posts and challenges on the profile page.
