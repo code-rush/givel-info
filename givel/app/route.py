@@ -11,6 +11,7 @@ from app.resources.organizations.uplift.controller import organizations_uplift_a
 from app.resources.search.controller import search_api_routes
 from app.resources.notifications.controller import notifications_api_routes
 from app.resources.users.accounts.controller import user_profile_api_routes
+from app.resources.faqs.controller import faq_api_routes
 
 def build_route(app):
     app.register_blueprint(hw_bp)
@@ -26,3 +27,4 @@ def build_route(app):
     app.register_blueprint(search_api_routes, url_prefix='/api/v1/search')
     app.register_blueprint(notifications_api_routes, url_prefix='/api/v1/notifications')
     app.register_blueprint(user_profile_api_routes, url_prefix='/api/v1/profile')
+    app.register_blueprint(faq_api_routes, url_prefix='/api/v1/faq')
