@@ -49,5 +49,19 @@ class AskQuestion(Resource):
 
         return response, 201
 
+class GetFAQs(Resource):
+    def get(self):
+        response = {}
+
+        try:
+            faqs = db.scan(TableName='QAs')
+
+            response['message'] = 'Request successful!'
+            response['result'] = faqs['Items']
+            return response, 200
+        except:
+            raise BadRequest('Request failed! Please try again later')
+
 
 api.add_resource(AskQuestion, '/question/<user_email>')
+api.add_resource(GetFAQs, '/')

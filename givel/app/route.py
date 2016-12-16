@@ -27,4 +27,4 @@ def build_route(app):
     app.register_blueprint(search_api_routes, url_prefix='/api/v1/search')
     app.register_blueprint(notifications_api_routes, url_prefix='/api/v1/notifications')
     app.register_blueprint(user_profile_api_routes, url_prefix='/api/v1/profile')
-    app.register_blueprint(faq_api_routes, url_prefix='/api/v1/faq')
+    app.register_blueprint(faq_api_routes, url_prefix='/api/v1/faqs')
