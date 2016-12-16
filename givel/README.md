@@ -239,7 +239,6 @@
                    for the application. The location should be a string in the following 
                    syntax: "City, State".
 
-
 - **edit challenge**
   - Path: /api/v1/users/challenges/{user_email}
   - Method: **PUT**
@@ -504,6 +503,7 @@
                  then the response will consist of just a message and no results.
 
 
+
 ### REPORT API
 - **report post**
   - Path: /api/v1/reports/{feed}/{user_email}
@@ -517,6 +517,7 @@
                    the post.
                  - The client needs to send the *id* and *key* to report a post else a 
                    BadRequest Exception is raised.
+
 
 
 ### ORGANIZATION'S APIS
@@ -596,6 +597,7 @@
                  are coming from is shown in percentages for total 6 regions in US.
 
 
+
 ### Search Givel users API
 
 - **search users**
@@ -638,6 +640,7 @@
   - Content-Type: multipart/form-data
   - Returns: *200 OK* Status Code and a message if the picture changed successfully
   - Description: Changes organization's profile picture.
+
 
 
 ### Notifications API's
@@ -719,6 +722,7 @@
   - Description: Gets the content of the notification.
   
 
+
 ### Get User's Profile Page (Following, Followers, Badges, Activity)
 
 - **get user's profile**
@@ -734,10 +738,28 @@
                  user_id and the *following* Key in the following and followers list has a 
                  boolean value for the user_email following the user in the list.
 
-- **get user's post and challenges on profile**
+- **get user's posts and challenges on profile**
   - Path: /api/v1/profile/users/feeds/{user_email}
   - Method: **POST**
   - Content-Type: application/json
   - Required Data: user_id
   - Returns: List of posts and challenges if request successful
   - Description: Gets user's posts and challenges on the profile page.
+
+
+
+### FAQ apis
+
+- **ask a question**
+  - Path: /api/v1/faqs/question/<user_email>
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: question
+  - Returns: *201 CREATED* Status Code with a message.
+  - Description: Allows user to ask questions.
+
+- **get FAQs**
+  - Path: /api/v1/faqs/
+  - Method: **GET**
+  - Returns: All frequently asked questions and answers.
+
