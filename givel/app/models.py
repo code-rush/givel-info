@@ -474,7 +474,7 @@ def create_favorite_posts_table():
         try:
             favorites_table = dynamodb.Table('favorites')
         except:
-            print('Favorites Table does not exists')
+            print('Favorites Table does not exist')
     finally:
         return favorites_table
 
@@ -512,7 +512,7 @@ def create_report_table():
         try:
             reports_table = dynamodb.Table('reports')
         except:
-            print('reports Table does not exists')
+            print('reports Table does not exist')
     finally:
         return reports_table      
 
@@ -591,7 +591,7 @@ def create_organizations_table():
         try:
             organization_table = dynamodb.Table('organizations')
         except:
-            print('organizations Table does not exists')
+            print('organizations Table does not exist')
     finally:
         return organization_table
 
@@ -660,7 +660,7 @@ def create_shared_feeds_table():
         try:
             shared_feeds_table = dynamodb.Table('shared_feeds')
         except:
-            print('shared_feeds Table does not exists')
+            print('shared_feeds Table does not exist')
     finally:
         return shared_feeds_table
 
@@ -698,7 +698,46 @@ def create_notifications_table():
         try:
             notifications_table = dynamodb.Table('notifications')
         except:
-            print('notifications Table does not exists')
+            print('notifications Table does not exist')
     finally:
         return notifications_table 
+
+
+def create_faqs_table():
+    try:
+        faqs_table = dynamodb.create_table(
+             TableName='faqs',
+             KeySchema=[
+                 {
+                     'AttributeName': 'email',
+                     'KeyType': 'HASH'
+                 },
+                 {
+                     'AttributeName': 'creation_time',
+                     'KeyType': 'RANGE'
+                 }
+             ],
+             AttributeDefinitions=[
+                 {
+                     'AttributeName': 'email',
+                     'AttributeType': 'S'
+                 },
+                 {
+                     'AttributeName': 'creation_time',
+                     'AttributeType': 'S'
+                 }
+             ],
+             ProvisionedThroughput={
+                 'ReadCapacityUnits': 10,
+                 'WriteCapacityUnits': 10
+             }
+        )
+    except:
+        try:
+            faqs_table = dynamodb.Table('faqs')
+        except:
+            print('faqs Table does not exist')
+    finally:
+        return faqs_table
+
 
