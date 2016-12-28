@@ -15,6 +15,7 @@ from app.helper import get_user_details, STATES
 
 from app.helper import mid_west_states, southeast_states, northeast_states
 from app.helper import pacific_states, southwest_states, rocky_mountain_states
+from app.helper import check_if_user_following_user
 
 from werkzeug.exceptions import BadRequest
 
@@ -124,7 +125,7 @@ class FeedLikes(Resource):
 
 
 class GetFeedLikes(Resource):
-    def post(self):
+    def post(self, user_email):
         response = {}
         data = request.get_json(force=True)
 
@@ -149,6 +150,10 @@ class GetFeedLikes(Resource):
                 for like in likes['Items']:
                     email = like['user']['S']
                     user_name, profile_picture, home = get_user_details(email)
+                    following_value = None
+                    if user_email != email:
+                        following_value = check_if_user_following_user(
+                                                          user_email, email)
                     if user_name == None:
                         del like
                     else:
@@ -161,6 +166,9 @@ class GetFeedLikes(Resource):
                         like['user']['home']['S'] = home
                         like['user']['id'] = {}
                         like['user']['id']['S'] = email
+                        if following_value != None:
+                            like['user']['following'] = {}
+                            like['user']['following']['BOOL'] = following_value
 
                 response['message'] = 'Successfully fetched all likes'
                 response['result'] = likes['Items']
@@ -325,7 +333,7 @@ class FeedStars(Resource):
 
 
 class GetFeedStars(Resource):
-    def post(self):
+    def post(self, user_email):
         response = {}
         data = request.get_json(force=True)
 
@@ -355,7 +363,12 @@ class GetFeedStars(Resource):
                         )
 
                 for star in stars['Items']:
-                    user_name, profile_picture, home = get_user_details(star['email']['S'])
+                    email = star['email']['S']
+                    user_name, profile_picture, home = get_user_details(email)
+                    following_value = None
+                    if user_email != email:
+                        following_value = check_if_user_following_user(
+                                                          user_email, email)
                     if user_name == None:
                         del star
                     else:
@@ -365,6 +378,9 @@ class GetFeedStars(Resource):
                         star['user']['name']['S'] = user_name
                         star['user']['profile_picture']['S'] = profile_picture
                         star['user']['id'] = star['email']
+                        if following_value != None:
+                            star['user']['following'] = {}
+                            star['user']['following']['BOOL'] = following_value
                         del star['email']
 
                 response['message'] = 'Successfully fetched all stars'
@@ -579,9 +595,9 @@ class ShareFeeds(Resource):
 
 
 api.add_resource(FeedLikes, '/likes/<user_email>/<feed>')
-api.add_resource(GetFeedLikes,'/likes')
+api.add_resource(GetFeedLikes,'/likes/<user_email>')
 api.add_resource(FeedStars, '/stars/share/<user_email>/<feed>')
-api.add_resource(GetFeedStars, '/stars')
+api.add_resource(GetFeedStars, '/stars/<user_email>')
 api.add_resource(FeedComments, '/comments/<user_email>')
 api.add_resource(GetFeedComments, '/comments')
 api.add_resource(ShareFeeds, '/share/<feed>/<user_email>')
