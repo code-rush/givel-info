@@ -117,7 +117,7 @@ class UsersPost(Resource):
                                           ':d': {'S': request.form['content']}
                                       }
                                   )
-                    if request.form['tags'] != None:
+                    if 'tags' in request.form:
                         post = db.update_item(TableName='posts',
                                     Key={'email': {'S': user_email},
                                          'creation_time': {'S': date_time}
