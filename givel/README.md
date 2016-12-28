@@ -700,6 +700,9 @@
       the notification would be **"*user_name* tagged you in a *tagged_where* 
       *comment_content"**.
 
+    - *Note:* If **feed_content** OR **comment_content** is an empty string, it means the 
+            comment/post has been deleted.
+
 
 - **changed notification's status**
   - Path: /api/v1/notifications/{user_email}
@@ -762,4 +765,4 @@
   - Path: /api/v1/faqs/
   - Method: **GET**
   - Returns: All frequently asked questions and answers.
-
+  - Description: Gets all questions that have been answered.
