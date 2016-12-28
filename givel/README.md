@@ -408,7 +408,7 @@
                  with the request to fetch all comments made on that feed.
 
 - **get feed likes**
-  - Path: /api/v1/feeds/likes
+  - Path: /api/v1/feeds/likes/{user_email}
   - Method: **POST**
   - Required Data: id, key
   - Content-Type: application/json
@@ -416,9 +416,12 @@
   - Description: Gets all users who liked the post.
                  *id* and *key* here are the feed id and key which needs to be sent 
                  with the request.
+                 In the *user_following*, if the *following* is not present in any entity,
+                 that means the user is same who requested to get feed stars, else the 
+                 *following* will have a boolean value.
 
 - **get feed stars**
-  - Path: /api/v1/feeds/stars
+  - Path: /api/v1/feeds/stars/{user_email}
   - Method: **POST**
   - Required Data: id, key
   - Content-Type: application/json
@@ -426,6 +429,9 @@
   - Description: Gets all users who gave stars to the post.
                  *id* and *key* here are the feed id and key which needs to be sent 
                  with the request.
+                 In the *user_following*, if the *following* is not present in any entity,
+                 that means the user is same who requested to get feed stars, else the 
+                 *following* will have a boolean value.
 
 - **get community posts(feed)**
   - Path: /api/v1/communities/posts/{user_email}
