@@ -187,7 +187,7 @@ class UserFollowingPostsFeeds(Resource):
         feeds = []
         if users_following['Item'].get('following') == None:
             response['message'] = 'Success!'
-            response['result'] = 'You are not following any user!'
+            response['result'] = feeds
         else:
             for user in users_following['Item']['following']['SS']:
                 try:
@@ -245,7 +245,7 @@ class UserFollowingChallengesFeeds(Resource):
         feeds = []
         if users_following['Item'].get('following') == None:
             response['message'] = 'Success!'
-            response['result'] = 'You are not following any user!'
+            response['result'] = feeds
         else:
             for user in users_following['Item']['following']['SS']:
                 try:
