@@ -235,10 +235,10 @@ class UsersChallengePosts(Resource):
                     del challenge['email']
                     del challenge['creator']
                     del challenge['value']
-            response['message'] = 'Successfully fetched users all challenges!'
+            response['message'] = 'Successfully fetched users challenges!'
             response['result'] = user_challenges['Items']
         except:
-            response['message'] = 'Failed to fetch users posts!'
+            response['message'] = 'Failed to fetch users challenges!'
         return response, 200
 
     def delete(self, user_email):

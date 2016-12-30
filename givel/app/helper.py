@@ -331,9 +331,10 @@ def check_challenge_state(id, key):
         current_time = datetime.datetime.now()
         creation_time = datetime.datetime.strptime(key, "%Y-%m-%d %H:%M:%S")
         diff = current_time - creation_time
-        str_diff = str(diff).rsplit(' ', 2)[0]
-        if int(str_diff) >= 2:
-            change_state = db.update_item(TableName='challenges',
+        str_diff = str(diff).rsplit(' ', 2)
+        if len(str_diff) > 1:
+            if int(str_diff[0]) >= 2:
+                change_state = db.update_item(TableName='challenges',
                                     Key={'email': {'S': id},
                                          'creation_time': {'S': key}
                                     },
@@ -345,8 +346,11 @@ def check_challenge_state(id, key):
                                         ':st': {'S': 'INACTIVE'}
                                     }
                                 )
-            state = 'INACTIVE'
-            return state
+                state = 'INACTIVE'
+                return state
+            else:
+                state = 'ACTIVE'
+                return state
         else:
             state = 'ACTIVE'
             return state
