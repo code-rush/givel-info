@@ -311,7 +311,7 @@ def check_if_user_commented(feed_id, user_id):
                         ':e': {'S': user_id}
                     }
                 )
-    if user_commented.get('Item') != None:
+    if user_commented.get('Items') != None:
         commented = True
     return commented
 
