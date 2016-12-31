@@ -297,7 +297,7 @@ def check_if_user_starred(feed_id, user_id):
                     ':id': {'S': feed_id}
                 }
             )
-    if user_starred.get('Item') != None:
+    if user_starred.get('Items') != None:
         starred = True
     return starred
 
