@@ -387,3 +387,15 @@ def check_if_user_following_user(user1_id, user2_id):
     return following
 
 
+def check_if_post_added_to_favorites(feed_id, user_id):
+    added_to_fav = False
+    fav = db.get_item(TableName='favorites',
+                    Key={'email': {'S': user_id},
+                         'feed_id': {'S': feed_id}
+                    }
+                )
+
+    if fav.get('Item') != None:
+        added_to_fav = True
+
+    return added_to_fav

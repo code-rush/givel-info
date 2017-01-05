@@ -10,11 +10,10 @@ from app.models import create_posts_table
 from app.models import create_favorite_posts_table
 
 from app.helper import upload_post_file
-from app.helper import check_if_user_liked
-from app.helper import check_if_user_starred
-from app.helper import check_if_user_commented
-from app.helper import get_user_details
-from app.helper import check_if_taking_off
+from app.helper import check_if_user_liked, check_if_taking_off
+from app.helper import check_if_user_starred, check_if_user_commented
+from app.helper import get_user_details, check_if_post_added_to_favorites
+
 
 from werkzeug.exceptions import BadRequest
 
@@ -224,6 +223,8 @@ class UsersPost(Resource):
                     starred = check_if_user_starred(feed_id, user_email)
                     commented = check_if_user_commented(feed_id, user_email)
                     taking_off = check_if_taking_off(feed_id, 'posts')
+                    added_to_fav = check_if_post_added_to_favorites(feed_id, 
+                                                                  user_email)
                     posts['user'] = {}
                     posts['user']['name'] = {}
                     posts['user']['id'] = {}
@@ -244,6 +245,8 @@ class UsersPost(Resource):
                     posts['liked']['BOOL'] = liked
                     posts['starred']['BOOL'] = starred
                     posts['commented']['BOOL'] = commented
+                    posts['added_to_fav'] = {}
+                    posts['added_to_fav']['BOOL'] = added_to_fav
                     del posts['email']
                     del posts['value']
             response['message'] = 'Successfully fetched users all posts!'
