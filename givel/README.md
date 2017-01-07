@@ -608,7 +608,7 @@
 
 - **search users**
   - Path: /api/v1/search/users/{user_email}
-  - Method: **GET**
+  - Method: **POST**
   - Required Data: search_for
   - Content-Type: application/json
   - Returns: *200 Ok* Status Code with a list of givel users if request is successful
