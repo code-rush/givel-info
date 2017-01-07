@@ -4,7 +4,7 @@ from app.app import app
 from flask import Blueprint, request
 from flask_restful import Api, Resource
 
-from app.helper import get_user_details
+from app.helper import get_user_details, check_if_user_following_user
 
 from werkzeug.exceptions import BadRequest
 
@@ -25,6 +25,7 @@ class SearchUsersOnGivel(Resource):
         response = {}
         data = request.get_json(force=True)
 
+        search_results = []
         if data.get('search_for') != None:
             results = users_table.scan(Select='ALL_ATTRIBUTES',
                         FilterExpression=Attr('first_name').begins_with(data['search_for']) \
@@ -36,16 +37,23 @@ class SearchUsersOnGivel(Resource):
             else:
                 response['message'] = 'Succefully found the following matches'
                 for item in results['Items']:
-                    user_name, profile_picture, home = get_user_details(item['email'])
-                    if user_name == None:
-                        del item
-                    else:
+                    if item['email'] != user_email:
+                        following_user = check_if_user_following_user(user_email, 
+                                                                    item['email'])
                         users = {}
                         users['name'] = {}
                         users['profile_picture'] = {}
-                        users['name']['S'] = user_name
-                        users['profile_picture']['S'] = profile_picture
-                        response['results'] = users
+                        users['name']['S'] = item['first_name'] + ' ' \
+                                                + item['last_name']
+                        users['profile_picture']['S'] = item['profile_picture']
+                        users['home_community'] = {}
+                        users['home_community']['S'] = item['home']
+                        users['id'] = {}
+                        users['id']['S'] = item['email']
+                        users['following'] = {}
+                        users['following']['BOOL'] = following_user
+                        search_results.append(users)
+                response['results'] = search_results
         else:
             response['message'] = 'Please provide some input!'
 
