@@ -37,10 +37,10 @@ class OrganizationRegistration(Resource):
     def post(self):
         response = {}
 
-        if not request.form['name'] or not request.form['type'] \
-          or not request.form['global'] or not request.form['location'] \
-          or not request.form['description'] or not request.form['admin'] \
-          or not request.form['password']:
+        if request.form.get('name') == None or request.form.get('type') == None \
+          or request.form.get('description') == None or request.form.get('admin') == None \
+          or request.form.get('password') == None or request.form.get('global') == None \
+          or request.form.get('location') == None:
             raise BadRequest('Please provide all details.')
         if request.form['type'] != 'b-corp' and request.form['type'] != 'non-profit':
             raise BadRequest('Organization can be either b-corp or non-profit')
@@ -49,60 +49,48 @@ class OrganizationRegistration(Resource):
             organization = db.get_item(TableName='organizations',
                             Key={'name': {'S': organization_name}})
             if organization.get('Item') != None:
-                raise BadRequest('Organization with that name already exists.' \
+                raise BadRequest('Organization with that name already exists. ' \
                                  'Please provide a unique organization name.')
+
+            global_org = False
+            if request.form['global'] == 'true':
+                global_org = True
             else:
                 try:
                     organization = db.put_item(TableName='organizations',
-                                        Item={'name': {'S': organization_name},
-                                              'description': {'S': request.form['description']},
-                                              'type': {'S': request.form['type']},
-                                              'global': {'BOOL': request.form['global']},
-                                              'location': {'S': request.form['location']},
-                                              'admin_email': {'S': request.form['admin']},
-                                              'password': {'S': generate_password_hash(request.form['password'])},
-                                              'stars': {'N': '0'},
-                                              'feed_stars': {'N': '0'},
-                                              'comments': {'N': '0'},
-                                              'likes': {'N': '0'},
-                                              'pacific_region_stars': {'N': '0'},
-                                              'south_west_region_stars': {'N': '0'},
-                                              'rocky_mountain_region_stars': {'N': '0'},
-                                              'south_east_region_stars': {'N': '0'},
-                                              'north_east_region_stars': {'N': '0'},
-                                              'mid_west_region_stars': {'N': '0'},
-                                              'pacific_region_feed_stars': {'N': '0'},
-                                              'south_west_region_feed_stars': {'N': '0'},
-                                              'rocky_mountain_region_feed_stars': {'N': '0'},
-                                              'south_east_region_feed_stars': {'N': '0'},
-                                              'north_east_region_feed_stars': {'N': '0'},
-                                              'mid_west_region_feed_stars': {'N': '0'}
-                                        }
-                                    )
+                                    Item={'name': {'S': organization_name},
+                                          'description': {'S': request.form['description']},
+                                          'type': {'S': request.form['type']},
+                                          'global': {'BOOL': global_org},
+                                          'location': {'S': request.form['location']},
+                                          'admin_email': {'S': request.form['admin']},
+                                          'password': {'S': generate_password_hash(request.form['password'])},
+                                          'stars': {'N': '0'},
+                                          'feed_stars': {'N': '0'},
+                                          'comments': {'N': '0'},
+                                          'likes': {'N': '0'},
+                                          'pacific_region_stars': {'N': '0'},
+                                          'south_west_region_stars': {'N': '0'},
+                                          'rocky_mountain_region_stars': {'N': '0'},
+                                          'south_east_region_stars': {'N': '0'},
+                                          'north_east_region_stars': {'N': '0'},
+                                          'mid_west_region_stars': {'N': '0'},
+                                          'pacific_region_feed_stars': {'N': '0'},
+                                          'south_west_region_feed_stars': {'N': '0'},
+                                          'rocky_mountain_region_feed_stars': {'N': '0'},
+                                          'south_east_region_feed_stars': {'N': '0'},
+                                          'north_east_region_feed_stars': {'N': '0'},
+                                          'mid_west_region_feed_stars': {'N': '0'}
+                                    }
+                                )
+
                     response['message'] = 'Congratulations! Organization registered!'
                 except:
-                    response['message'] = 'Request Failed! Try again later'
-                    return response, 200
+                    delete_organization = db.delete_item(TableName='organizations',
+                                            Key={'name': {'S': organization_name}})
+                    raise BadRequest('Request Failed! Try again later')
 
-                if request.files['picture']:
-                    try:
-                        f = request.files['picture']
-                        picture_file = upload_file(f, BUCKET_NAME, organization_name, ALLOWED_EXTENSIONS)
-                        if picture_file != None:
-                            user = db.update_item(TableName='users',
-                                                Key={'name': {'S': organization_name}},
-                                                UpdateExpression='SET picture = :picture',
-                                                ExpressionAttributeValues={
-                                                         ':picture': {'S': picture_file}}
-                                            )
-                        response['message'] = 'Congratulations! Organization registered!'
-                    except:
-                        delete_organization = db.delete_item(TableName='organizations',
-                                                Key={'name': {'S': organization_name}})
-                        response['message'] = 'Request failed! Try again later'
-                        return response, 200
-
-        return response, 201
+            return response, 201
 
 
 class ChangeOrganizationName(Resource):
