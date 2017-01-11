@@ -236,11 +236,15 @@ class OrganizationLogin(Resource):
                         }
                     )
 
-        if admin.get('Item') != None and check_password_hash(data['password'], \
-                                              admin['Item']['password']['S']):
+        user_authenticated = False
+
+        if admin.get('Items') != [] and check_password_hash(
+                      admin['Items'][0]['password']['S'],data['password']):
+            user_authenticated = True
             response['message'] = 'Login successful!'
         else:
             response['message'] = 'Login failed! Try again later!'
+        response['user_authenticated'] = user_authenticated
 
         return response, 200
 
