@@ -56,121 +56,127 @@ class UsersPost(Resource):
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
         file_id_ex = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
 
-        if request.form['content'] or ('file_count' in request.form and int(request.form['file_count'])) != 0:
+        if request.form.get('content') == None:
+            raise BadRequest('Post cannot be empty. Please provide '\
+                                            + 'content of the post.')
+        if request.form.get('file_count') == None:
+            raise BadRequest('Please provide file_count. If no files are ' \
+                                              + 'sent, set file_count to 0')
+        if 'file_count' in request.form and int(request.form['file_count']) != 0:
             if int(request.form['file_count']) > 1:
                 raise BadRequest('Only one file is allowed!')
-            else:
-                user = db.get_item(TableName='users',
-                                Key={'email': {'S': user_email}})
-                try:
-                    post = db.put_item(TableName='posts',
-                                    Item={'email': {'S': user_email},
-                                         'creation_time': {'S': date_time},
-                                         'value': {'N': '0'},
-                                         'likes': {'N': '0'},
-                                         'stars': {'N': '0'},
-                                         'favorites': {'N': '0'},
-                                         'comments': {'N': '0'},
-                                         'only_to_followers': 
-                                             {'BOOL': user['Item']['post_only_to_followers']['BOOL']}
+        else:
+            user = db.get_item(TableName='users',
+                            Key={'email': {'S': user_email}})
+            try:
+                post = db.put_item(TableName='posts',
+                                Item={'email': {'S': user_email},
+                                     'creation_time': {'S': date_time},
+                                     'value': {'N': '0'},
+                                     'likes': {'N': '0'},
+                                     'stars': {'N': '0'},
+                                     'favorites': {'N': '0'},
+                                     'comments': {'N': '0'},
+                                     'only_to_followers': 
+                                         {'BOOL': user['Item']['post_only_to_followers']['BOOL']}
+                                }
+                            )
+                if 'location' in request.form:
+                    post = db.update_item(TableName='posts',
+                                  Key={'email':{'S': user_email},
+                                       'creation_time': {'S': date_time}
+                                  },
+                                  UpdateExpression='SET #loc = :l',
+                                  ExpressionAttributeNames={
+                                      '#loc': 'location'
+                                  },
+                                  ExpressionAttributeValues={
+                                      ':l': {'S': request.form['location']}
+                                  }
+                              )
+                else:
+                    user = db.get_item(TableName='users',
+                                    Key={'email': {'S': user_email}
                                     }
                                 )
-                    if 'location' in request.form:
-                        post = db.update_item(TableName='posts',
-                                      Key={'email':{'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET #loc = :l',
-                                      ExpressionAttributeNames={
-                                          '#loc': 'location'
-                                      },
-                                      ExpressionAttributeValues={
-                                          ':l': {'S': request.form['location']}
-                                      }
-                                  )
-                    else:
-                        user = db.get_item(TableName='users',
-                                        Key={'email': {'S': user_email}
-                                        }
-                                    )
-                        home_community = user['Item']['home']['S']
+                    home_community = user['Item']['home']['S']
+                    post = db.update_item(TableName='posts',
+                                  Key={'email': {'S': user_email},
+                                       'creation_time': {'S': date_time}
+                                  },
+                                  UpdateExpression='SET #loc = :l',
+                                  ExpressionAttributeNames={
+                                      '#loc': 'location'
+                                  },
+                                  ExpressionAttributeValues={
+                                      ':l': {'S': home_community}
+                                  }
+                              )
+                if 'content' in request.form:
+                    post = db.update_item(TableName='posts',
+                                  Key={'email': {'S': user_email},
+                                       'creation_time': {'S': date_time}
+                                  },
+                                  UpdateExpression='SET content = :d',
+                                  ExpressionAttributeValues={
+                                      ':d': {'S': request.form['content']}
+                                  }
+                              )
+                if 'tags' in request.form:
+                    post = db.update_item(TableName='posts',
+                                Key={'email': {'S': user_email},
+                                     'creation_time': {'S': date_time}
+                                },
+                                UpdateExpression='ADD tagged :t',
+                                ExpressionAttributeValues={
+                                    ':t': {'SS': request.form['tags']}
+                                }
+                            )
+                    for i in range(0, len(request.form['tags'])):
+                        tag_notification = db.put_item(TableName='notifications',
+                                Item={'notify_to': {'S': request.form['tags'][i]['user_id']},
+                                      'creation_time': {'S': date_time},
+                                      'email': {'S': user_email},
+                                      'from': {'S': 'feed'},
+                                      'feed_id': {'S': feed_id},
+                                      'checked': {'BOOL': False},
+                                      'notify_for': {'S': 'tagging'},
+                                      'tagged_where': {'S': 'post'}
+                                }
+                            )
+                if 'file_count' in request.form and int(request.form['file_count']) == 1:
+                    f = request.files['file']
+                    media_file, file_type = upload_post_file(f, BUCKET_NAME,
+                                     user_email+file_id_ex, ALLOWED_EXTENSIONS)
+                    if file_type == 'picture_file':
                         post = db.update_item(TableName='posts',
                                       Key={'email': {'S': user_email},
                                            'creation_time': {'S': date_time}
                                       },
-                                      UpdateExpression='SET #loc = :l',
-                                      ExpressionAttributeNames={
-                                          '#loc': 'location'
-                                      },
+                                      UpdateExpression='ADD pictures :p',
                                       ExpressionAttributeValues={
-                                          ':l': {'S': home_community}
+                                          ':p': {'SS': [media_file]}
                                       }
                                   )
-                    if 'content' in request.form:
+                    elif file_type == 'video_file':
                         post = db.update_item(TableName='posts',
                                       Key={'email': {'S': user_email},
                                            'creation_time': {'S': date_time}
                                       },
-                                      UpdateExpression='SET content = :d',
+                                      UpdateExpression='ADD videos :v',
                                       ExpressionAttributeValues={
-                                          ':d': {'S': request.form['content']}
+                                          ':v': {'SS': [media_file]}
                                       }
                                   )
-                    if 'tags' in request.form:
-                        post = db.update_item(TableName='posts',
-                                    Key={'email': {'S': user_email},
-                                         'creation_time': {'S': date_time}
-                                    },
-                                    UpdateExpression='ADD tagged :t',
-                                    ExpressionAttributeValues={
-                                        ':t': {'SS': request.form['tags']}
-                                    }
-                                )
-                        for i in range(0, len(request.form['tags'])):
-                            tag_notification = db.put_item(TableName='notifications',
-                                    Item={'notify_to': {'S': request.form['tags'][i]['user_id']},
-                                          'creation_time': {'S': date_time},
-                                          'email': {'S': user_email},
-                                          'from': {'S': 'feed'},
-                                          'feed_id': {'S': feed_id},
-                                          'checked': {'BOOL': False},
-                                          'notify_for': {'S': 'tagging'},
-                                          'tagged_where': {'S': 'post'}
-                                    }
-                                )
-                    if 'file_count' in request.form and int(request.form['file_count']) == 1:
-                        f = request.files['file']
-                        media_file, file_type = upload_post_file(f, BUCKET_NAME,
-                                         user_email+file_id_ex, ALLOWED_EXTENSIONS)
-                        if file_type == 'picture_file':
-                            post = db.update_item(TableName='posts',
-                                          Key={'email': {'S': user_email},
-                                               'creation_time': {'S': date_time}
-                                          },
-                                          UpdateExpression='ADD pictures :p',
-                                          ExpressionAttributeValues={
-                                              ':p': {'SS': [media_file]}
-                                          }
-                                      )
-                        elif file_type == 'video_file':
-                            post = db.update_item(TableName='posts',
-                                          Key={'email': {'S': user_email},
-                                               'creation_time': {'S': date_time}
-                                          },
-                                          UpdateExpression='ADD videos :v',
-                                          ExpressionAttributeValues={
-                                              ':v': {'SS': [media_file]}
-                                          }
-                                      )
-                    response['message'] = 'Success! Post Created!'
-                except:
-                    post = db.delete_item(TableName='posts',
-                                 Key={'email': {'S': user_email},
-                                      'creation_time': {'S': date_time}
-                                 }
-                             )
-                    raise BadRequest('Failed to create post')
-                return response, 201
+                response['message'] = 'Success! Post Created!'
+            except:
+                post = db.delete_item(TableName='posts',
+                             Key={'email': {'S': user_email},
+                                  'creation_time': {'S': date_time}
+                             }
+                         )
+                raise BadRequest('Failed to create post')
+            return response, 201
 
 
     def put(self, user_email):
