@@ -571,7 +571,7 @@
 - **give stars to organization on uplift**
   - Path: /api/v1/organizations/uplift/stars/share/{user_email}
   - Method: *POST*
-  - Required Data: organizations_name, stars
+  - Required Data: organization_name, stars
   - Content-Type: application/json
   - Returns: *200 OK* Status Code with a message and *400 Bad Request* if failed
   - Description: - Allows users to give stars to organizations on uplift.

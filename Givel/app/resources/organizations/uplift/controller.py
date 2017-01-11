@@ -25,20 +25,23 @@ class OrganizationsUplift(Resource):
         if str(o_type) != 'social_good' and str(o_type) != 'non-profit':
             raise BadRequest('Organizations type can be either social_good or non-profit.')
         else:
-            type = None
+            otype = None
             if str(o_type) == 'social_good':
-                type = 'b-corp'
+                otype = 'b-corp'
             else:
-                type = 'non-profit'
+                otype = 'non-profit'
             organizations = db.query(TableName='organizations',
                                   IndexName='organizations-type-name',
-                                  KeyConditionExpression='type = :t',
+                                  KeyConditionExpression='#t = :t',
+                                  ExpressionAttributeNames={
+                                      '#t': 'type'
+                                  },
                                   ExpressionAttributeValues={
-                                      ':t': {'S': type}
+                                      ':t': {'S': otype}
                                   }
                               )
 
-            organizations = []
+            orgs = []
 
             if organizations.get('Items') == []:
                 response['message'] = 'No organizations exists currently'
@@ -47,9 +50,24 @@ class OrganizationsUplift(Resource):
                     del organization['admin_email']
                     del organization['password']
                     del organization['type']
-                    organizations.append(organization)
+                    del organization['likes']
+                    del organization['comments']
+                    del organization['feed_stars']
+                    del organization['mid_west_region_stars']
+                    del organization['mid_west_region_feed_stars']
+                    del organization['north_east_region_stars']
+                    del organization['north_east_region_feed_stars']
+                    del organization['pacific_region_stars']
+                    del organization['pacific_region_feed_stars']
+                    del organization['rocky_mountain_region_stars']
+                    del organization['rocky_mountain_region_feed_stars']
+                    del organization['south_east_region_stars']
+                    del organization['south_east_region_feed_stars']
+                    del organization['south_west_region_stars']
+                    del organization['south_west_region_feed_stars']
+                    orgs.append(organization)
                 response['message'] = 'Successfully fetched all organizations'
-                response['result'] = organizations
+                response['result'] = orgs
 
             return response, 200
 
@@ -71,7 +89,7 @@ class GiveStarsOnUplift(Resource):
                 raise BadRequest('Cannot donate less than 1 star.')
             if int(user['Item']['givel_stars']['N']) < int(data['stars']):
                 raise BadRequest('You don\'t have enough stars to donate.')
-            if data.get('organizations_name') == None:
+            if data.get('organization_name') == None:
                 raise BadRequest('Please provide organizations name to give stars to.')
 
             st = user['Item']['home']['S'].rsplit(' ', 1)[1]
@@ -90,7 +108,7 @@ class GiveStarsOnUplift(Resource):
             elif STATES[st] in northeast_states:
                 region = 'north_east_region_stars'
 
-            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
 
             if data.get('stars') != None:
                 try:
@@ -99,17 +117,13 @@ class GiveStarsOnUplift(Resource):
                                           'shared_time': {'S': date_time},
                                           'stars': {'N': str(data['stars'])},
                                           'shared_to': {'S': 'organization'},
-                                          'shared_id': {'S': data['organizations_name']}
+                                          'shared_id': {'S': data['organization_name']}
                                     }
                                 )
-                except:
-                    raise BadRequest('Request Failed!')
-
-                try:
                     add_stars_to_organization = db.update_item(TableName='organizations',
-                                        Key={'name': {'S': data['organizations_name']}},
+                                        Key={'name': {'S': data['organization_name']}},
                                         UpdateExpression='SET stars = stars + :s, \
-                                                          SET #rs = #rs + :s',
+                                                          #rs = #rs + :s',
                                         ExpressionAttributeNames={
                                             '#rs': region
                                         },
@@ -129,12 +143,12 @@ class GiveStarsOnUplift(Resource):
 
                     response['message'] = 'Stars shared successfully'
                 except:
-                    result['message'] = 'Request failed! Try again later'
+                    raise BadRequest('Request failed! Please try again later.')
 
             return response, 200
 
 
 
-api.add_resource(OrganizationsUplift, '/<type>')
+api.add_resource(OrganizationsUplift, '/<o_type>')
 api.add_resource(GiveStarsOnUplift, '/stars/share/<user_email>')
 
