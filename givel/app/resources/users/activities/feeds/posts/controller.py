@@ -53,8 +53,8 @@ class UsersPost(Resource):
     def post(self, user_email):
         """Creates Post"""
         response = {}
-        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
-        file_id_ex = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        file_id_ex = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
         if request.form['content'] or ('file_count' in request.form and int(request.form['file_count'])) != 0:
             if int(request.form['file_count']) > 1:
@@ -292,7 +292,7 @@ class UserRepostFeed(Resource):
         """Repost user's post"""
         response = {}
         data = request.get_json(force=True)
-        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         try:
             if data.get('id') == None or data.get('key') == None:
@@ -386,7 +386,6 @@ class UserRepostFeed(Resource):
 
 class UsersFavoritePosts(Resource):
     def put(self, user_email):
-        """Add post to user's favorites"""
         response = {}
         data = request.get_json(force=True)
 
@@ -406,7 +405,6 @@ class UsersFavoritePosts(Resource):
             return response, 200
 
     def delete(self, user_email):
-        """Delete post from user's favorites"""
         response = {}
         data = request.get_json(force=True)
 
@@ -426,7 +424,6 @@ class UsersFavoritePosts(Resource):
             return response, 200
 
     def get(self, user_email):
-        """Gets user's favorite posts"""
         response = {}
         favorites = []
         favorite_posts = db.query(TableName='favorites',
@@ -439,7 +436,6 @@ class UsersFavoritePosts(Resource):
 
         if favorite_posts.get('Items') == []:
             response['message'] = 'You have no favorite posts!'
-            response['result'] = favorites
         else:
             try:
                 for feed in favorite_posts['Items']:
@@ -455,8 +451,6 @@ class UsersFavoritePosts(Resource):
                     starred = check_if_user_starred(feed['feed_id']['S'], user_email)
                     commented = check_if_user_commented(feed['feed_id']['S'], user_email)
                     taking_off = check_if_taking_off(feed['feed_id']['S'], 'posts')
-                    added_to_fav = check_if_post_added_to_favorites(
-                                        feed['feed_id']['S'], user_email)
                     post = p['Item']
                     post['user'] = {}
                     post['user']['id'] = p_id
@@ -475,8 +469,6 @@ class UsersFavoritePosts(Resource):
                     post['liked']['BOOL'] = liked
                     post['starred']['BOOL'] = starred
                     post['commented']['BOOL'] = commented
-                    post['added_to_fav'] = {}
-                    post['added_to_fav']['BOOL'] = added_to_fav
                     del post['email']
                     del post['creation_time']
                     del post['value']

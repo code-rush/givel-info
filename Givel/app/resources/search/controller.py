@@ -35,7 +35,7 @@ class SearchUsersOnGivel(Resource):
             if results['Count'] == 0:
                 response['message'] = 'No user found with that name'
             else:
-                response['message'] = 'Successfully found the following matches'
+                response['message'] = 'Succefully found the following matches'
                 for item in results['Items']:
                     if item['email'] != user_email:
                         following_user = check_if_user_following_user(user_email, 

@@ -86,7 +86,7 @@ class FeedLikes(Resource):
             else:
                 feed_id = data['id']+'_'+data['key']
 
-            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             if data['emotion'] != 'like' and data['emotion'] != 'unlike':
                 raise BadRequest('emotion can only be either like or unlike')
@@ -223,7 +223,7 @@ class FeedStars(Resource):
                 feed_id = data['id']+'_'+data['key']
 
 
-            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f") 
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
 
             if data.get('stars') != None:
                 try:
@@ -406,7 +406,7 @@ class FeedComments(Resource):
             else:
                 feed_id = data['id']+'_'+data['key']
 
-            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             if data.get('tags') != None:
                 add_comment = db.put_item(TableName='comments',
@@ -554,42 +554,24 @@ class ShareFeeds(Resource):
 
         if data.get('id') == None and data.get('key') == None:
             raise BadRequest('Please provide ID and KEY to share the feed')
-        if data.get('shared_to') == None or data.get('shared_to') == []:
+        if data.get('shared_to') == None:
             raise BadRequest('Please provide the user with whom you are \
                              sharing the feed with')
         if str(feed) != 'post' and str(feed) != 'challenge':
             raise BadRequest('feed can be either challenge or post')
         else:
-            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             feed_id = data['id']+'_'+data['key']
 
             try:
-                for i in range(0, len(data['shared_to'])):
-                    if data['id'] != 'organization':
-                        notification = db.put_item(TableName='notifications',
-                                     Item={'notify_to': {'S': 
-                                                 data['shared_to'][i]},
-                                           'creation_time': {'S': date_time},
-                                           'email': {'S': user_email},
-                                           'from': {'S': 'feed'},
-                                           'notify_for': {'S': 'shared'},
-                                           'feed_id': {'S': feed_id},
-                                           'checked': {'BOOL': False},
-                                           'feed_type': {'S': str(feed)+'s'}
-                                     }
-                                 )
-
-                    share_feed = db.put_item(TableName='shared_feeds',
-                                    Item={'email': {'S': user_email},
-                                          'creation_time': {'S': 
-                                            datetime.datetime.now().strftime(
-                                                    "%Y-%m-%d %H:%M:%S:%f")},
-                                          'feed_type': {'S': str(feed)},
-                                          'shared_to': {'S': 
-                                              data['shared_to'][i]},
-                                          'feed_id': {'S': feed_id}
-                                         }
-                                     )
+                share_feed = db.put_item(TableName='shared_feeds',
+                                        Item={'email': {'S': user_email},
+                                              'creation_time': {'S': date_time},
+                                              'feed_type': {'S': str(feed)},
+                                              'shared_to': {'S': data['shared_to']},
+                                              'feed_id': {'S': feed_id}
+                                             }
+                                      )
 
                 if data['id'] != 'organization':
                     notification = db.put_item(TableName='notifications',

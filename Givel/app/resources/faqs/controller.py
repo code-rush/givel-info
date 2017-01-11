@@ -36,7 +36,7 @@ class AskQuestion(Resource):
         if data.get('question') == None:
             raise BadRequest('Please ask a question.')
         else:
-            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             put_question = db.put_item(TableName='faqs',
                                 Item={'email': {'S': str(user_email)},

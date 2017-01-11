@@ -12,7 +12,7 @@ from app.helper import check_if_user_commented
 from app.helper import check_if_user_liked
 from app.helper import check_if_user_starred
 from app.helper import get_user_details
-from app.helper import check_if_taking_off, check_if_challenge_accepted
+from app.helper import check_if_taking_off
 
 from werkzeug.exceptions import BadRequest
 
@@ -43,7 +43,7 @@ class UsersChallengePosts(Resource):
         """Creates challenges"""
         response = {}
         challenge_data = request.get_json(force=True)
-        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         date = date_time.rsplit(' ', 1)[0]
         time = date_time.rsplit(' ', 1)[1]
 
@@ -54,36 +54,33 @@ class UsersChallengePosts(Resource):
                                 Key={'email': {'S': user_email}})
 
             challenge_post = db.put_item(TableName='challenges',
-                            Item={'email': {'S': user_email},
-                                  'creation_time': {'S': date_time},
-                                  'likes': {'N': '0'},
-                                  'value': {'N': '0'},
-                                  'state': {'S': 'ACTIVE'},
-                                  'comments': {'N': '0'},
-                                  'stars': {'N': '0'},
-                                  'description': {'S': 
-                                          challenge_data['description']},
-                                  'creator': {'S': user_email},
-                                  'only_to_followers': 
-                                      {'BOOL': user['Item']\
-                                          ['post_only_to_followers']['BOOL']}
-                            }
-                        )
+                                Item={'email': {'S': user_email},
+                                      'creation_time': {'S': date_time},
+                                      'likes': {'N': '0'},
+                                      'value': {'N': '0'},
+                                      'state': {'S': 'ACTIVE'},
+                                      'comments': {'N': '0'},
+                                      'stars': {'N': '0'},
+                                      'description': {'S': challenge_data['description']},
+                                      'creator': {'S': user_email},
+                                      'only_to_followers': 
+                                          {'BOOL': user['Item']['post_only_to_followers']['BOOL']}
+                                }
+                            )
             try:
                 if challenge_data.get('location'):
                     challenge_post = db.update_item(TableName='challenges',
-                                      Key={'email':{'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET #loc = :l',
-                                      ExpressionAttributeNames={
-                                              '#loc': 'location'
+                                          Key={'email':{'S': user_email},
+                                               'creation_time': {'S': date_time}
                                           },
-                                      ExpressionAttributeValues={
-                                          ':l': {'S': 
-                                              challenge_data['location']}
-                                      }
-                                  )
+                                          UpdateExpression='SET #loc = :l',
+                                          ExpressionAttributeNames={
+                                                  '#loc': 'location'
+                                              },
+                                          ExpressionAttributeValues={
+                                              ':l': {'S': challenge_data['location']}
+                                          }
+                                      )
                 else:
                     user = db.get_item(TableName='users',
                                     Key={'email': {'S': user_email}
@@ -91,17 +88,17 @@ class UsersChallengePosts(Resource):
                                 )
                     home_community = user['Item']['home']['S']
                     challenge_post = db.update_item(TableName='challenges',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='SET #loc = :l',
-                                      ExpressionAttributeNames={
-                                          '#loc': 'location'
-                                      },
-                                      ExpressionAttributeValues={
-                                          ':l': {'S': home_community}
-                                      }
-                                  )
+                                          Key={'email': {'S': user_email},
+                                               'creation_time': {'S': date_time}
+                                          },
+                                          UpdateExpression='SET #loc = :l',
+                                          ExpressionAttributeNames={
+                                              '#loc': 'location'
+                                          },
+                                          ExpressionAttributeValues={
+                                              ':l': {'S': home_community}
+                                          }
+                                      )
                 response['message'] = 'Challenge successfully created!'
                 return response, 201
             except:
@@ -124,14 +121,14 @@ class UsersChallengePosts(Resource):
         if challenge_data.get('description') != None:
             try:
                 post = db.update_item(TableName='challenges',
-                                Key={'email': {'S': challenge_data['id']},
-                                     'creation_time': {'S': challenge_data['key']}
-                                },
-                                UpdateExpression='SET description = :c',
-                                ExpressionAttributeValues={
-                                    ':c': {'S': challenge_data['description']}
-                                }
-                            )
+                                    Key={'email': {'S': challenge_data['id']},
+                                         'creation_time': {'S': challenge_data['key']}
+                                    },
+                                    UpdateExpression='SET description = :c',
+                                    ExpressionAttributeValues={
+                                        ':c': {'S': challenge_data['description']}
+                                    }
+                                )
                 response['message'] = 'Challenge edited successfully!'
             except:
                 raise BadRequest('Failed to edit challenge!')
@@ -206,21 +203,16 @@ class UsersChallengePosts(Resource):
                                 }
                             )
             for challenge in user_challenges['Items']:
-                user_name, profile_picture, home = get_user_details(
-                                                challenge['creator']['S'])
+                user_name, profile_picture, home = get_user_details(challenge['creator']['S'])
                 if user_name == None:
                     del challenge
                 else:
-                    feed_id = challenge['email']['S'] + '_' \
-                              + challenge['creation_time']['S']
+                    feed_id = challenge['email']['S'] + '_' + challenge['creation_time']['S']
                     liked = check_if_user_liked(feed_id, user_email)
                     starred = check_if_user_starred(feed_id, user_email)
                     commented = check_if_user_commented(feed_id, user_email)
-                    state = check_challenge_state(user_email, \
-                                         challenge['creation_time']['S'])
+                    state = check_challenge_state(user_email, challenge['creation_time']['S'])
                     taking_off = check_if_taking_off(feed_id, 'challenges')
-                    challenge_accepted = check_if_challenge_accepted(feed_id,
-                                                                  user_email)
                     challenge['user'] = {}
                     challenge['user']['name'] = {}
                     challenge['user']['profile_picture'] = {}
@@ -240,8 +232,6 @@ class UsersChallengePosts(Resource):
                     challenge['liked']['BOOL'] = liked
                     challenge['starred']['BOOL'] = starred
                     challenge['commented']['BOOL'] = commented
-                    challenge['accepted'] = {}
-                    challenge['accepted']['BOOL'] = challenge_accepted
                     del challenge['email']
                     del challenge['creator']
                     del challenge['value']
@@ -277,7 +267,7 @@ class AcceptChallenge(Resource):
         """Accepts Challenge"""
         response = {}
         data = request.get_json(force=True)
-        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if data.get('id') == None and data.get('key') == None:
             raise BadRequest('Please provide ID and Key')
@@ -293,24 +283,20 @@ class AcceptChallenge(Resource):
                                 )
 
                 accept_challenge = db.put_item(TableName='challenges',
-                        Item={'email': {'S': user_email},
-                             'creation_time': {'S': date_time},
-                             'creator': {'S': challenge['Item']\
-                                                 ['creator']['S']},
-                             'likes': {'N': '0'},
-                             'value': {'N': '0'},
-                             'state': {'S': 'ACTIVE'},
-                             'comments': {'N': '0'},
-                             'stars': {'N': '0'},
-                             'description': {'S': challenge['Item']\
-                                                 ['description']['S']},
-                             'only_to_followers': 
-                                 {'BOOL': user['Item']\
-                                         ['post_only_to_followers']['BOOL']},
-                             'location': {'S': challenge['Item']\
-                                                     ['location']['S']}
-                        }
-                    )
+                                    Item={'email': {'S': user_email},
+                                         'creation_time': {'S': date_time},
+                                         'creator': {'S': challenge['Item']['creator']['S']},
+                                         'likes': {'N': '0'},
+                                         'value': {'N': '0'},
+                                         'state': {'S': 'ACTIVE'},
+                                         'comments': {'N': '0'},
+                                         'stars': {'N': '0'},
+                                         'description': {'S': challenge['Item']['description']['S']},
+                                         'only_to_followers': 
+                                             {'BOOL': user['Item']['post_only_to_followers']['BOOL']},
+                                         'location': {'S': challenge['Item']['location']['S']}
+                                    }
+                                )
                 
                 notification = db.put_item(TableName='notifications',
                                 Item={'notify_to': {'S': data['id']},
@@ -318,8 +304,7 @@ class AcceptChallenge(Resource):
                                       'email': {'S': user_email},
                                       'from': {'S': 'feed'},
                                       'feed_id': 
-                                          {'S': str(data['id'])+'_'\
-                                                +str(data['key'])},
+                                          {'S': str(data['id'])+'_'+str(data['key'])},
                                       'checked': {'BOOL': False},
                                       'notify_for': {'S': 'accepting challenge'}
                                 }
@@ -334,7 +319,7 @@ class PostChallengeAsOwn(Resource):
     def post(self, user_email):
         response = {}
         data = request.get_json(force=True)
-        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if data.get('id') == None and data.get('key') == None:
             raise BadRequest('Please provide ID and Key')
@@ -349,21 +334,19 @@ class PostChallengeAsOwn(Resource):
                                 )
 
                 post_challenge = db.put_item(TableName='challenges',
-                                Item={'email': {'S': user_email},
-                                     'creation_time': {'S': date_time},
-                                     'creator': {'S': user_email},
-                                     'likes': {'N': '0'},
-                                     'value': {'N': '0'},
-                                     'state': {'S': 'ACTIVE'},
-                                     'comments': {'N': '0'},
-                                     'stars': {'N': '0'},
-                                     'description': {'S': challenge['Item']\
-                                                     ['description']['S']},
-                                     'only_to_followers': 
-                                         {'BOOL': user['Item']\
-                                          ['post_only_to_followers']['BOOL']}
-                                }
-                            )
+                                    Item={'email': {'S': user_email},
+                                         'creation_time': {'S': date_time},
+                                         'creator': {'S': user_email},
+                                         'likes': {'N': '0'},
+                                         'value': {'N': '0'},
+                                         'state': {'S': 'ACTIVE'},
+                                         'comments': {'N': '0'},
+                                         'stars': {'N': '0'},
+                                         'description': {'S': challenge['Item']['description']['S']},
+                                         'only_to_followers': 
+                                             {'BOOL': user['Item']['post_only_to_followers']['BOOL']}
+                                    }
+                                )
                 response['message'] = 'Challenge Posted as Own!'
             except:
                 response['message'] = 'Try again later'
@@ -419,7 +402,7 @@ class UsersChallengeRepost(Resource):
         """Reposts user's challenge"""
         response = {}
         data = request.get_json(force=True)
-        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         try:
             if data.get('id') == None and data.get('key') == None:
@@ -434,21 +417,19 @@ class UsersChallengeRepost(Resource):
                                 }
                             )
                 repost_challenge = db.put_item(TableName='challenges',
-                            Item={'email': {'S': user_email},
-                                  'creation_time': {'S': date_time},
-                                  'description': {'S': challenge['Item']\
-                                                      ['description']['S']},
-                                  'likes': {'N': '0'},
-                                  'value': {'N': '0'},
-                                  'state': {'S': 'ACTIVE'},
-                                  'comments': {'N': '0'},
-                                  'stars': {'N': '0'},
-                                  'creator': {'S': user_email},
-                                  'only_to_followers': 
-                                      {'BOOL': user['Item']\
-                                          ['post_only_to_followers']['BOOL']}
-                            }
-                        )
+                                Item={'email': {'S': user_email},
+                                      'creation_time': {'S': date_time},
+                                      'description': {'S': challenge['Item']['description']['S']},
+                                      'likes': {'N': '0'},
+                                      'value': {'N': '0'},
+                                      'state': {'S': 'ACTIVE'},
+                                      'comments': {'N': '0'},
+                                      'stars': {'N': '0'},
+                                      'creator': {'S': user_email},
+                                      'only_to_followers': 
+                                          {'BOOL': user['Item']['post_only_to_followers']['BOOL']}
+                                }
+                            )
                 if data.get('location') != None:
                     repost_challenge = db.update_item(TableName='challenges',
                                           Key={'email':{'S': user_email},

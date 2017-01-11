@@ -10,7 +10,6 @@ from app.models import create_community_table
 from app.helper import check_if_taking_off, check_if_user_liked
 from app.helper import check_if_user_starred, check_if_user_commented
 from app.helper import get_user_details, check_challenge_state
-from app.helper import check_if_challenge_accepted
 
 db = boto3.client('dynamodb')
 
@@ -201,8 +200,6 @@ class CommunityChallenges(Resource):
                         commented = check_if_user_commented(feed_id, user_email)
                         state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
                         taking_off = check_if_taking_off(feed_id, 'challenges')
-                        challenge_accepted = check_if_challenge_accepted(feed_id,
-                                                                  user_email)
                         challenge['user'] = {}
                         challenge['user']['name'] = {}
                         challenge['user']['id'] = challenge['email']
@@ -222,8 +219,6 @@ class CommunityChallenges(Resource):
                         challenge['liked']['BOOL'] = liked
                         challenge['starred']['BOOL'] = starred
                         challenge['commented']['BOOL'] = commented
-                        challenge['accepted'] = {}
-                        challenge['accepted']['BOOL'] = challenge_accepted
                         del challenge['email']
                         del challenge['creator']
                         del challenge['value']
