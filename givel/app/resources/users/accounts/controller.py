@@ -372,7 +372,7 @@ class GiveStarsToFollowings(Resource):
     def put(self, user_email):
         response = {}
         data = request.get_json(force=True)
-        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
 
         user = db.get_item(TableName='users',
                         Key={'email': {'S': user_email}})

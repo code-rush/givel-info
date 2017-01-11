@@ -297,7 +297,7 @@ def check_if_user_starred(feed_id, user_id):
                     ':id': {'S': feed_id}
                 }
             )
-    if user_starred.get('Items') != None:
+    if user_starred.get('Items') != []:
         starred = True
     return starred
 
@@ -311,7 +311,7 @@ def check_if_user_commented(feed_id, user_id):
                         ':e': {'S': user_id}
                     }
                 )
-    if user_commented.get('Items') != None:
+    if user_commented.get('Items') != []:
         commented = True
     return commented
 
@@ -399,3 +399,13 @@ def check_if_post_added_to_favorites(feed_id, user_id):
         added_to_fav = True
 
     return added_to_fav
+
+
+def check_if_challenge_accepted(challenge_id, user_id):
+    challenge_accepted = False
+    c_id = challenge_id.rsplit('_',1)[0]
+
+    if c_id == user_id:
+        challenge_accepted = True
+
+    return challenge_accepted

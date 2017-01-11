@@ -10,6 +10,7 @@ from app.helper import check_if_taking_off, check_if_user_liked
 from app.helper import check_if_user_starred, check_if_user_commented
 from app.helper import get_user_details, check_challenge_state
 from app.helper import check_if_user_exists, check_if_post_added_to_favorites
+from app.helper import check_if_challenge_accepted
 
 from werkzeug.exceptions import BadRequest
 
@@ -59,7 +60,7 @@ class UserFollowings(Resource):
             raise BadRequest('Please provide user_id in follow_user ' \
                              + 'to follow.')
         try:
-            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
             following_user = check_if_user_exists(data['follow_user'])
             user_exists = check_if_user_exists(user_email)
             if following_user and user_exists:
@@ -248,7 +249,7 @@ class UserFollowingChallengesFeeds(Resource):
                         )
         feeds = []
         if users_following['Item'].get('following') == None:
-            response['message'] = 'Success!'
+            response['message'] = 'You have no followings!'
             response['result'] = feeds
         else:
             for user in users_following['Item']['following']['SS']:
@@ -270,6 +271,8 @@ class UserFollowingChallengesFeeds(Resource):
                             commented = check_if_user_commented(feed_id, user_email)
                             state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
                             taking_off = check_if_taking_off(feed_id, 'challenges')
+                            challenge_accepted = check_if_challenge_accepted(feed_id,
+                                                                  user_email)
                             challenge['user'] = {}
                             challenge['user']['id'] = challenge['email']
                             challenge['user']['name'] = {}
@@ -289,6 +292,8 @@ class UserFollowingChallengesFeeds(Resource):
                             challenge['liked']['BOOL'] = liked
                             challenge['starred']['BOOL'] = starred
                             challenge['commented']['BOOL'] = commented
+                            challenge['accepted'] = {}
+                            challenge['accepted']['BOOL'] = challenge_accepted
                             del challenge['email']
                             del challenge['creator']
                             del challenge['value']

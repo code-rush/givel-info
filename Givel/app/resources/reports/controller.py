@@ -37,7 +37,7 @@ class ReportFeeds(Resource):
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('Provide ID and Key of the feed to report')
         else:
-            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
             feed_id = str(data['id']) + '_' + str(data['key'])
 
             try:

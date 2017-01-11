@@ -301,7 +301,9 @@
   - Required Data: id, key
   - Content-Type: application/json
   - Returns: *200 OK* Status Code if repost is successful
-  - Description: Accepts challenges for the user.
+  - Description: Accepts challenges for the user. Provide challenge_id and challenge_key 
+                 as the *id* and *key* in the data for the challenge to be accepted by 
+                 user.
 
 
 
@@ -469,10 +471,13 @@
                   - The client needs to send 'id' and 'key' of the post with the request.
                   - value for {feed} is either 'posts' or 'challenges'.
 
-- **share feed with someone**
+- **share feed with users**
   - Path: /api/v1/feeds/share/{feed}/{user_email}
   - Method: **PUT**
   - Required Data: id, key, shared_to
+  - Data-types: - id: String
+                - key: String
+                - shared_to: Array of strings
   - Content-Type: application/json
   - Returns: *200 OK* Status Code if the feed shared successfully
   - Description: Allows user to share with someone. {user_email} in the url 
@@ -661,7 +666,8 @@
     - checked: denotes that the notification is seen OR not seen by the user.
       - 2 possible boolean values: True OR False.
     - activity: says what is the notification about.
-      - Possible values: 'like', 'share', 'stars', 'comment', 'following', 'tagging'.
+      - Possible values: 'like', 'share', 'shared' 'stars', 'comment', 
+        'following', 'tagging'.
     - where: denotes where did the activity took place.
       - Possible values: 'post', 'challenge'.
     - tagged_where: the value denotes where the user was tagged.
@@ -697,6 +703,8 @@
       liked your *where* *feed_content*"**.
     - If the value of the *activity* is "share", the notification would be **"*user_name* 
       shared your *where* *feed_content*"**.
+    - If the value of the *activity* is "shared", the notification would be **"*user_name* 
+      shared a *where* with you *feed_content*"**.
     - If the value of the *activity* is "comment", the notification would be **"*user_name* 
       commented on your *where* *feed_content*"**.
     - If the value of the *activity* is "tagging" and the value of *tagged_where* is "post", 
