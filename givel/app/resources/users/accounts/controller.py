@@ -117,18 +117,23 @@ class UserLogin(Resource):
         user = db.get_item(TableName='users',
                        Key={'email': {'S':user_data['email']}})
         response = {}
+
+        user_authenticated = False
         try:
             if user and check_password_hash(user['Item']['password']['S'],
                                         user_data['password']):
+                user_authenticated = True
                 response['message'] = 'User successfully Logged In!'
                 response['result'] = user['Item']
                 del response['result']['password']
                 del response['result']['total_stars_shared']
                 del response['result']['total_stars_earned']
-                return response, 200
             else:
                 response['message'] = 'Incorrect Password!'
-                return response, 401
+
+            response['user_authenticated'] = user_authenticated
+            
+            return response, 200
         except:
             raise NotFound('User not found!')
 
