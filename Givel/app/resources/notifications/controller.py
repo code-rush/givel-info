@@ -249,31 +249,32 @@ class GetNotification(Resource):
                 starred = check_if_user_starred(data['feed_id'], user_email)
                 commented = check_if_user_commented(data['feed_id'], user_email)
                 taking_off = check_if_taking_off(data['feed_id'], data['feed_type'])
-                feed['user'] = {}
-                feed['user']['id'] = {}
-                feed['user']['name'] = {}
-                feed['user']['profile_picture'] = {}
-                feed['user']['id']['S'] = user_id
-                feed['user']['name']['S'] = user_name
-                feed['user']['profile_picture']['S'] = profile_picture
-                feed['feed'] = {}
-                feed['feed']['id'] = feed['Item']['email']
-                feed['feed']['key'] = feed['Item']['creation_time']
-                feed['liked'] = {}
-                feed['starred'] = {}
-                feed['commented'] = {}
-                feed['taking_off'] = {}
-                feed['taking_off']['BOOL'] = taking_off
-                feed['liked']['BOOL'] = liked
-                feed['starred']['BOOL'] = starred
-                feed['commented']['BOOL'] = commented
+                f = feed['Item']
+                f['user'] = {}
+                f['user']['id'] = {}
+                f['user']['name'] = {}
+                f['user']['profile_picture'] = {}
+                f['user']['id']['S'] = user_id
+                f['user']['name']['S'] = user_name
+                f['user']['profile_picture']['S'] = profile_picture
+                f['feed'] = {}
+                f['feed']['id'] = feed['Item']['email']
+                f['feed']['key'] = feed['Item']['creation_time']
+                f['liked'] = {}
+                f['starred'] = {}
+                f['commented'] = {}
+                f['taking_off'] = {}
+                f['taking_off']['BOOL'] = taking_off
+                f['liked']['BOOL'] = liked
+                f['starred']['BOOL'] = starred
+                f['commented']['BOOL'] = commented
                 del feed['Item']['email']
                 del feed['Item']['value']
                 del feed['Item']['only_to_followers']
                 del feed['ResponseMetadata']
 
                 response['message'] = 'Successfully fetched the notification!'
-                response['result'] = feed
+                response['result'] = f
         return response, 200
 
 
