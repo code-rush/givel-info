@@ -9,7 +9,7 @@ from flask_restful import Api, Resource
 from app.models import create_posts_table
 from app.models import create_favorite_posts_table
 
-from app.helper import upload_post_file
+from app.helper import upload_post_file, check_if_user_exists
 from app.helper import check_if_user_liked, check_if_taking_off
 from app.helper import check_if_user_starred, check_if_user_commented
 from app.helper import get_user_details, check_if_post_added_to_favorites
@@ -399,14 +399,19 @@ class UsersFavoritePosts(Resource):
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('Provide feed id and key to add to the favorites')
         else:
+            user_exists = check_if_user_exists(user_email)
             feed_id = str(data['id']) + '_' + str(data['key'])
             try:
-                add_to_fav = db.put_item(TableName='favorites',
-                                Item={'email': {'S': user_email},
-                                      'feed_id': {'S': feed_id}
-                                }
-                            )
-                response['message'] = 'Post added to your favorites'
+                if user_exists == True:
+                    add_to_fav = db.put_item(TableName='favorites',
+                                    Item={'email': {'S': user_email},
+                                          'feed_id': {'S': feed_id}
+                                    }
+                                )
+                    response['message'] = 'Post added to your favorites'
+                else:
+                    raise BadRequest('User does not exist! ' \
+                                   + 'Sign Up to add post to favorites')
             except:
                 response['message'] = 'Try again later'
             return response, 200
