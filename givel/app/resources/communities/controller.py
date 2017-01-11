@@ -10,6 +10,9 @@ from app.models import create_community_table
 from app.helper import check_if_taking_off, check_if_user_liked
 from app.helper import check_if_user_starred, check_if_user_commented
 from app.helper import get_user_details, check_challenge_state
+from app.helper import check_if_challenge_accepted
+from app.helper import check_if_post_added_to_favorites
+
 
 db = boto3.client('dynamodb')
 
@@ -123,6 +126,8 @@ class CommunityPosts(Resource):
                         starred = check_if_user_starred(feed_id, user_email)
                         commented = check_if_user_commented(feed_id, user_email)
                         taking_off = check_if_taking_off(feed_id, 'posts')
+                        added_to_fav = check_if_post_added_to_favorites(
+                                        feed_id, user_email)
                         post['user'] = {}
                         post['user']['id'] = post['email']
                         post['user']['name'] = {}
@@ -140,6 +145,8 @@ class CommunityPosts(Resource):
                         post['liked']['BOOL'] = liked
                         post['starred']['BOOL'] = starred
                         post['commented']['BOOL'] = commented
+                        post['added_to_fav'] = {}
+                        post['added_to_fav']['BOOL'] = added_to_fav
                         del post['email']
                         del post['value']
                         feeds.append(post)
@@ -200,6 +207,8 @@ class CommunityChallenges(Resource):
                         commented = check_if_user_commented(feed_id, user_email)
                         state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
                         taking_off = check_if_taking_off(feed_id, 'challenges')
+                        challenge_accepted = check_if_challenge_accepted(feed_id,
+                                                                      user_email)
                         challenge['user'] = {}
                         challenge['user']['name'] = {}
                         challenge['user']['id'] = challenge['email']
@@ -219,6 +228,8 @@ class CommunityChallenges(Resource):
                         challenge['liked']['BOOL'] = liked
                         challenge['starred']['BOOL'] = starred
                         challenge['commented']['BOOL'] = commented
+                        challenge['accepted'] = {}
+                        challenge['accepted']['BOOL'] = challenge_accepted
                         del challenge['email']
                         del challenge['creator']
                         del challenge['value']
