@@ -379,7 +379,7 @@ def check_challenge_state(id, key):
         return state
     elif challenge['Item']['state']['S'] == 'ACTIVE':
         current_time = datetime.datetime.now()
-        creation_time = datetime.datetime.strptime(key, "%Y-%m-%d %H:%M:%S")
+        creation_time = datetime.datetime.strptime(key, "%Y-%m-%d %H:%M:%S:%f")
         diff = current_time - creation_time
         str_diff = str(diff).rsplit(' ', 2)
         if len(str_diff) > 1:
