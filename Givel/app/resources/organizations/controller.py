@@ -257,19 +257,22 @@ class OrganizationUpliftBillboard(Resource):
 
         if organization.get('Item') != None:
             org = {}
-            org['picture'] = organization['picture']['S']
-            org['description'] = organization['description']['S']
-            org['name'] = organization['name']['S']
-            org['stars'] = organization['stars']
-            if organization['global']['BOOL'] == False:
+
+            if organization['Item'].get('picture') != None:
+                org['picture'] = organization['Item']['picture']
+            org['description'] = organization['Item']['description']
+            org['name'] = organization['Item']['name']
+            org['stars'] = organization['Item']['stars']
+            if organization['Item']['global']['BOOL'] == False:
                 org['location'] = {}
                 org['location']['S'] = 'global'
             else:
-                org['location'] = organization['location']
-            if organization['type']['S'] == 'b-corp':
+                org['location'] = organization['Item']['location']
+            if organization['Item']['type']['S'] == 'b-corp':
+                org['type'] = {}
                 org['type']['S'] = 'social good'
             else:
-                org['type'] = organization['type']
+                org['type'] = organization['Item']['type']
 
             response['results'] = org
             response['message'] = 'Successful fetched organizations uplift billboard!'
@@ -288,21 +291,23 @@ class OrganizationFeedBillboard(Resource):
 
         if organization.get('Item') != None:
             org = {}
-            org['picture'] = organization['picture']['S']
-            org['description'] = organization['description']['S']
-            org['name'] = organization['name']['S']
-            if organization['global']['BOOL'] == False:
+            if organization['Item'].get('picture') != None:
+                org['picture'] = organization['Item']['picture']
+            org['description'] = organization['Item']['description']
+            org['name'] = organization['Item']['name']
+            if organization['Item']['global']['BOOL'] == False:
                 org['location'] = {}
                 org['location']['S'] = 'global'
             else:
-                org['location'] = organization['location']
-            if organization['type']['S'] == 'b-corp':
+                org['location'] = organization['Item']['location']
+            if organization['Item']['type']['S'] == 'b-corp':
+                org['type'] = {}
                 org['type']['S'] = 'social good'
             else:
-                org['type'] = organization['type']
-            org['comments'] = organization['comments']
-            org['likes'] = organization['likes']
-            org['stars'] = organization['feed_stars']
+                org['type'] = organization['Item']['type']
+            org['comments'] = organization['Item']['comments']
+            org['likes'] = organization['Item']['likes']
+            org['stars'] = organization['Item']['feed_stars']
 
             response['results'] = org
             response['message'] = 'Successful fetched organizations uplift billboard!'
