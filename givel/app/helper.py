@@ -213,6 +213,56 @@ def update_stars_count(feed, id, key, stars=None):
                         }
                     )
 
+def update_comments(id, key, operation):
+    if id == 'organization':
+        if operation == 'add_comment':
+            update_count = db.update_item(TableName='organization',
+                            Key={'name': {'S': key}},
+                            UpdateExpression='SET comments = comments + :c',
+                            ExpressionAttributeValues={
+                                ':c': {'N': '1'}
+                            }
+                        )
+        elif operation == 'delete_comment':
+            update_count = db.update_item(TableName='organization',
+                            Key={'name': {'S': key}},
+                            UpdateExpression='SET comments = comments - :c',
+                            ExpressionAttributeValues={
+                                ':c': {'N': '1'}
+                            }
+                        )
+    else:
+        feed_type = None
+        get_feed = db.get_item(TableName='posts',
+                        Key={'email': {'S': id},
+                             'creation_time': {'S': key}
+                        }
+                    )
+        if get_feed.get('Item') != None:
+            feed_type = 'posts'
+        else:
+            feed_type = 'challenges'
+
+        if operation == 'add_comment':
+            update_count = db.update_item(TableName=feed_type,
+                            Key={'email': {'S': id},
+                                 'creation_time': {'S': key}
+                            },
+                            UpdateExpression='SET comments = comments + :c',
+                            ExpressionAttributeValues={
+                                ':c': {'N': '1'}
+                            }
+                        )
+        elif operation == 'delete_comment':
+            update_count = db.update_item(TableName=feed_type,
+                            Key={'email': {'S': id},
+                                 'creation_time': {'S': key}
+                            },
+                            UpdateExpression='SET comments = comments - :c',
+                            ExpressionAttributeValues={
+                                ':c': {'N': '1'}
+                            }
+                        )
 
 def update_value(feed, id, key, operation, stars=None):
     if id == 'organization':
