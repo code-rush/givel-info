@@ -584,7 +584,7 @@
   - Description: Gets organization's details to create billboard.
 
 - **organizations's feed billboard**
-  - Path: /api/v1/organizations/billboard/uplift/{organization's_name}
+  - Path: /api/v1/organizations/billboard/feed/{organization's_name}
   - Method: *GET*
   - Returns: Organization's details with a success message and *200 OK* Status Code 
   - Description: Gets organization's details to create billboard.
