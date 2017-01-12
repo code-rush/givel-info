@@ -336,8 +336,8 @@ class OrganizationUpliftStats(Resource):
                 if all_organizations_stars['Count'] == 1:
                     response['message'] = 'Request Successful'
                     response['result'] = {}
-                    response['organization_stars_percentage'] = {}
-                    response['organization_stars_percentage']['S'] = '100%'
+                    response['result']['organization_stars_percentage'] = {}
+                    response['result']['organization_stars_percentage']['S'] = '100%'
                 else:
                     total_organization_stars = 0
 
@@ -367,29 +367,35 @@ class OrganizationUpliftStats(Resource):
                 
                 #pacific region percentage
                 p_rg = int(organization['Item']['pacific_region_stars']['N'])\
-                       / uplift_stars
+                       / uplift_stars * 100
                 #mid_west region percentage
                 mw_rg = int(organization['Item']['mid_west_region_stars']['N'])\
-                        / uplift_stars
+                        / uplift_stars * 100
                 #south_west region percentage
                 sw_rg = int(organization['Item']['south_west_region_stars']['N'])\
-                        / uplift_stars
+                        / uplift_stars * 100
                 #south_east region percentage
                 se_rg = int(organization['Item']['south_east_region_stars']['N'])\
-                        / uplift_stars
+                        / uplift_stars * 100
                 #north_east region percentage
                 ne_rg = int(organization['Item']['north_east_region_stars']['N'])\
-                        / uplift_stars
+                        / uplift_stars * 100
                 #rocky_mountain region percentage
                 rm_rg = int(organization['Item']['rocky_mountain_region_stars']['N'])\
-                        / uplift_stars
+                        / uplift_stars * 100
 
-                response['result']['pacific_region'] = str(p_rg) + '%'
-                response['result']['mid_west_region'] = str(mw_rg) + '%'
-                response['result']['south_west_region'] = str(sw_rg) + '%'
-                response['result']['south_east_region'] = str(se_rg) + '%'
-                response['result']['north_east_region'] = str(ne_rg) + '%'
-                response['result']['rocky_mountain_region'] = str(rm_rg) + '%'
+                response['result']['pacific_region'] = {}
+                response['result']['mid_west_region'] = {}
+                response['result']['south_west_region'] = {}
+                response['result']['south_east_region'] = {}
+                response['result']['north_east_region'] = {}
+                response['result']['rocky_mountain_region'] = {}
+                response['result']['pacific_region']['S'] = str(p_rg) + '%'
+                response['result']['mid_west_region']['S'] = str(mw_rg) + '%'
+                response['result']['south_west_region']['S'] = str(sw_rg) + '%'
+                response['result']['south_east_region']['S'] = str(se_rg) + '%'
+                response['result']['north_east_region']['S'] = str(ne_rg) + '%'
+                response['result']['rocky_mountain_region']['S'] = str(rm_rg) + '%'
 
                 return response, 200
         except:
@@ -414,8 +420,8 @@ class OrganizationFeedStats(Resource):
                 if all_organizations_feed_stars['Count'] == 1:
                     response['message'] = 'Request Successful'
                     response['result'] = {}
-                    response['organization_stars_percentage'] = {}
-                    response['organization_stars_percentage']['S'] = '100%'
+                    response['result']['organization_stars_percentage'] = {}
+                    response['result']['organization_stars_percentage']['S'] = '100%'
                 else:
                     total_org_feed_stars = 0
 
@@ -443,29 +449,35 @@ class OrganizationFeedStats(Resource):
 
                 #pacific region percentage
                 p_rg = int(organization['Item']['pacific_region_feed_stars']['N'])\
-                       / feed_stars
+                       / feed_stars * 100
                 #mid_west region percentage
                 mw_rg = int(organization['Item']['mid_west_region_feed_stars']['N'])\
-                        / feed_stars
+                        / feed_stars * 100
                 #south_west region percentage
                 sw_rg = int(organization['Item']['south_west_region_feed_stars']['N'])\
-                        / feed_stars
+                        / feed_stars * 100
                 #south_east region percentage
                 se_rg = int(organization['Item']['south_east_region_feed_stars']['N'])\
-                        / feed_stars
+                        / feed_stars * 100
                 #north_east region percentage
                 ne_rg = int(organization['Item']['north_east_region_feed_stars']['N'])\
-                        / feed_stars
+                        / feed_stars * 100
                 #rocky_mountain region percentage
                 rm_rg = int(organization['Item']['rocky_mountain_region_feed_stars']['N'])\
-                        / feed_stars
+                        / feed_stars * 100
 
-                response['result']['pacific_region'] = str(p_rg) + '%'
-                response['result']['mid_west_region'] = str(mw_rg) + '%'
-                response['result']['south_west_region'] = str(sw_rg) + '%'
-                response['result']['south_east_region'] = str(se_rg) + '%'
-                response['result']['north_east_region'] = str(ne_rg) + '%'
-                response['result']['rocky_mountain_region'] = str(rm_rg) + '%'
+                response['result']['pacific_region'] = {}
+                response['result']['mid_west_region'] = {}
+                response['result']['south_west_region'] = {}
+                response['result']['south_east_region'] = {}
+                response['result']['north_east_region'] = {}
+                response['result']['rocky_mountain_region'] = {}
+                response['result']['pacific_region']['S'] = str(p_rg) + '%'
+                response['result']['mid_west_region']['S'] = str(mw_rg) + '%'
+                response['result']['south_west_region']['S'] = str(sw_rg) + '%'
+                response['result']['south_east_region']['S'] = str(se_rg) + '%'
+                response['result']['north_east_region']['S'] = str(ne_rg) + '%'
+                response['result']['rocky_mountain_region']['S'] = str(rm_rg) + '%'
 
                 return response, 200
         except:
