@@ -62,9 +62,8 @@ class UsersPost(Resource):
         if request.form.get('file_count') == None:
             raise BadRequest('Please provide file_count. If no files are ' \
                                               + 'sent, set file_count to 0')
-        if 'file_count' in request.form and int(request.form['file_count']) != 0:
-            if int(request.form['file_count']) > 1:
-                raise BadRequest('Only one file is allowed!')
+        if int(request.form['file_count']) != 0 and int(request.form['file_count']) > 1:
+            raise BadRequest('Only one file is allowed!')
         else:
             user = db.get_item(TableName='users',
                             Key={'email': {'S': user_email}})
@@ -175,7 +174,7 @@ class UsersPost(Resource):
                                   'creation_time': {'S': date_time}
                              }
                          )
-                raise BadRequest('Failed to create post')
+                response['message'] = 'Failed to create post. Try again later.'
             return response, 201
 
 
