@@ -11,7 +11,7 @@ from app.models import create_comments_table
 from app.models import create_shared_feeds_table
 
 from app.helper import update_likes, update_value, update_stars_count
-from app.helper import get_user_details, STATES
+from app.helper import get_user_details, STATES, update_comments
 
 from app.helper import mid_west_states, southeast_states, northeast_states
 from app.helper import pacific_states, southwest_states, rocky_mountain_states
@@ -454,6 +454,8 @@ class FeedComments(Resource):
                             }
                         )
 
+            update_comments(data['id'], data['key'], 'add_comment')
+
             response['message'] = 'Comment successfully created!'
             return response, 200
 
@@ -471,6 +473,7 @@ class FeedComments(Resource):
                                  'creation_time': {'S': data['key']}
                             }
                         )
+            update_comments(data['id'], data['key'], 'delete_comment')
             response['message'] = 'Comment deleted!'
             return response, 200
 
