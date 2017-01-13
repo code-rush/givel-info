@@ -37,7 +37,7 @@ class OrganizationRegistration(Resource):
         response = {}
 
         if request.form.get('name') == None or request.form.get('type') == None \
-          or request.form.get('description') == None or request.form.get('admin') == None \
+          or request.form.get('description') == None or request.form.get('admin_email') == None \
           or request.form.get('password') == None or request.form.get('global') == None \
           or request.form.get('location') == None:
             raise BadRequest('Please provide all details.')
@@ -62,7 +62,7 @@ class OrganizationRegistration(Resource):
                                           'type': {'S': request.form['type']},
                                           'global': {'BOOL': global_org},
                                           'location': {'S': request.form['location']},
-                                          'admin_email': {'S': request.form['admin']},
+                                          'admin_email': {'S': request.form['admin_email']},
                                           'password': {'S': generate_password_hash(request.form['password'])},
                                           'stars': {'N': '0'},
                                           'feed_stars': {'N': '0'},
