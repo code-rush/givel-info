@@ -11,7 +11,7 @@ from app.helper import upload_post_file, check_challenge_state
 from app.helper import check_if_user_commented
 from app.helper import check_if_user_liked
 from app.helper import check_if_user_starred
-from app.helper import get_user_details
+from app.helper import get_user_details, get_challenge_accepted_users
 from app.helper import check_if_taking_off, check_if_challenge_accepted
 
 from werkzeug.exceptions import BadRequest
@@ -56,6 +56,7 @@ class UsersChallengePosts(Resource):
             challenge_post = db.put_item(TableName='challenges',
                             Item={'email': {'S': user_email},
                                   'creation_time': {'S': date_time},
+                                  'creation_key': {'S': date_time},
                                   'likes': {'N': '0'},
                                   'value': {'N': '0'},
                                   'state': {'S': 'ACTIVE'},
@@ -220,7 +221,11 @@ class UsersChallengePosts(Resource):
                                          challenge['creation_time']['S'])
                     taking_off = check_if_taking_off(feed_id, 'challenges')
                     challenge_accepted = check_if_challenge_accepted(feed_id,
-                                                                  user_email)                    
+                                                                  user_email) 
+                    accepted_users_list = get_challenge_accepted_users(
+                                            challenge['creator']['S'], 
+                                            challenge['creation_key']['S'],
+                                            challenge['email']['S'])
                     challenge['user'] = {}
                     challenge['user']['name'] = {}
                     challenge['user']['profile_picture'] = {}
@@ -241,10 +246,13 @@ class UsersChallengePosts(Resource):
                     challenge['starred']['BOOL'] = starred
                     challenge['commented']['BOOL'] = commented
                     challenge['accepted'] = {}
-                    challenge['accepted']['BOOL'] = challenge_accepted                    
+                    challenge['accepted']['BOOL'] = challenge_accepted
+                    challenge['accepted_users'] = {}
+                    challenge['accepted_users']['SS'] = accepted_users_list                   
                     del challenge['email']
                     del challenge['creator']
                     del challenge['value']
+                    del challenge['creation_key']
             response['message'] = 'Successfully fetched users challenges!'
             response['result'] = user_challenges['Items']
         except:
@@ -297,6 +305,8 @@ class AcceptChallenge(Resource):
                              'creation_time': {'S': date_time},
                              'creator': {'S': challenge['Item']\
                                                  ['creator']['S']},
+                             'creation_key': {'S': challenge['Item']\
+                                                 ['creation_key']['S']},
                              'likes': {'N': '0'},
                              'value': {'N': '0'},
                              'state': {'S': 'ACTIVE'},
@@ -351,6 +361,7 @@ class PostChallengeAsOwn(Resource):
                 post_challenge = db.put_item(TableName='challenges',
                                 Item={'email': {'S': user_email},
                                      'creation_time': {'S': date_time},
+                                     'creation_key': {'S': date_time},
                                      'creator': {'S': user_email},
                                      'likes': {'N': '0'},
                                      'value': {'N': '0'},
@@ -438,6 +449,7 @@ class UsersChallengeRepost(Resource):
                                   'creation_time': {'S': date_time},
                                   'description': {'S': challenge['Item']\
                                                       ['description']['S']},
+                                  'creation_key': {'S': date_time},
                                   'likes': {'N': '0'},
                                   'value': {'N': '0'},
                                   'state': {'S': 'ACTIVE'},

@@ -10,7 +10,7 @@ from app.models import create_community_table
 from app.helper import check_if_taking_off, check_if_user_liked
 from app.helper import check_if_user_starred, check_if_user_commented
 from app.helper import get_user_details, check_challenge_state
-from app.helper import check_if_challenge_accepted
+from app.helper import check_if_challenge_accepted, get_challenge_accepted_users
 from app.helper import check_if_post_added_to_favorites
 
 
@@ -209,6 +209,10 @@ class CommunityChallenges(Resource):
                         taking_off = check_if_taking_off(feed_id, 'challenges')
                         challenge_accepted = check_if_challenge_accepted(feed_id,
                                                                       user_email)
+                        accepted_users_list = get_challenge_accepted_users(
+                                            challenge['creator']['S'], 
+                                            challenge['creation_key']['S'],
+                                            challenge['email']['S'])
                         challenge['user'] = {}
                         challenge['user']['name'] = {}
                         challenge['user']['id'] = challenge['email']
@@ -230,9 +234,12 @@ class CommunityChallenges(Resource):
                         challenge['commented']['BOOL'] = commented
                         challenge['accepted'] = {}
                         challenge['accepted']['BOOL'] = challenge_accepted
+                        challenge['accepted_users'] = {}
+                        challenge['accepted_users']['SS'] = accepted_users_list 
                         del challenge['email']
                         del challenge['creator']
                         del challenge['value']
+                        del challenge['creation_key']
                         feeds.append(challenge)
                 response['message'] = 'Successfully fetched all community challenges!'
                 response['results'] = feeds
