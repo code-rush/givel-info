@@ -199,6 +199,14 @@ def create_challenges_table():
                 {
                     'AttributeName': 'value',
                     'AttributeType': 'N'
+                },
+                {
+                    'AttributeName': 'creator',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'creation_key',
+                    'AttributeType': 'S'
                 }
             ],
             GlobalSecondaryIndexes=[
@@ -216,6 +224,26 @@ def create_challenges_table():
                     ],
                     'Projection': {
                         'ProjectionType': 'ALL'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 10,
+                        'WriteCapacityUnits': 10
+                    }
+                },
+                {
+                    'IndexName': 'challenge-creator-key',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'creator',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'creation_key',
+                            'KeyType': 'RANGE'
+                        },
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'KEYS_ONLY'
                     },
                     'ProvisionedThroughput': {
                         'ReadCapacityUnits': 10,
