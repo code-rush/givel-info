@@ -460,3 +460,34 @@ def check_if_challenge_accepted(challenge_id, user_id):
 
     return challenge_accepted
 
+def get_challenge_accepted_users(c_creator, c_key, c_id):
+    users_list = db.query(TableName='challenges', 
+                      IndexName='challenges-creator-key',
+                      KeyConditionExpression='creator = :c AND creation_key = :k',
+                      ExpressionAttributeValues={
+                          ':c': {'S': c_creator},
+                          ':k': {'S': c_key}
+                      }
+                  )
+    accepted_users = []
+
+    if users_list.get('Items') != []:
+        for u in users_list['Items']:
+            if c_id != u['email']['S']:
+                user_exists = check_if_user_exists(u['email']['S'])
+                if user_exists == True:
+                    user_name, profile_picture, home = get_user_details(
+                                                        u['email']['S'])
+                    user = {}
+                    user['name'] = {}
+                    user['id'] = u['email']
+                    user['profile_picture'] = {}
+                    user['home_community'] = {}
+                    user['name']['S'] = user_name
+                    user['home_community']['S'] = home
+                    user['profile_picture']['S'] = profile_picture
+                    accepted_users.append(user)
+
+    return accepted_users
+
+
