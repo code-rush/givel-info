@@ -10,6 +10,7 @@ from app.models import create_notifications_table
 from app.helper import check_if_user_exists, get_user_details
 from app.helper import check_if_user_liked, check_if_user_starred
 from app.helper import check_if_user_commented, check_if_taking_off
+from app.helper import check_if_post_added_to_favorites
 
 from werkzeug.exceptions import BadRequest
 
@@ -237,6 +238,7 @@ class GetNotification(Resource):
                 profile_picture = None
                 home_community = None
                 user_id = None
+                added_to_fav = None
                 if data['feed_type'] == 'challenges':
                     user_id = feed['Item']['creator']['S']
                     user_name, profile_picture, home_community = get_user_details(
@@ -245,6 +247,8 @@ class GetNotification(Resource):
                     user_id = user_email
                     user_name, profile_picture, home_community = get_user_details(
                                                                           user_id)
+                    added_to_fav = check_if_post_added_to_favorites(data['feed_id'], 
+                                                                  user_email)
                 liked = check_if_user_liked(data['feed_id'], user_email)
                 starred = check_if_user_starred(data['feed_id'], user_email)
                 commented = check_if_user_commented(data['feed_id'], user_email)
@@ -268,6 +272,11 @@ class GetNotification(Resource):
                 f['liked']['BOOL'] = liked
                 f['starred']['BOOL'] = starred
                 f['commented']['BOOL'] = commented
+
+                if data['feed_type'] == 'posts':
+                    f['added_to_fav'] = {}
+                    f['added_to_fav']['BOOL'] = added_to_fav
+
                 del feed['Item']['email']
                 del feed['Item']['value']
                 del feed['Item']['only_to_followers']
