@@ -543,8 +543,6 @@
                    - location: city, country
                    - admin_email
                    - password
-  - Optional Data: picture
-  - Allowed Extensions: 'jpg', 'png', 'jpeg'
   - Content-Type: multipart/form-data
   - Returns: *201 CREATED* Status Code if the organization succesfully created
   - Description: Registers organization on the application and adds it to the database.

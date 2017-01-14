@@ -10,12 +10,14 @@ from werkzeug.exceptions import BadRequest
 
 from app.models import create_organizations_table
 
+from app.helper import upload_file
+
 db = boto3.client('dynamodb')
 
 organizations_api_routes = Blueprint('organization_api', __name__)
 api = Api(organizations_api_routes)
 
-BUCKET_NAME = 'organizationspicture'
+BUCKET_NAME = 'gorganizationspicture'
 ALLOWED_EXTENSIONS = set(['jpg', 'png', 'jpeg'])
 
 
@@ -199,9 +201,9 @@ class OrganizationPicture(Resource):
             organization_name = request.form['name']
             organization = db.get_item(TableName='organizations',
                             Key={'name': {'S': organization_name}})
-            if organization.get('Item') != None:
-                raise BadRequest('Organization with that name already exists.' \
-                                 'Please provide a unique organization name.')
+            if organization.get('Item') == None:
+                raise BadRequest('Organization with that name does not exist.' \
+                                 'Please register the organization first.')
             else:
                 try:
                     picture_file = upload_file(picture, BUCKET_NAME, organization_name, ALLOWED_EXTENSIONS)
