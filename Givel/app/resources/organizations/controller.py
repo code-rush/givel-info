@@ -227,7 +227,7 @@ class OrganizationLogin(Resource):
         data = request.get_json(force=True)
 
         email = data['email']
-        admin = db.query(TableName='organizations',
+        ogz = db.query(TableName='organizations',
                         IndexName='organizations-admin',
                         KeyConditionExpression='admin_email = :e',
                         ExpressionAttributeValues={
@@ -237,10 +237,11 @@ class OrganizationLogin(Resource):
 
         user_authenticated = False
 
-        if admin.get('Items') != [] and check_password_hash(
-                      admin['Items'][0]['password']['S'],data['password']):
+        if ogz.get('Items') != [] and check_password_hash(
+                      ogz['Items'][0]['password']['S'],data['password']):
             user_authenticated = True
             response['message'] = 'Login successful!'
+            response['organization_name'] = ogz['Items'][0]['name']
         else:
             response['message'] = 'Login failed! Try again later!'
         response['user_authenticated'] = user_authenticated

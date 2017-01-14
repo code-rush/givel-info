@@ -321,19 +321,21 @@ class AcceptChallenge(Resource):
                                                      ['location']['S']}
                         }
                     )
-                
-                notification = db.put_item(TableName='notifications',
-                                Item={'notify_to': {'S': data['id']},
-                                      'creation_time': {'S': date_time},
-                                      'email': {'S': user_email},
-                                      'from': {'S': 'feed'},
-                                      'feed_id': 
-                                          {'S': str(data['id'])+'_'\
-                                                +str(data['key'])},
-                                      'checked': {'BOOL': False},
-                                      'notify_for': {'S': 'accepting challenge'}
-                                }
-                            )
+                if data['id'] != user_email:
+                    notification = db.put_item(TableName='notifications',
+                                    Item={'notify_to': {'S': data['id']},
+                                          'creation_time': {'S': date_time},
+                                          'email': {'S': user_email},
+                                          'from': {'S': 'feed'},
+                                          'feed_id': 
+                                              {'S': str(data['id'])+'_'\
+                                                    +str(data['key'])},
+                                          'checked': {'BOOL': False},
+                                          'feed_type': {'S': 'challenges'},
+                                          'notify_for': {'S': 
+                                                  'accepting challenge'}
+                                    }
+                                )
                 response['message'] = 'Challenge Accepted!'
             except:
                 response['message'] = 'Try again later'

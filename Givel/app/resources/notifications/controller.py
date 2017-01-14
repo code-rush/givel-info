@@ -11,6 +11,7 @@ from app.helper import check_if_user_exists, get_user_details
 from app.helper import check_if_user_liked, check_if_user_starred
 from app.helper import check_if_user_commented, check_if_taking_off
 from app.helper import check_if_post_added_to_favorites
+from app.helper import get_challenge_accepted_users, check_if_challenge_accepted
 
 from werkzeug.exceptions import BadRequest
 
@@ -65,16 +66,11 @@ class GetUserNotifications(Resource):
                   and notification['notify_for']['S'] == 'following':
                     notification['from']['S'] = user_name
                     notification['activity'] = notification['notify_for']
-                    # notification['notification']['S'] = '{} '.format(
-                    #                user_name) + 'started following you'
-
+                    
                 elif notification['from']['S'] == 'follower' \
                   and notification['notify_for']['S'] == 'stars':
                     notification['from']['S'] = user_name
                     notification['activity'] = notification['notify_for']
-                    # notification['notification']['S'] = '{} '.format(
-                    #        user_name) + 'gave you {} stars '.format(
-                    #        notification['stars']['N']) + 'for being awesome'
 
                 elif notification['from']['S'] == 'feed':
                     notification['feed'] = {}
@@ -97,7 +93,6 @@ class GetUserNotifications(Resource):
                                 }
                             )
 
-                        # notification['from']['S'] = user_name
                         notification['where'] = notification['feed_type']['S'][:-1]
                         if feed.get('Item') == None:
                             notification['feed']['content'] = {}
@@ -108,20 +103,13 @@ class GetUserNotifications(Resource):
                         del notification['feed_type']
 
                     notification['activity'] = notification['notify_for']
-                    
-                    # elif notification['notify_for']['S'] == 'share':
-                    #     notification['notification']['S'] = '{} '.format(
-                    #             user_name) + 'shared your {} {}'.format( 
-                    #               notification['feed_type']['S'][:-1],
-                    #               feed['Item'][content_name_holder]['S'])
-                    
+                  
                     if notification['notify_for']['S'] == 'comment':
                         notification['feed']['type'] = {}
                         f1 = db.get_item(TableName='posts',
                                 Key={'email': {'S': f_id},
                                      'creation_time': {'S': f_key}})
 
-                        # if feed.get('Item') == None:
                         f2 = db.get_item(TableName='challenges',
                                 Key={'email': {'S': f_id},
                                      'creation_time': {'S': f_key}})
@@ -131,17 +119,10 @@ class GetUserNotifications(Resource):
                             notification['feed']['content']['S'] = ''
                         elif f1.get('Item') == None:
                             notification['feed']['type']['S'] = 'challenges'
-                            notification['feed']['content'] = feed['Item']['description']
+                            notification['feed']['content'] = f2['Item']['description']
                         else:
                             notification['feed']['type']['S'] = 'posts'
-                            notification['feed']['content'] = feed['Item']['content']
-
-
-                    #     notification['comment_id'] = notification['comment_id']
-                    #     notification['notification']['S'] = '{} '.format(
-                    #             user_name) + 'commented on your {} {}'.format(
-                    #                 notification['feed_type']['S'][:-1].
-                    #                 feed['Item'][content_name_holder]['S'])
+                            notification['feed']['content'] = f1['Item']['content']
                     
                     if notification['notify_for']['S'] == 'tagging':
                         if notification['tagged_where']['S'] == 'comment':
@@ -239,10 +220,18 @@ class GetNotification(Resource):
                 home_community = None
                 user_id = None
                 added_to_fav = None
+                accepted_users = None
+                challenge_accepted = None
                 if data['feed_type'] == 'challenges':
                     user_id = feed['Item']['creator']['S']
                     user_name, profile_picture, home_community = get_user_details(
                                                                           user_id)
+                    accepted_users_list = get_challenge_accepted_users(
+                                                feed['Item']['creator']['S'], 
+                                                feed['Item']['creation_key']['S'],
+                                                feed['Item']['email']['S'])
+                    challenge_accepted = check_if_challenge_accepted(data['feed_id'],
+                                                                      user_email)
                 else:
                     user_id = user_email
                     user_name, profile_picture, home_community = get_user_details(
@@ -276,6 +265,11 @@ class GetNotification(Resource):
                 if data['feed_type'] == 'posts':
                     f['added_to_fav'] = {}
                     f['added_to_fav']['BOOL'] = added_to_fav
+                elif data['feed_type'] == 'challenges':
+                    f['accepted'] = {}
+                    f['accepted']['BOOL'] = challenge_accepted
+                    f['accepted_users'] = {}
+                    f['accepted_users']['SS'] = accepted_users_list 
 
                 del feed['Item']['email']
                 del feed['Item']['value']

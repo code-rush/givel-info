@@ -97,7 +97,7 @@ class FeedLikes(Resource):
                                                   'user': {'S': user_email}
                                             }
                                         )
-                    if data['id'] != 'organization':
+                    if data['id'] != 'organization' and data['id'] != user_email:
                         notification = db.put_item(TableName='notifications',
                                 Item={'notify_to': {'S': data['id']},
                                       'creation_time': {'S': date_time},
@@ -245,19 +245,19 @@ class FeedStars(Resource):
                                               'shared_id': {'S': feed_id}
                                         }
                                     )
-
-                        notifications = db.put_item(TableName='notifications',
-                                        Item={'notify_to': {'S': data['id']},
-                                              'creation_time': {'S': date_time},
-                                              'email': {'S': user_email},
-                                              'from': {'S': 'feed'},
-                                              'feed_id': {'S': feed_id},
-                                              'checked': {'BOOL': False},
-                                              'notify_for': {'S': 'stars'},
-                                              'feed_type': {'S': str(feed)},
-                                              'stars': {'N': str(data['stars'])}
-                                        }
-                                    )
+                        if data['id'] != user_email:
+                            notifications = db.put_item(TableName='notifications',
+                                            Item={'notify_to': {'S': data['id']},
+                                                  'creation_time': {'S': date_time},
+                                                  'email': {'S': user_email},
+                                                  'from': {'S': 'feed'},
+                                                  'feed_id': {'S': feed_id},
+                                                  'checked': {'BOOL': False},
+                                                  'notify_for': {'S': 'stars'},
+                                                  'feed_type': {'S': str(feed)},
+                                                  'stars': {'N': str(data['stars'])}
+                                            }
+                                        )
                 except:
                     raise BadRequest('Request Failed!')
 
@@ -440,7 +440,7 @@ class FeedComments(Resource):
                             }
                         )
 
-            if data['id'] != 'organization':
+            if data['id'] != 'organization' and data['id'] != user_email:
                 notification = db.put_item(TableName='notifications',
                             Item={'notify_to': {'S': data['id']},
                                   'creation_time': {'S': date_time},
@@ -594,7 +594,7 @@ class ShareFeeds(Resource):
                                          }
                                      )
 
-                if data['id'] != 'organization':
+                if data['id'] != 'organization' and data['id'] != user_email:
                     notification = db.put_item(TableName='notifications',
                                     Item={'notify_to': {'S': data['id']},
                                           'creation_time': {'S': date_time},
