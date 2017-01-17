@@ -451,14 +451,31 @@ def check_if_post_added_to_favorites(feed_id, user_id):
     return added_to_fav
 
 
-def check_if_challenge_accepted(challenge_id, user_id):
+def check_if_challenge_accepted(challenge_id, user_id, creator=None, creation_key=None):
     challenge_accepted = False
-    c_id = challenge_id.rsplit('_',1)[0]
+    state = None
+    c_id = challenge_id.rsplit('_', 1)[0]
+    c_key = challenge_id.rsplit('_', 1)[1]
 
     if c_id == user_id:
         challenge_accepted = True
+    elif creator != None and creation_key != None:
+        challenges = db.query(TableName='challenges',
+                        IndexName='challenges-creator-key',
+                        KeyConditionExpression='creator = :c AND creation_key = :k',
+                        ExpressionAttributeValues={
+                            ':c': {'S': creator},
+                            ':k': {'S': creation_key}
+                        }
+                    )
 
-    return challenge_accepted
+        if challenges.get('Items') != []:
+            for i in challenges['Items']:
+                if i['email']['S'] == user_id:
+                    challenge_accepted = True
+                    state = check_challenge_state(c_id, c_key)
+
+    return challenge_accepted, state
 
 def get_challenge_accepted_users(c_creator, c_key, c_id):
     users_list = db.query(TableName='challenges', 
