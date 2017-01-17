@@ -207,8 +207,9 @@ class CommunityChallenges(Resource):
                         commented = check_if_user_commented(feed_id, user_email)
                         state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
                         taking_off = check_if_taking_off(feed_id, 'challenges')
-                        challenge_accepted = check_if_challenge_accepted(feed_id,
-                                                                      user_email)
+                        challenge_accepted, c_state = check_if_challenge_accepted(feed_id,
+                                              user_email, challenge['creator']['S'],
+                                              challenge['creation_key']['S'])
                         accepted_users_list = get_challenge_accepted_users(
                                             challenge['creator']['S'], 
                                             challenge['creation_key']['S'],
@@ -223,7 +224,10 @@ class CommunityChallenges(Resource):
                         challenge['feed']['id'] = challenge['email']
                         challenge['feed']['key'] = challenge['creation_time']
                         challenge['state'] = {}
-                        challenge['state']['S'] = state
+                        if c_state == None:
+                            challenge['state']['S'] = state
+                        else:
+                            challenge['state']['S'] = c_state
                         challenge['liked'] = {}
                         challenge['starred'] = {}
                         challenge['commented'] = {}
