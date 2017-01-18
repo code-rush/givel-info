@@ -161,7 +161,7 @@ class UserFollowers(Resource):
             for follower in user['Item']['followers']['SS']:
                 user_name, profile_picture, home = get_user_details(follower)
                 following_follower = check_if_user_following_user(user_email,
-                                                                    follwer)
+                                                                    follower)
                 f = {}
                 f['user'] = {}
                 f['user']['name'] = {}
