@@ -27,33 +27,47 @@ class SearchUsersOnGivel(Resource):
 
         search_results = []
         if data.get('search_for') != None:
-            results = users_table.scan(Select='ALL_ATTRIBUTES',
-                        FilterExpression=Attr('first_name').begins_with(data['search_for']) \
-                                        | Attr('last_name').begins_with(data['search_for'])
+            search_upper = data['search_for'].upper()
+            search_lower = data['search_for'].lower()
+            search_camel = data['search_for'][0].upper() + data['search_for'][1:].lower()
+            results = None
+            if '@' in data['search_for']:
+                results = users_table.query(Select='ALL_ATTRIBUTES',
+                            KeyConditionExpression=Key('email').eq(data['search_for'].lower())
+                        )
+            else:
+                results = users_table.scan(Select='ALL_ATTRIBUTES',
+                        FilterExpression=Attr('first_name').begins_with(search_lower) \
+                                        | Attr('last_name').begins_with(search_lower) \
+                                        | Attr('first_name').begins_with(search_upper) \
+                                        | Attr('last_name').begins_with(search_upper) \
+                                        | Attr('first_name').begins_with(search_camel) \
+                                        | Attr('last_name').begins_with(search_camel)
                           )
 
-            if results['Count'] == 0:
-                response['message'] = 'No user found with that name'
-            else:
-                response['message'] = 'Successfully found the following matches'
-                for item in results['Items']:
-                    if item['email'] != user_email:
-                        following_user = check_if_user_following_user(user_email, 
-                                                                    item['email'])
-                        users = {}
-                        users['name'] = {}
-                        users['profile_picture'] = {}
-                        users['name']['S'] = item['first_name'] + ' ' \
-                                                + item['last_name']
-                        users['profile_picture']['S'] = item['profile_picture']
-                        users['home_community'] = {}
-                        users['home_community']['S'] = item['home']
-                        users['id'] = {}
-                        users['id']['S'] = item['email']
-                        users['following'] = {}
-                        users['following']['BOOL'] = following_user
-                        search_results.append(users)
-                response['results'] = search_results
+            if results.get('Count') != None:
+                if results['Count'] == 0:
+                    response['message'] = 'No user found with that name'
+                else:
+                    response['message'] = 'Successfully found the following matches'
+                    for item in results['Items']:
+                        if item['email'] != user_email:
+                            following_user = check_if_user_following_user(user_email, 
+                                                                        item['email'])
+                            users = {}
+                            users['name'] = {}
+                            users['profile_picture'] = {}
+                            users['name']['S'] = item['first_name'] + ' ' \
+                                                    + item['last_name']
+                            users['profile_picture']['S'] = item['profile_picture']
+                            users['home_community'] = {}
+                            users['home_community']['S'] = item['home']
+                            users['id'] = {}
+                            users['id']['S'] = item['email']
+                            users['following'] = {}
+                            users['following']['BOOL'] = following_user
+                            search_results.append(users)
+                    response['results'] = search_results
         else:
             response['message'] = 'Please provide some input!'
 
