@@ -225,7 +225,8 @@ class UsersChallengePosts(Resource):
                     accepted_users_list = get_challenge_accepted_users(
                                             challenge['creator']['S'], 
                                             challenge['creation_key']['S'],
-                                            challenge['email']['S'])
+                                            challenge['email']['S'],
+                                            user_email)
                     challenge['user'] = {}
                     challenge['user']['name'] = {}
                     challenge['user']['profile_picture'] = {}

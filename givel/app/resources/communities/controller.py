@@ -12,6 +12,7 @@ from app.helper import check_if_user_starred, check_if_user_commented
 from app.helper import get_user_details, check_challenge_state
 from app.helper import check_if_challenge_accepted, get_challenge_accepted_users
 from app.helper import check_if_post_added_to_favorites
+from app.helper import check_if_user_following_user
 
 
 db = boto3.client('dynamodb')
@@ -128,12 +129,16 @@ class CommunityPosts(Resource):
                         taking_off = check_if_taking_off(feed_id, 'posts')
                         added_to_fav = check_if_post_added_to_favorites(
                                         feed_id, user_email)
+                        following = check_if_user_following_user(user_email,
+                                                        post['email']['S'])
                         post['user'] = {}
                         post['user']['id'] = post['email']
                         post['user']['name'] = {}
                         post['user']['profile_picture'] = {}
                         post['user']['name']['S'] = user_name
                         post['user']['profile_picture']['S'] = profile_picture
+                        post['user']['following'] = {}
+                        post['user']['following']['BOOL'] = following
                         post['feed'] = {}
                         post['feed']['id'] = post['email']
                         post['feed']['key'] = post['creation_time']
@@ -213,13 +218,18 @@ class CommunityChallenges(Resource):
                         accepted_users_list = get_challenge_accepted_users(
                                             challenge['creator']['S'], 
                                             challenge['creation_key']['S'],
-                                            challenge['email']['S'])
+                                            challenge['email']['S'],
+                                            user_email)
+                        following = check_if_user_following_user(user_email,
+                                                    challenge['creator']['S'])
                         challenge['user'] = {}
                         challenge['user']['name'] = {}
                         challenge['user']['id'] = challenge['email']
                         challenge['user']['profile_picture'] = {}
                         challenge['user']['name']['S'] = user_name
                         challenge['user']['profile_picture']['S'] = profile_picture
+                        challenge['user']['following'] = {}
+                        challenge['user']['following']['BOOL'] = following
                         challenge['feed'] = {}
                         challenge['feed']['id'] = challenge['email']
                         challenge['feed']['key'] = challenge['creation_time']
