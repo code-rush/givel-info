@@ -263,31 +263,28 @@ class UserFollowingChallengesFeeds(Resource):
         else:
             for user in users_following['Item']['following']['SS']:
                 try:
-                    community_challenges = db.query(TableName='challenges',
-                                           KeyConditionExpression='email = :e',
+                    following_challenges = db.query(TableName='challenges',
+                                           IndexName='challenges-creator-key',
+                                           KeyConditionExpression='creator = :e',
                                            ExpressionAttributeValues={
                                                ':e': {'S': user}
                                            }
                                        )
-                    for challenge in community_challenges['Items']:
+                    for challenge in following_challenges['Items']:
                         user_name, profile_picture, home = get_user_details(challenge['creator']['S'])
                         if user_name == None:
                             del challenge
                         else:
-                            feed_id = challenge['email']['S'] + '_' + challenge['creation_time']['S']
+                            feed_id = challenge['creator']['S'] + '_' + challenge['creation_key']['S']
                             liked = check_if_user_liked(feed_id, user_email)
                             starred = check_if_user_starred(feed_id, user_email)
                             commented = check_if_user_commented(feed_id, user_email)
-                            state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
+                            # state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
                             taking_off = check_if_taking_off(feed_id, 'challenges')
-                            challenge_accepted, c_state = check_if_challenge_accepted(feed_id,
-                                                   user_email, challenge['creator']['S'],
-                                                   challenge['creation_key']['S'])
+                            challenge_accepted, c_state = check_if_challenge_accepted(
+                                                                  feed_id, user_email)
                             accepted_users_list = get_challenge_accepted_users(
-                                            challenge['creator']['S'], 
-                                            challenge['creation_key']['S'],
-                                            challenge['email']['S'],
-                                            user_email)
+                                                           feed_id, user_email)
                             following = check_if_user_following_user(user_email,
                                                     challenge['creator']['S'])
                             challenge['user'] = {}
@@ -301,10 +298,8 @@ class UserFollowingChallengesFeeds(Resource):
                             challenge['feed'] = {}
                             challenge['feed']['id'] = challenge['email']
                             challenge['feed']['key'] = challenge['creation_time']
-                            challenge['state'] = {}
                             if c_state == None:
-                                challenge['state']['S'] = state
-                            else:
+                                challenge['state'] = {}
                                 challenge['state']['S'] = c_state
                             challenge['liked'] = {}
                             challenge['starred'] = {}

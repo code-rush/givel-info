@@ -12,6 +12,7 @@ from app.helper import check_if_user_liked, check_if_user_starred
 from app.helper import check_if_user_commented, check_if_taking_off
 from app.helper import check_if_post_added_to_favorites
 from app.helper import get_challenge_accepted_users, check_if_challenge_accepted
+from app.helper import check_if_user_following_user
 
 from werkzeug.exceptions import BadRequest
 
@@ -222,22 +223,25 @@ class GetNotification(Resource):
                 added_to_fav = None
                 accepted_users = None
                 challenge_accepted = None
+                following = None
                 if data['feed_type'] == 'challenges':
                     user_id = feed['Item']['creator']['S']
                     user_name, profile_picture, home_community = get_user_details(
                                                                           user_id)
                     accepted_users_list = get_challenge_accepted_users(
-                                                feed['Item']['creator']['S'], 
-                                                feed['Item']['creation_key']['S'],
-                                                feed['Item']['email']['S'])
+                                              data['feed_id'], user_email)
                     challenge_accepted = check_if_challenge_accepted(data['feed_id'],
                                                                       user_email)
+                    following = check_if_user_following_user(user_email, 
+                                                              user_id)
                 else:
-                    user_id = user_email
+                    user_id = feed['Item']['email']['S']
                     user_name, profile_picture, home_community = get_user_details(
                                                                           user_id)
                     added_to_fav = check_if_post_added_to_favorites(data['feed_id'], 
                                                                   user_email)
+                    following = check_if_user_following_user(user_email, 
+                                                              user_id)
                 liked = check_if_user_liked(data['feed_id'], user_email)
                 starred = check_if_user_starred(data['feed_id'], user_email)
                 commented = check_if_user_commented(data['feed_id'], user_email)
@@ -251,8 +255,9 @@ class GetNotification(Resource):
                 f['user']['name']['S'] = user_name
                 f['user']['profile_picture']['S'] = profile_picture
                 f['feed'] = {}
-                f['feed']['id'] = feed['Item']['email']
-                f['feed']['key'] = feed['Item']['creation_time']
+                if data['feed_type'] == 'challenges':
+                    f['feed']['id'] = feed['Item']['creator']
+                    f['feed']['key'] = feed['Item']['creation_key']
                 f['liked'] = {}
                 f['starred'] = {}
                 f['commented'] = {}
@@ -265,11 +270,17 @@ class GetNotification(Resource):
                 if data['feed_type'] == 'posts':
                     f['added_to_fav'] = {}
                     f['added_to_fav']['BOOL'] = added_to_fav
+                    if feed['Item']['email']['S'] != user_email:
+                        f['user']['following'] = {}
+                        f['user']['following']['BOOL'] = following
                 elif data['feed_type'] == 'challenges':
                     f['accepted'] = {}
                     f['accepted']['BOOL'] = challenge_accepted
                     f['accepted_users'] = {}
                     f['accepted_users']['SS'] = accepted_users_list 
+                    if feed['Item']['creator']['S'] != user_email:
+                        f['user']['following'] = {}
+                        f['user']['following']['BOOL'] = following
 
                 del feed['Item']['email']
                 del feed['Item']['value']
