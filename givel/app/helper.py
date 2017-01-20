@@ -451,46 +451,47 @@ def check_if_post_added_to_favorites(feed_id, user_id):
     return added_to_fav
 
 
-def check_if_challenge_accepted(challenge_id, user_id, creator=None, creation_key=None):
+def check_if_challenge_accepted(challenge_creator_id, user_id):
     challenge_accepted = False
     state = None
-    c_id = challenge_id.rsplit('_', 1)[0]
-    c_key = challenge_id.rsplit('_', 1)[1]
+    creator = challenge_creator_id.rsplit('_', 1)[0]
+    creation_key = challenge_creator_id.rsplit('_', 1)[1]
 
-    if c_id == user_id:
-        challenge_accepted = True
-    elif creator != None and creation_key != None:
-        challenges = db.query(TableName='challenges',
-                        IndexName='challenges-creator-key',
-                        KeyConditionExpression='creator = :c AND creation_key = :k',
-                        ExpressionAttributeValues={
-                            ':c': {'S': creator},
-                            ':k': {'S': creation_key}
-                        }
-                    )
+    challenges = db.query(TableName='challenges',
+                    IndexName='challenges-creator-key',
+                    KeyConditionExpression='creator = :c AND creation_key = :k',
+                    ExpressionAttributeValues={
+                        ':c': {'S': creator},
+                        ':k': {'S': creation_key}
+                    }
+                )
 
-        if challenges.get('Items') != []:
-            for i in challenges['Items']:
-                if i['email']['S'] == user_id:
-                    challenge_accepted = True
-                    state = check_challenge_state(c_id, c_key)
+    if challenges.get('Items') != []:
+        for i in challenges['Items']:
+            if i['email']['S'] == user_id:
+                challenge_accepted = True
+                state = check_challenge_state(i['email']['S'], 
+                                        i['creation_time']['S'])
 
     return challenge_accepted, state
 
-def get_challenge_accepted_users(c_creator, c_key, c_id, user_id):
+def get_challenge_accepted_users(challenge_creator_id, user_id):
+    creator = challenge_creator_id.rsplit('_', 1)[0]
+    creation_key = challenge_creator_id.rsplit('_', 1)[1]
+
     users_list = db.query(TableName='challenges', 
                       IndexName='challenges-creator-key',
                       KeyConditionExpression='creator = :c AND creation_key = :k',
                       ExpressionAttributeValues={
-                          ':c': {'S': c_creator},
-                          ':k': {'S': c_key}
+                          ':c': {'S': creator},
+                          ':k': {'S': creation_key}
                       }
                   )
     accepted_users = []
 
     if users_list.get('Items') != []:
         for u in users_list['Items']:
-            if c_id != u['email']['S']:
+            if creator != u['email']['S']:
                 user_exists = check_if_user_exists(u['email']['S'])
                 if user_exists == True:
                     user_name, profile_picture, home = get_user_details(
@@ -502,11 +503,12 @@ def get_challenge_accepted_users(c_creator, c_key, c_id, user_id):
                     user['id'] = u['email']
                     user['profile_picture'] = {}
                     user['home_community'] = {}
-                    user['following'] = {}
+                    if user_id != u['email']['S']:
+                        user['following'] = {}
+                        user['following']['BOOL'] = following
                     user['name']['S'] = user_name
                     user['home_community']['S'] = home
                     user['profile_picture']['S'] = profile_picture
-                    user['following']['BOOL'] = following
                     accepted_users.append(user)
 
     return accepted_users
