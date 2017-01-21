@@ -258,6 +258,9 @@ class GetNotification(Resource):
                 if data['feed_type'] == 'challenges':
                     f['feed']['id'] = feed['Item']['creator']
                     f['feed']['key'] = feed['Item']['creation_key']
+                elif data['feed_type'] == 'posts':
+                    f['feed']['id'] = feed['Item']['email']
+                    f['feed']['key'] = feed['Item']['creation_time']
                 f['liked'] = {}
                 f['starred'] = {}
                 f['commented'] = {}

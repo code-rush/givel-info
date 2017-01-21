@@ -192,59 +192,66 @@ class UserFollowingPostsFeeds(Resource):
                         )
         feeds = []
         if users_following['Item'].get('following') == None:
-            response['message'] = 'Success!'
+            response['message'] = 'You have no followings!'
             response['result'] = feeds
         else:
             for user in users_following['Item']['following']['SS']:
-                try:
-                    following_posts = db.query(TableName='posts',
-                                           KeyConditionExpression='email = :e',
-                                           ExpressionAttributeValues={
-                                               ':e': {'S': user}
-                                           }
-                                       )
-                    for post in following_posts['Items']:
-                        user_name, profile_picture, home = get_user_details(post['email']['S'])
-                        if user_name == None:
-                            del post
-                        else:
-                            feed_id = post['email']['S'] + '_' + post['creation_time']['S']
-                            liked = check_if_user_liked(feed_id, user_email)
-                            starred = check_if_user_starred(feed_id, user_email)
-                            commented = check_if_user_commented(feed_id, user_email)
-                            taking_off = check_if_taking_off(feed_id, 'posts')
-                            added_to_fav = check_if_post_added_to_favorites(feed_id, 
-                                                                          user_email)
+                following_posts = db.query(TableName='posts',
+                                       KeyConditionExpression='email = :e',
+                                       ExpressionAttributeValues={
+                                           ':e': {'S': user}
+                                       }
+                                   )
+                for post in following_posts['Items']:
+                    if post['email']['S'] != user_email:
+                        feeds.append(post)
+
+            try:
+                for post in feeds:
+                    user_name, profile_picture, home = get_user_details(post['email']['S'])
+                    if user_name == None:
+                        del post
+                    else:
+                        feed_id = post['email']['S'] + '_' + post['creation_time']['S']
+                        liked = check_if_user_liked(feed_id, user_email)
+                        starred = check_if_user_starred(feed_id, user_email)
+                        commented = check_if_user_commented(feed_id, user_email)
+                        taking_off = check_if_taking_off(feed_id, 'posts')
+                        added_to_fav = check_if_post_added_to_favorites(feed_id, 
+                                                                      user_email)
+                        post['user'] = {}
+                        post['user']['id'] = post['email']
+                        post['user']['name'] = {}
+                        post['user']['profile_picture'] = {}
+                        post['user']['name']['S'] = user_name
+                        post['user']['profile_picture']['S'] = profile_picture
+                        post['feed'] = {}
+                        post['feed']['id'] = post['email']
+                        post['feed']['key'] = post['creation_time']
+                        post['liked'] = {}
+                        post['starred'] = {}
+                        post['commented'] = {}
+                        post['taking_off'] = {}
+                        post['taking_off']['BOOL'] = taking_off
+                        post['liked']['BOOL'] = liked
+                        post['starred']['BOOL'] = starred
+                        post['commented']['BOOL'] = commented
+                        post['added_to_fav'] = {}
+                        post['added_to_fav']['BOOL'] = added_to_fav
+
+                        if post['email']['S'] != user_email:
                             following = check_if_user_following_user(user_email,
-                                                                post['email']['S'])
-                            post['user'] = {}
-                            post['user']['id'] = post['email']
-                            post['user']['name'] = {}
-                            post['user']['profile_picture'] = {}
-                            post['user']['name']['S'] = user_name
-                            post['user']['profile_picture']['S'] = profile_picture
+                                                            post['email']['S'])
                             post['user']['following'] = {}
                             post['user']['following']['BOOL'] = following
-                            post['feed'] = {}
-                            post['feed']['id'] = post['email']
-                            post['feed']['key'] = post['creation_time']
-                            post['liked'] = {}
-                            post['starred'] = {}
-                            post['commented'] = {}
-                            post['taking_off'] = {}
-                            post['taking_off']['BOOL'] = taking_off
-                            post['liked']['BOOL'] = liked
-                            post['starred']['BOOL'] = starred
-                            post['commented']['BOOL'] = commented
-                            post['added_to_fav'] = {}
-                            post['added_to_fav']['BOOL'] = added_to_fav
-                            del post['email']
-                            del post['value']
-                            feeds.append(post)
-                    response['message'] = 'Successfully fetched all following posts!'
-                    response['results'] = feeds
-                except:
-                    response['message'] = 'Failed to fetch following posts!'
+
+                        del post['email']
+                        del post['value']
+                        
+                response['message'] = 'Successfully fetched all following posts!'
+                response['results'] = feeds
+            except:
+                response['message'] = 'Failed to fetch following posts!'
 
         return response, 200
 

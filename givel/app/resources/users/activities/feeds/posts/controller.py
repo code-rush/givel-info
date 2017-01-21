@@ -13,6 +13,7 @@ from app.helper import upload_post_file, check_if_user_exists
 from app.helper import check_if_user_liked, check_if_taking_off
 from app.helper import check_if_user_starred, check_if_user_commented
 from app.helper import get_user_details, check_if_post_added_to_favorites
+from app.helper import check_if_user_following_user
 
 
 from werkzeug.exceptions import BadRequest
@@ -460,39 +461,49 @@ class UsersFavoritePosts(Resource):
                                  'creation_time': {'S': p_key}
                             }
                         )
-                    user_name, profile_picture, home = get_user_details(p_id)
-                    liked = check_if_user_liked(feed['feed_id']['S'], user_email)
-                    starred = check_if_user_starred(feed['feed_id']['S'], user_email)
-                    commented = check_if_user_commented(feed['feed_id']['S'], user_email)
-                    taking_off = check_if_taking_off(feed['feed_id']['S'], 'posts')
-                    added_to_fav = check_if_post_added_to_favorites(
-                                        feed['feed_id']['S'], user_email)
-                    post = p['Item']
-                    post['user'] = {}
-                    post['user']['id'] = p_id
-                    post['user']['name'] = {}
-                    post['user']['profile_picture'] = {}
-                    post['user']['name']['S'] = user_name
-                    post['user']['profile_picture']['S'] = profile_picture
-                    post['feed'] = {}
-                    post['feed']['id'] = p['Item']['email']
-                    post['feed']['key'] = p['Item']['creation_time']
-                    post['liked'] = {}
-                    post['starred'] = {}
-                    post['commented'] = {}
-                    post['taking_off'] = {}
-                    post['taking_off']['BOOL'] = taking_off
-                    post['liked']['BOOL'] = liked
-                    post['starred']['BOOL'] = starred
-                    post['commented']['BOOL'] = commented
-                    post['added_to_fav'] = {}
-                    post['added_to_fav']['BOOL'] = added_to_fav
-                    del post['email']
-                    del post['creation_time']
-                    del post['value']
-                    favorites.append(post)
-                response['message'] = 'Successfully fetched all favorites'
-                response['result'] = favorites
+                    
+                    if p.get('Item') != None:
+                        user_name, profile_picture, home = get_user_details(p_id)
+                        liked = check_if_user_liked(feed['feed_id']['S'], user_email)
+                        starred = check_if_user_starred(feed['feed_id']['S'], user_email)
+                        commented = check_if_user_commented(feed['feed_id']['S'], user_email)
+                        taking_off = check_if_taking_off(feed['feed_id']['S'], 'posts')
+                        added_to_fav = check_if_post_added_to_favorites(
+                                            feed['feed_id']['S'], user_email)
+                        post = p['Item']
+                        post['user'] = {}
+                        post['user']['id'] = p_id
+                        post['user']['name'] = {}
+                        post['user']['profile_picture'] = {}
+                        post['user']['name']['S'] = user_name
+                        post['user']['profile_picture']['S'] = profile_picture
+                        post['feed'] = {}
+                        post['feed']['id'] = p['Item']['email']
+                        post['feed']['key'] = p['Item']['creation_time']
+                        post['liked'] = {}
+                        post['starred'] = {}
+                        post['commented'] = {}
+                        post['taking_off'] = {}
+                        post['taking_off']['BOOL'] = taking_off
+                        post['liked']['BOOL'] = liked
+                        post['starred']['BOOL'] = starred
+                        post['commented']['BOOL'] = commented
+                        post['added_to_fav'] = {}
+                        post['added_to_fav']['BOOL'] = added_to_fav
+
+                        if p_id != user_email:
+                            following = check_if_user_following_user(
+                                                     p_id, user_email)
+                            post['user']['following'] = {}
+                            post['user']['following']['BOOL'] = following
+
+                        del post['email']
+                        del post['creation_time']
+                        del post['value']
+
+                        favorites.append(post)
+                    response['message'] = 'Successfully fetched all favorites'
+                    response['result'] = favorites
             except:
                 response['message'] = 'Request Failed! Try again later'
 
