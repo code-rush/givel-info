@@ -230,7 +230,7 @@ class GetNotification(Resource):
                                                                           user_id)
                     accepted_users_list = get_challenge_accepted_users(
                                               data['feed_id'], user_email)
-                    challenge_accepted = check_if_challenge_accepted(data['feed_id'],
+                    challenge_accepted, state = check_if_challenge_accepted(data['feed_id'],
                                                                       user_email)
                     following = check_if_user_following_user(user_email, 
                                                               user_id)
@@ -277,6 +277,9 @@ class GetNotification(Resource):
                         f['user']['following'] = {}
                         f['user']['following']['BOOL'] = following
                 elif data['feed_type'] == 'challenges':
+                    if state != None:
+                        f['state'] = {}
+                        f['state']['S'] = state
                     f['accepted'] = {}
                     f['accepted']['BOOL'] = challenge_accepted
                     f['accepted_users'] = {}
