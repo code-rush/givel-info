@@ -269,66 +269,74 @@ class UserFollowingChallengesFeeds(Resource):
             response['result'] = feeds
         else:
             for user in users_following['Item']['following']['SS']:
-                try:
-                    following_challenges = db.query(TableName='challenges',
-                                           IndexName='challenges-creator-key',
-                                           KeyConditionExpression='creator = :e',
-                                           ExpressionAttributeValues={
-                                               ':e': {'S': user}
-                                           }
-                                       )
-                    for challenge in following_challenges['Items']:
-                        user_name, profile_picture, home = get_user_details(challenge['creator']['S'])
-                        if user_name == None:
-                            del challenge
-                        else:
-                            feed_id = challenge['creator']['S'] + '_' + challenge['creation_key']['S']
-                            liked = check_if_user_liked(feed_id, user_email)
-                            starred = check_if_user_starred(feed_id, user_email)
-                            commented = check_if_user_commented(feed_id, user_email)
-                            # state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
-                            taking_off = check_if_taking_off(feed_id, 'challenges')
-                            challenge_accepted, c_state = check_if_challenge_accepted(
-                                                                  feed_id, user_email)
-                            accepted_users_list = get_challenge_accepted_users(
-                                                           feed_id, user_email)
+                following_challenges = db.query(TableName='challenges',
+                                       IndexName='challenges-creator-key',
+                                       KeyConditionExpression='creator = :e',
+                                       ExpressionAttributeValues={
+                                           ':e': {'S': user}
+                                       }
+                                   )
+
+
+                for feed in following_challenges['Items']:
+                    if feed['creator']['S'] != user_email:
+                        feeds.append(feed)
+
+            try:
+                for challenge in feeds:
+                    user_name, profile_picture, home = get_user_details(challenge['creator']['S'])
+                    if user_name == None:
+                        del challenge
+                    else:
+                        feed_id = challenge['creator']['S'] + '_' + challenge['creation_key']['S']
+                        liked = check_if_user_liked(feed_id, user_email)
+                        starred = check_if_user_starred(feed_id, user_email)
+                        commented = check_if_user_commented(feed_id, user_email)
+                        # state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
+                        taking_off = check_if_taking_off(feed_id, 'challenges')
+                        challenge_accepted, c_state = check_if_challenge_accepted(
+                                                              feed_id, user_email)
+                        accepted_users_list = get_challenge_accepted_users(
+                                                       feed_id, user_email)
+                        challenge['user'] = {}
+                        challenge['user']['id'] = challenge['email']
+                        challenge['user']['name'] = {}
+                        challenge['user']['profile_picture'] = {}
+                        challenge['user']['name']['S'] = user_name
+                        challenge['user']['profile_picture']['S'] = profile_picture
+                        challenge['feed'] = {}
+                        challenge['feed']['id'] = challenge['email']
+                        challenge['feed']['key'] = challenge['creation_time']
+                        if c_state == None:
+                            challenge['state'] = {}
+                            challenge['state']['S'] = c_state
+                        challenge['liked'] = {}
+                        challenge['starred'] = {}
+                        challenge['commented'] = {}
+                        challenge['taking_off'] = {}
+                        challenge['taking_off']['BOOL'] = taking_off
+                        challenge['liked']['BOOL'] = liked
+                        challenge['starred']['BOOL'] = starred
+                        challenge['commented']['BOOL'] = commented
+                        challenge['accepted'] = {}
+                        challenge['accepted']['BOOL'] = challenge_accepted
+                        challenge['accepted_users'] = {}
+                        challenge['accepted_users']['SS'] = accepted_users_list
+
+                        if challenge['creator']['S'] != user_email:
                             following = check_if_user_following_user(user_email,
                                                     challenge['creator']['S'])
-                            challenge['user'] = {}
-                            challenge['user']['id'] = challenge['email']
-                            challenge['user']['name'] = {}
-                            challenge['user']['profile_picture'] = {}
-                            challenge['user']['name']['S'] = user_name
-                            challenge['user']['profile_picture']['S'] = profile_picture
                             challenge['user']['following'] = {}
                             challenge['user']['following']['BOOL'] = following
-                            challenge['feed'] = {}
-                            challenge['feed']['id'] = challenge['email']
-                            challenge['feed']['key'] = challenge['creation_time']
-                            if c_state == None:
-                                challenge['state'] = {}
-                                challenge['state']['S'] = c_state
-                            challenge['liked'] = {}
-                            challenge['starred'] = {}
-                            challenge['commented'] = {}
-                            challenge['taking_off'] = {}
-                            challenge['taking_off']['BOOL'] = taking_off
-                            challenge['liked']['BOOL'] = liked
-                            challenge['starred']['BOOL'] = starred
-                            challenge['commented']['BOOL'] = commented
-                            challenge['accepted'] = {}
-                            challenge['accepted']['BOOL'] = challenge_accepted
-                            challenge['accepted_users'] = {}
-                            challenge['accepted_users']['SS'] = accepted_users_list 
-                            del challenge['email']
-                            del challenge['creator']
-                            del challenge['value']
-                            del challenge['creation_key']
-                            feeds.append(challenge) 
-                    response['message'] = 'Successfully fetched all following\'s challenges!'
-                    response['results'] = feeds
-                except:
-                    response['message'] = 'Failed to fetch following\'s challenges!'
+
+                        del challenge['email']
+                        del challenge['creator']
+                        del challenge['value']
+                        del challenge['creation_key']
+                response['message'] = 'Successfully fetched all following\'s challenges!'
+                response['results'] = feeds
+            except:
+                response['message'] = 'Failed to fetch following\'s challenges!'
         return response, 200
 
 
