@@ -329,80 +329,80 @@ class OrganizationUpliftStats(Resource):
 
         all_organizations_stars = db.scan(TableName='organizations',
                                     ProjectionExpression='stars')
-        try:
-            if all_organizations_stars['Count'] == 0:
-                response['message'] = 'There does not exist' +\
-                                      'any organization yet!'
-                return response, 404
+        # try:
+        if all_organizations_stars['Count'] == 0:
+            response['message'] = 'There does not exist' +\
+                                  'any organization yet!'
+            return response, 404
+        else:
+            organization['Item']['stars']
+            if all_organizations_stars['Count'] == 1:
+                response['message'] = 'Request Successful'
+                response['result'] = {}
+                response['result']['organization_stars_percentage'] = {}
+                response['result']['organization_stars_percentage']['S'] = '100%'
             else:
-                organization['Item']['stars']
-                if all_organizations_stars['Count'] == 1:
-                    response['message'] = 'Request Successful'
-                    response['result'] = {}
-                    response['result']['organization_stars_percentage'] = {}
-                    response['result']['organization_stars_percentage']['S'] = '100%'
-                else:
-                    total_organization_stars = 0
+                total_organization_stars = 0
 
-                    for stars in all_organizations_stars['Items']:
-                        total_organization_stars += int(stars['stars']['N'])
+                for stars in all_organizations_stars['Items']:
+                    total_organization_stars += int(stars['stars']['N'])
 
-                    avg_stars_of_other_org = (total_organization_stars / \
-                                         int(all_organizations_stars['count']))
+                avg_stars_of_other_org = (total_organization_stars / \
+                                     int(all_organizations_stars['count']))
 
-                    org_stats = (int(organization['Item']['stars']['N']) / \
-                                  avg_stars_of_other_org + \
-                                  int(organization['Item']['stars']['N'])) * 100
+                org_stats = (int(organization['Item']['stars']['N']) / \
+                              avg_stars_of_other_org + \
+                              int(organization['Item']['stars']['N'])) * 100
 
-                    other_org_stats = (avg_stars_of_other_org / \
-                                       avg_stars_of_other_org + \
-                                  int(organization['Item']['stars']['N'])) * 100
+                other_org_stats = (avg_stars_of_other_org / \
+                                   avg_stars_of_other_org + \
+                              int(organization['Item']['stars']['N'])) * 100
 
 
-                    response['message'] = 'Request successful!'
-                    response['result'] = {}
-                    response['result']['organization_stars_percentage'] = {}
-                    response['result']['other_organizations_stars_percentage'] = {}
-                    response['result']['organization_stars_percentage']['S'] = str(org_percent_stats) + '%'
-                    response['result']['other_organizations_stars_percentage']['S'] = str(other_org_stats) + '%'
+                response['message'] = 'Request successful!'
+                response['result'] = {}
+                response['result']['organization_stars_percentage'] = {}
+                response['result']['other_organizations_stars_percentage'] = {}
+                response['result']['organization_stars_percentage']['S'] = str(org_percent_stats) + '%'
+                response['result']['other_organizations_stars_percentage']['S'] = str(other_org_stats) + '%'
 
-                uplift_stars = int(organization['Item']['stars']['N'])
-                
-                #pacific region percentage
-                p_rg = int(organization['Item']['pacific_region_stars']['N'])\
-                       / uplift_stars * 100
-                #mid_west region percentage
-                mw_rg = int(organization['Item']['mid_west_region_stars']['N'])\
-                        / uplift_stars * 100
-                #south_west region percentage
-                sw_rg = int(organization['Item']['south_west_region_stars']['N'])\
-                        / uplift_stars * 100
-                #south_east region percentage
-                se_rg = int(organization['Item']['south_east_region_stars']['N'])\
-                        / uplift_stars * 100
-                #north_east region percentage
-                ne_rg = int(organization['Item']['north_east_region_stars']['N'])\
-                        / uplift_stars * 100
-                #rocky_mountain region percentage
-                rm_rg = int(organization['Item']['rocky_mountain_region_stars']['N'])\
-                        / uplift_stars * 100
+            uplift_stars = int(organization['Item']['stars']['N'])
+            
+            #pacific region percentage
+            p_rg = int(organization['Item']['pacific_region_stars']['N'])\
+                   / uplift_stars * 100
+            #mid_west region percentage
+            mw_rg = int(organization['Item']['mid_west_region_stars']['N'])\
+                    / uplift_stars * 100
+            #south_west region percentage
+            sw_rg = int(organization['Item']['south_west_region_stars']['N'])\
+                    / uplift_stars * 100
+            #south_east region percentage
+            se_rg = int(organization['Item']['south_east_region_stars']['N'])\
+                    / uplift_stars * 100
+            #north_east region percentage
+            ne_rg = int(organization['Item']['north_east_region_stars']['N'])\
+                    / uplift_stars * 100
+            #rocky_mountain region percentage
+            rm_rg = int(organization['Item']['rocky_mountain_region_stars']['N'])\
+                    / uplift_stars * 100
 
-                response['result']['pacific_region'] = {}
-                response['result']['mid_west_region'] = {}
-                response['result']['south_west_region'] = {}
-                response['result']['south_east_region'] = {}
-                response['result']['north_east_region'] = {}
-                response['result']['rocky_mountain_region'] = {}
-                response['result']['pacific_region']['S'] = str(p_rg) + '%'
-                response['result']['mid_west_region']['S'] = str(mw_rg) + '%'
-                response['result']['south_west_region']['S'] = str(sw_rg) + '%'
-                response['result']['south_east_region']['S'] = str(se_rg) + '%'
-                response['result']['north_east_region']['S'] = str(ne_rg) + '%'
-                response['result']['rocky_mountain_region']['S'] = str(rm_rg) + '%'
+            response['result']['pacific_region'] = {}
+            response['result']['mid_west_region'] = {}
+            response['result']['south_west_region'] = {}
+            response['result']['south_east_region'] = {}
+            response['result']['north_east_region'] = {}
+            response['result']['rocky_mountain_region'] = {}
+            response['result']['pacific_region']['S'] = str(p_rg) + '%'
+            response['result']['mid_west_region']['S'] = str(mw_rg) + '%'
+            response['result']['south_west_region']['S'] = str(sw_rg) + '%'
+            response['result']['south_east_region']['S'] = str(se_rg) + '%'
+            response['result']['north_east_region']['S'] = str(ne_rg) + '%'
+            response['result']['rocky_mountain_region']['S'] = str(rm_rg) + '%'
 
-                return response, 200
-        except:
-            raise BadRequest('Try again later')
+            return response, 200
+        # except:
+            # raise BadRequest('Try again later')
 
 
 class OrganizationFeedStats(Resource):
@@ -415,25 +415,34 @@ class OrganizationFeedStats(Resource):
         all_organizations_feed_stars = db.scan(TableName='organizations',
                                           ProjectionExpression='feed_stars')
 
-        try:
-            if all_organizations_feed_stars['Count'] == 0:
-                response['message'] = 'There does not exist any organization yet!'
-                return response, 404
+        # try:
+        if all_organizations_feed_stars['Count'] == 0:
+            response['message'] = 'There does not exist any organization yet!'
+            return response, 404
+        else:
+            if all_organizations_feed_stars['Count'] == 1:
+                response['message'] = 'Request Successful'
+                response['result'] = {}
+                response['result']['organization_stars_percentage'] = {}
+                response['result']['organization_stars_percentage']['S'] = '100%'
             else:
-                if all_organizations_feed_stars['Count'] == 1:
-                    response['message'] = 'Request Successful'
-                    response['result'] = {}
-                    response['result']['organization_stars_percentage'] = {}
-                    response['result']['organization_stars_percentage']['S'] = '100%'
+                total_org_feed_stars = 0
+
+                for stars in all_organizations_feed_stars['Items']:
+                    total_org_feed_stars += int(stars['feed_stars']['N'])
+
+                avg_stars_of_other_org = (total_org_feed_stars / \
+                                          int(all_organizations_feed_stars['Count']))
+
+                response['message'] = 'Request successful!'
+                response['result'] = {}
+                response['result']['organization_stars_percentage'] = {}
+                response['result']['other_organizations_stars_percentage'] = {}
+
+                if avg_stars_of_other_org == 0:
+                    response['result']['organization_stars_percentage']['S'] = '50%'
+                    response['result']['other_organizations_stars_percentage']['S'] = '50%'
                 else:
-                    total_org_feed_stars = 0
-
-                    for stars in all_organizations_feed_stars['Items']:
-                        total_org_feed_stars += int(stars['feed_stars']['N'])
-
-                    avg_stars_of_other_org = (total_org_feed_stars / \
-                                              int(all_organizations_stars['count']))
-
                     org_stats = (int(organization['Item']['feed_stars']['N'])/ \
                                  avg_stars_of_other_org + \
                                   int(organization['Item']['feed_stars']['N'])) * 100
@@ -441,10 +450,7 @@ class OrganizationFeedStats(Resource):
                     other_org_stats = (avg_stars_of_other_org / \
                                        avg_stars_of_other_org + \
                                        int(organization['Item']['feed_stars']['N'])) * 100
-                    response['message'] = 'Request successful!'
-                    response['result'] = {}
-                    response['result']['organization_stars_percentage'] = {}
-                    response['result']['other_organizations_stars_percentage'] = {}
+
                     response['result']['organization_stars_percentage']['S'] = str(org_stats) + '%'
                     response['result']['other_organizations_stars_percentage']['S'] = str(other_org_stats) + '%'
 
@@ -482,9 +488,9 @@ class OrganizationFeedStats(Resource):
                 response['result']['north_east_region']['S'] = str(ne_rg) + '%'
                 response['result']['rocky_mountain_region']['S'] = str(rm_rg) + '%'
 
-                return response, 200
-        except:
-            raise BadRequest('Try again later')
+            return response, 200
+        # except:
+            # raise BadRequest('Try again later')
 
 
 
