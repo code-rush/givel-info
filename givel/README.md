@@ -107,11 +107,11 @@
 
 
 ### USERS ACTIVITY APIS
-- **follow a user**
+- **follow a user/organization**
   - Path: /api/v1/users/{user_email}/following
   - Method: **PUT**
   - Content-Type: application/json
-  - Required_Data: follow_user
+  - Required_Data: follow
   - Returns: *200 OK* Status Code with a success message.
   - Description: Following a user. It adds the user to the following list and 
                  adds this user to the following users followers list.
@@ -123,11 +123,11 @@
   - Description: Get all list of user's following user list as results and also 
                  returns a message.
 
-- **unfollow a user**
+- **unfollow a user/organization**
   - Path: /api/v1/users/{user_email}/following
   - Method: **DELETE**
   - Content-Type: application/json
-  - Required_Data: unfollow_user
+  - Required_Data: unfollow
   - Returns: *200 OK* Status Code with a success message.
   - Description: Removes the unfollowed user from the followings list and removes 
                  this user from followers list from the unfollowed user. Returns a message 
