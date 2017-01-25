@@ -559,7 +559,7 @@
   - Description: Allows the admin to login into the organizations account.
 
 - **uplift feed**
-  - Path: /api/v1/organizations/uplift/{organization_type}
+  - Path: /api/v1/organizations/uplift/{organization_type}/{user_email}
   - Method: **GET**
   - Returns: List of all the organization in the category
   - Description: Gets organizations of type 'social_good' and/or 'non-profit'.
