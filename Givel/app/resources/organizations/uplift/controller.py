@@ -10,6 +10,8 @@ from werkzeug.exceptions import BadRequest
 
 from app.helper import STATES, mid_west_states, southeast_states, northeast_states
 from app.helper import pacific_states, southwest_states, rocky_mountain_states
+from app.helper import check_if_user_following_user
+from app.helper import check_if_post_added_to_favorites
 
 organizations_uplift_api_routes = Blueprint('uplift_api_routes', __name__)
 api = Api(organizations_uplift_api_routes)
@@ -19,7 +21,7 @@ db = boto3.client('dynamodb')
 
 
 class OrganizationsUplift(Resource):
-    def get(self, o_type):
+    def get(self, o_type, user_email):
         response = {}
 
         if str(o_type) != 'social_good' and str(o_type) != 'non-profit':
@@ -41,12 +43,22 @@ class OrganizationsUplift(Resource):
                                   }
                               )
 
+
             orgs = []
 
             if organizations.get('Items') == []:
                 response['message'] = 'No organizations exists currently'
             else:
                 for organization in organizations['Items']:
+                    following = check_if_user_following_user(user_email, 
+                                                organization['name']['S'])
+                    feed_id = 'organization_' + organization['name']['S']
+                    added_to_fav = check_if_post_added_to_favorites(feed_id,
+                                                               user_email)
+                    organization['following'] = {}
+                    organization['following']['BOOL'] = following
+                    organization['added_to_fav'] = {}
+                    organization['added_to_fav']['BOOL'] = added_to_fav
                     del organization['admin_email']
                     del organization['password']
                     del organization['type']
@@ -149,6 +161,6 @@ class GiveStarsOnUplift(Resource):
 
 
 
-api.add_resource(OrganizationsUplift, '/<o_type>')
+api.add_resource(OrganizationsUplift, '/<o_type>/<user_email>')
 api.add_resource(GiveStarsOnUplift, '/stars/share/<user_email>')
 
