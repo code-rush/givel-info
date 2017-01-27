@@ -409,12 +409,24 @@ class FeedComments(Resource):
             date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
 
             if data.get('tags') != None:
+                tags = []
+                for t in data['tags']:
+                    tag_entry = {}
+                    tag_entry['M'] = {}
+                    tag_entry['M']['user_id'] = {}
+                    tag_entry['M']['user_id']['S'] = t['user_id']
+                    tag_entry['M']['origin'] = {}
+                    tag_entry['M']['origin']['N'] = str(t['origin'])
+                    tag_entry['M']['length'] = {}
+                    tag_entry['M']['length']['N'] = str(t['length'])
+                    tags.append(tag_entry)
+
                 add_comment = db.put_item(TableName='comments',
                             Item={'email': {'S': user_email},
                                   'creation_time': {'S': date_time},
                                   'feed_id': {'S': feed_id},
                                   'comment': {'S': data['comment']},
-                                  'tagged': {'SS': data['tags']}
+                                  'tags': {'L': tags}
                             }
                         )
                 for i in range(0, len(data['tags'])):
@@ -539,7 +551,13 @@ class GetFeedComments(Resource):
                         comment['user']['profile_picture'] = {}
                         comment['user']['name']['S'] = user_name
                         comment['user']['profile_picture']['S'] = profile_picture
-                        comment['user']['id'] = comment['email'] 
+                        comment['user']['id'] = comment['email']
+                        if comment.get('tags') != None:
+                            tags = []
+                            for t in comment['tags']['L']:
+                                tags.append(t['M'])
+                            comment['tags']['L'] = tags
+
                         del comment['email']
 
                 response['message'] = 'Successfully fetched all comments'
