@@ -368,13 +368,18 @@
   - Path: /api/v1/feeds/comments/{user_email}
   - Method: **POST**
   - Required Data: id, key, comment
+  - Optional Data: tags
   - Content-Type: application/json
   - Returns: *200 OK* Status Code with a message
-  - Description: {user_email} in the url is the email id of the logged in user.
-                 *id* and *key* is the feed id and key which needs to be sent with the 
-                 request else a BadRequest Exception is raised.
-                 If an empty *comment* is sent in the request, it raises BadRequest 
-                 Exception.
+  - Description: - {user_email} in the url is the email id of the logged in user.
+                 - *id* and *key* is the feed id and key which needs to be sent with the 
+                   request else a BadRequest Exception is raised.
+                 - If an empty *comment* is sent in the request, it raises BadRequest 
+                   Exception.
+                 - For tagging, send the data as array of dictionaries for each tag. 
+                   Use "user_id" Key to send the tagged user's id, "origin" for the 
+                   the place where the tag for that user started and "length" for 
+                   the total length of that tag.
 
 - **edit comment*
   - Path: /api/v1/feeds/comments/{user_email}
