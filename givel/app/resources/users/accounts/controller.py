@@ -329,7 +329,7 @@ class ChangePassword(Resource):
         user_data = request.get_json(force=True)
         if user_data.get('current_password') == None \
           or user_data.get('new_password') == None:
-            raise BadRequest('Please provide all details')
+            raise BadRequest('Please provide both old and new password.')
         else:
             if check_password_hash(user['Item']['password']['S'], \
                                     user_data['current_password']):
@@ -337,9 +337,10 @@ class ChangePassword(Resource):
                                         Key={'email': {'S': user_email}},
                                         UpdateExpression='SET password = :pwd',
                                         ExpressionAttributeValues={
-                                            ':pwd': {'S': generate_password_hash(user_data['new_password'])}
-                                        },
-                                        ReturnValues='UPDATED_NEW'
+                                            ':pwd': {
+                                                'S': generate_password_hash(
+                                                  user_data['new_password'])}
+                                        }
                                     )
                 response['message'] = 'Password Updated!'
             else:
