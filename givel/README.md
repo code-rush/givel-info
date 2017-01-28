@@ -611,6 +611,20 @@
                  result is sent in percentages. Also, the stats of where the stars 
                  are coming from is shown in percentages for total 6 regions in US.
 
+- **change organization's login password**
+  - Path: /api/v1/organizations/setings/password/{organization}
+  - Method: *POST*
+  - Required Data: current_password, new_password
+  - Returns: *200 OK* Status Code with a successful message if the password 
+             changed successfuly.
+  - Description: - Changes the organization's admin password. 
+                 - {organization} in the url is the organization's name
+                 - *current_password* and *new_password* are both required to 
+                   change the admins login password.
+                 - Results in failure if the *current_password* does not match.
+  -IMPORTANT: Check if new_password and confirm_password matches on the front end 
+              before sending the new password.
+
 
 
 ### Search Givel users API
