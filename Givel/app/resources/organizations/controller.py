@@ -251,6 +251,38 @@ class OrganizationLogin(Resource):
         return response, 200
 
 
+class ChangePassword(Resource):
+    def post(self, ogz):
+        response = {}
+        data = request.get_json(force=True)
+
+        organization = db.get_item(TableName='organizations',
+                            Key={'name': {'S': str(ogz)}})
+
+        admin_email = organization['Item']['admin_email']['S']
+
+        if data.get('current_password') == None \
+          or data.get('new_password') == None:
+            raise BadRequest('Please provide both old and new password.')
+        else:
+            if check_password_hash(organization['Item']['password']['S'], \
+                                              data['current_password']):
+                update_pwd = db.update_item(TableName='organizations',
+                                Key={'name': {'S': str(ogz)}},
+                                UpdateExpression='SET password = :pwd',
+                                ExpressionAttributeValues={
+                                    ':pwd': {
+                                        'S': generate_password_hash(
+                                              data['new_password'])}
+                                }
+                            )
+                response['message'] = 'Password Updated!'
+            else:
+                response['message'] = 'Please enter correct current password'
+
+            return response, 200
+
+
 class OrganizationUpliftBillboard(Resource):
     def get(self, ogz):
         response = {}
@@ -504,7 +536,6 @@ class OrganizationFeedStats(Resource):
             raise BadRequest('Try again later')
 
 
-
 api.add_resource(OrganizationRegistration, '/register')
 api.add_resource(OrganizationLogin, '/login')
 api.add_resource(ChangeOrganizationDetails, '/settings/details')
@@ -514,3 +545,4 @@ api.add_resource(OrganizationUpliftBillboard, '/billboard/uplift/<ogz>')
 api.add_resource(OrganizationFeedBillboard, '/billboard/feed/<ogz>')
 api.add_resource(OrganizationUpliftStats, '/stats/uplift/<ogz>')
 api.add_resource(OrganizationFeedStats, '/stats/feed/<ogz>')
+api.add_resource(ChangePassword, '/settings/password/<ogz>')
