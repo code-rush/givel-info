@@ -518,40 +518,42 @@ class GetUsersProfile(Resource):
 
             if user_profile['Item'] != None:
                 followings = []
-                for following in user_profile['Item']['following']['SS']:
-                    user_name, profile_picture, home = get_user_details(following)
-                    following_following = check_if_user_following_user(user_email,
-                                                                        following)
-                    user_profile['followings'] = {}
-                    user_profile['followings']['id'] = {}
-                    user_profile['followings']['name'] = {}
-                    user_profile['followings']['following'] = {}
-                    user_profile['followings']['profile_picture'] = {}
-                    user_profile['followings']['home_community'] = {}
-                    user_profile['followings']['id']['S'] = following
-                    user_profile['followings']['name']['S'] = user_name
-                    user_profile['followings']['following']['BOOL'] = following_following
-                    user_profile['followings']['profile_picture']['S'] = profile_picture
-                    user_profile['followings']['home_community']['S'] = home
-                    followings.append(user_profile['followings'])
-
                 followers = []
-                for follower in user_profile['Item']['followers']['SS']:
-                    user_name, profile_picture, home = get_user_details(follower)
-                    following_follower = check_if_user_following_user(user_email, 
-                                                                        follower)
-                    user_profile['follower'] = {}
-                    user_profile['follower']['id'] = {}
-                    user_profile['follower']['name'] = {}
-                    user_profile['follower']['following'] = {}
-                    user_profile['follower']['profile_picture'] = {}
-                    user_profile['follower']['home_community'] = {}
-                    user_profile['follower']['id']['S'] = follower
-                    user_profile['follower']['name']['S'] = user_name
-                    user_profile['follower']['following']['BOOL'] = following_follower
-                    user_profile['follower']['profile_picture']['S'] = profile_picture
-                    user_profile['follower']['home_community']['S'] = home
-                    followers.append(user_profile['follower'])
+                if user_profile['Item'].get('following') != None:
+                    for following in user_profile['Item']['following']['SS']:
+                        user_name, profile_picture, home = get_user_details(following)
+                        following_following = check_if_user_following_user(user_email,
+                                                                            following)
+                        user_profile['followings'] = {}
+                        user_profile['followings']['id'] = {}
+                        user_profile['followings']['name'] = {}
+                        user_profile['followings']['following'] = {}
+                        user_profile['followings']['profile_picture'] = {}
+                        user_profile['followings']['home_community'] = {}
+                        user_profile['followings']['id']['S'] = following
+                        user_profile['followings']['name']['S'] = user_name
+                        user_profile['followings']['following']['BOOL'] = following_following
+                        user_profile['followings']['profile_picture']['S'] = profile_picture
+                        user_profile['followings']['home_community']['S'] = home
+                        followings.append(user_profile['followings'])
+
+                if user_profile['Item'].get('followers') != None:
+                    for follower in user_profile['Item']['followers']['SS']:
+                        user_name, profile_picture, home = get_user_details(follower)
+                        following_follower = check_if_user_following_user(user_email, 
+                                                                            follower)
+                        user_profile['follower'] = {}
+                        user_profile['follower']['id'] = {}
+                        user_profile['follower']['name'] = {}
+                        user_profile['follower']['following'] = {}
+                        user_profile['follower']['profile_picture'] = {}
+                        user_profile['follower']['home_community'] = {}
+                        user_profile['follower']['id']['S'] = follower
+                        user_profile['follower']['name']['S'] = user_name
+                        user_profile['follower']['following']['BOOL'] = following_follower
+                        user_profile['follower']['profile_picture']['S'] = profile_picture
+                        user_profile['follower']['home_community']['S'] = home
+                        followers.append(user_profile['follower'])
 
                 badges = []
 
