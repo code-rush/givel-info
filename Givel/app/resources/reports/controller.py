@@ -32,7 +32,8 @@ class ReportFeeds(Resource):
         response = {}
         data = request.get_json(force=True)
 
-        if str(feed) != 'posts' and str(feed) != 'challenges':
+        if str(feed) != 'posts' and str(feed) != 'challenges' \
+          and str(feed) != 'organizations':
             raise BadRequest('Feed can either be posts or challenges')
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('Provide ID and Key of the feed to report')
@@ -53,7 +54,7 @@ class ReportFeeds(Resource):
                                           'reported_by': {'S': user_email},
                                           'creation_time': {'S': date_time},
                                           'times': {'N': '1'},
-                                          'feed': {'S': str(feed)}
+                                          'feed_type': {'S': str(feed)}
                                     }
                                 )
                 else:
