@@ -145,37 +145,90 @@
 - **create post**
   - Path: /api/v1/users/posts/{user_email}
   - Method: **POST**
-  - Content-Type: multipart/form-data
+  - Content-Type: application/json
   - Required Data: 
       - content= (some text)
       - file_count= 0 (default value should be 0. while sending file value is 
                        number of files. Max value is 1.)
   - Optional Data: 
-      - file = (send file only if file_count is not 0)
       - location = (send location as 'city, state' only if location services 
                     services are on)
-  - Allowed files: 
-      - IMAGE(.jpg, .png, .jpeg)
-      - VIDEOS(.mp4, .mpeg)
-  - Returns:  *201 OK* Status Code and message if post created successfully.
-              *400 BAD REQUEST* and message if failed to create post.
+      - tags = (Array of dictionaries). Send *user_id*, *origin* and *length* 
+                for each user who is being tagged on the post.
+                - *user_id*: user's id
+                - *origin*: origin of the person being tagged
+                - *length*: length of their tag. (Could be either 
+                            full or first name)
+  - Returns:  - If *file_count* is not **0** then, the response will contain feed's *id* 
+                 and *key*. Use this feed *id* and *key* to send the file in 
+                 **add files to the post** api.
+              - *201 OK* Status Code and message if post created successfully.
+              - *400 BAD REQUEST* and message if failed to create post.
   - Description: Creates post. To create a post content is required. If the post does not
                  contain any data, it will raise a BadRequest Exception.
-                 Provide location only when the user have their location services on
+                 Provide *location* only when the user have their location services on
                  for the application. The location should be a string in the following 
                  syntax: "City, State".
   - IMPORTANT: Handle that the users should not be able to create empty post on the client side.
+
+  - **NOTE:** - To remove file(s) and edit post contents, use **edit post** api.
+              - To add file(s) to the feed, use **add files to the post** api.
+                - Even when a user edits the post by just adding a file, only use the 
+                  **add files to the post** to send the file to the server and add to the post.
+                - While creating a post if the user sends in both *content* and *file*, 
+                  create a post first with the **create post** api and in the response of 
+                  that api, it has that feed's *id* and *key*, Use this to add file to that 
+                  feed with **add files to the post** api. 
+
+- **add files to the post**
+  - Path: /api/v1/users/posts/files/{user_email}
+  - Method: **PUT**
+  - Content-Type: multipart/form-data
+  - Required Data: id, key, file_count, file
+                - file_count= 0 (default value should be 0. while sending file value is 
+                       number of files. Max value is 1.)
+                - file = (send file only if file_count is not 0)
+  - Allowed files: 
+      - IMAGE(.jpg, .png, .jpeg)
+      - VIDEOS(.mp4, .mpeg)
+  - Returns: *200 OK* Status Code with a successful message if the file added successfully.
+  - Description: Adds files to the post. Use this api only to add file to the post.
 
 - **edit post**
   - Path: /api/v1/users/posts/{user_email}
   - Method: **PUT**
   - Content-Type: application/json
-  - Data: content, id, key
+  - Data: content, id, key, tags, file
+         - content: (text)
+         - id: feed_id (text)
+         - key: feed_key (text)
+         - tags: (Array of dictionaries). Send *user_id*, *origin* and *length* 
+                for each user who is being tagged on the post.
+                - *user_id*: user's id
+                - *origin*: origin of the person being tagged
+                - *length*: length of their tag. (Could be either 
+                            full or first name)
+         - file: (the only possible value is 'remove' to remove a file from post) (text)
   - Return: *200 OK* Status Code and message if post edited successfully.
   - Description: Edits post content. Once post is created, only the content is allowed 
                  to be edited. {user_email} is the email id for the one editing the post.
                  Only the creator of the post can edit the post. If someone else trys to
                  edit the post, it raises a BadRequest Exception.
+  - **NOTE:** - There are two ways a user can edit tags:
+                1) Add new tags.
+                2) Remove exisisting tags.
+
+              - Regardless of however they edit the tags, always send in the final tags 
+                after the edit.
+                **For example:** If *Bob* and *Cat* were two people tagged in a post 
+                earlier and if the *Cat* was removed, even then send *Bob* in tags again.
+                And if only *Bob* was tagged in a post and *Cat* was added while editing,
+                send *Bob* again alongwith *Cat* in the tags with the tagging parameters
+                (*user_id*, *origin* and *length*)
+              - While editing the post, even if the tags are not edited, the location 
+                of the tags will change and so the client needs to send tags everytime the 
+                post is edited.
+
 
 - **get user's posts**
   - Path: /api/v1/users/posts/{user_email}
@@ -384,7 +437,7 @@
 - **edit comment*
   - Path: /api/v1/feeds/comments/{user_email}
   - Method: **PUT**
-  - Required Data: id, key, comment
+  - Required Data: id, key, comment, tags
   - Content-Type: application/json
   - Returns: *200 OK* Status code with a message if comment succesfully edited
   - Description: Edits users comments if they are the creator of the comment.
@@ -393,6 +446,21 @@
                  the request else a BadRequest Exception is raised.
                  If an empty *comment* is sent in the request, it raises BadRequest 
                  Exception.
+  - **NOTE:** - There are two ways a user can edit tags:
+                1) Add new tags.
+                2) Remove exisisting tags.
+
+              - Regardless of however they edit the tags, always send in the final tags 
+                after the edit.
+                **For example:** If *Bob* and *Cat* were two people tagged in a post 
+                earlier and if the *Cat* was removed, even then send *Bob* in tags again.
+                And if only *Bob* was tagged in a post and *Cat* was added while editing,
+                send *Bob* again alongwith *Cat* in the tags with the tagging parameters
+                (*user_id*, *origin* and *length*)
+              - While editing the comment, even if the tags are not edited, the location 
+                of the tags will change and so the client needs to send tags everytime the 
+                comment is edited.
+
 
 - **delete comment**
   - Path: /api/v1/feeds/comments/{user_email}
