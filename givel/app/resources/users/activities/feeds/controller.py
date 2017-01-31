@@ -429,9 +429,9 @@ class FeedComments(Resource):
                                   'tags': {'L': tags}
                             }
                         )
-                for i in range(0, len(data['tags'])):
+                for i in tags:
                     tag_notification = db.put_item(TableName='notifications',
-                            Item={'notify_to': {'S': data['tags'][i]['user_id']},
+                            Item={'notify_to': {'S': i['M']['user_id']['S']},
                                   'creation_time': {'S': date_time},
                                   'email': {'S': user_email},
                                   'from': {'S': 'feed'},
@@ -508,6 +508,63 @@ class FeedComments(Resource):
                             },
                             ExpressionAttributeValues={
                                 ':com': {'S': data['comment']}
+                            }
+                        )
+            if data.get('tags') != None:
+                response = db.get_item(TableName='comments', 
+                        Key={'email': {'S': data['id']},
+                             'creation_time': {'S': data['key']}
+                        }
+                    )
+                tags = []
+                for t in data['tags']:
+                    tag_entry = {}
+                    tag_entry['M'] = {}
+                    tag_entry['M']['user_id'] = {}
+                    tag_entry['M']['user_id']['S'] = t['user_id']
+                    tag_entry['M']['origin'] = {}
+                    tag_entry['M']['origin']['N'] = str(t['origin'])
+                    tag_entry['M']['length'] = {}
+                    tag_entry['M']['length']['N'] = str(t['length'])
+                    tags.append(tag_entry)
+
+                edit_comment = db.update_item(TableName='comments',
+                            Key={'email': {'S': data['id']},
+                                 'creation_time': {'S': data['key']}
+                            },
+                            UpdateExpression='SET tags = :t',
+                            ExpressionAttributeValues={
+                                ':t': {'L': tags}
+                            }
+                        )
+                for i in tags:
+                    if response['Item'].get('tags') == None:
+                        tag_notification = db.put_item(TableName='notifications',
+                            Item={'notify_to': {'S': i['M']['user_id']['S']},
+                                  'creation_time': {'S': date_time},
+                                  'email': {'S': user_email},
+                                  'from': {'S': 'feed'},
+                                  'feed_id': {'S': feed_id},
+                                  'checked': {'BOOL': False},
+                                  'notify_for': {'S': 'tagging'},
+                                  'tagged_where': {'S': 'comment'},
+                                  'comment_id': 
+                                      {'S': data['id'] + '_' + data['key']} 
+                            }
+                        )
+                    elif response['Item'].get('tags') != None \
+                      and i not in response['Item']['tags']['L']:
+                        tag_notification = db.put_item(TableName='notifications',
+                            Item={'notify_to': {'S': i['M']['user_id']['S']},
+                                  'creation_time': {'S': date_time},
+                                  'email': {'S': user_email},
+                                  'from': {'S': 'feed'},
+                                  'feed_id': {'S': feed_id},
+                                  'checked': {'BOOL': False},
+                                  'notify_for': {'S': 'tagging'},
+                                  'tagged_where': {'S': 'comment'},
+                                  'comment_id': 
+                                      {'S': data['id'] + '_' + data['key']} 
                             }
                         )
             response['message'] = 'Comment edited!'

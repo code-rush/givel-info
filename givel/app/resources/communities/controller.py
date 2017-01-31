@@ -167,6 +167,12 @@ class CommunityPosts(Resource):
                             post['user']['following'] = {}
                             post['user']['following']['BOOL'] = following
 
+                        if post.get('tags') != None:
+                            tags = []
+                            for t in post['tags']['L']:
+                                tags.append(t['M'])
+                            post['tags']['L'] = tags
+
                         del post['email']
                         del post['value']
 
