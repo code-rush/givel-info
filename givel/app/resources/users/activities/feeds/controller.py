@@ -498,6 +498,8 @@ class FeedComments(Resource):
         if data['id'] != str(user_email):
             raise BadRequest('Only the creator can edit the comment')
         else:
+            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+
             edit_comment = db.update_item(TableName='comments',
                             Key={'email': {'S': data['id']},
                                  'creation_time': {'S': data['key']}
@@ -511,7 +513,7 @@ class FeedComments(Resource):
                             }
                         )
             if data.get('tags') != None:
-                response = db.get_item(TableName='comments', 
+                comment = db.get_item(TableName='comments', 
                         Key={'email': {'S': data['id']},
                              'creation_time': {'S': data['key']}
                         }
@@ -538,7 +540,7 @@ class FeedComments(Resource):
                             }
                         )
                 for i in tags:
-                    if response['Item'].get('tags') == None:
+                    if comment['Item'].get('tags') == None:
                         tag_notification = db.put_item(TableName='notifications',
                             Item={'notify_to': {'S': i['M']['user_id']['S']},
                                   'creation_time': {'S': date_time},
@@ -552,8 +554,8 @@ class FeedComments(Resource):
                                       {'S': data['id'] + '_' + data['key']} 
                             }
                         )
-                    elif response['Item'].get('tags') != None \
-                      and i not in response['Item']['tags']['L']:
+                    elif comment['Item'].get('tags') != None \
+                      and i not in comment['Item']['tags']['L']:
                         tag_notification = db.put_item(TableName='notifications',
                             Item={'notify_to': {'S': i['M']['user_id']['S']},
                                   'creation_time': {'S': date_time},

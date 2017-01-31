@@ -206,7 +206,7 @@ class UsersPost(Resource):
                                 )
 
                 if post_data.get('tags') != None:
-                    response = db.get_item(TableName='posts', 
+                    resp = db.get_item(TableName='posts', 
                             Key={'email': {'S': post_data['id']},
                                  'creation_time': {'S': post_data['key']}
                             }
@@ -233,7 +233,7 @@ class UsersPost(Resource):
                                 }
                             )
                     for i in tags:
-                        if response['Item'].get('tags') == None:
+                        if resp['Item'].get('tags') == None:
                             tag_notification = db.put_item(
                                     TableName='notifications',
                                     Item={'notify_to': 
@@ -247,8 +247,8 @@ class UsersPost(Resource):
                                           'tagged_where': {'S': 'post'}
                                     }
                                 )
-                        elif response['Item'].get('tags') != None \
-                          and i not in response['Item']['tags']['L']:
+                        elif resp['Item'].get('tags') != None \
+                          and i not in resp['Item']['tags']['L']:
                             tag_notification = db.put_item(
                                     TableName='notifications',
                                     Item={'notify_to': 
