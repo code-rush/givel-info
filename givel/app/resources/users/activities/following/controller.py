@@ -269,11 +269,11 @@ class UserFollowingPostsFeeds(Resource):
                             post['user']['following'] = {}
                             post['user']['following']['BOOL'] = following
 
-                        if posts.get('tags') != None:
+                        if post.get('tags') != None:
                             tags = []
-                            for t in posts['tags']['L']:
+                            for t in post['tags']['L']:
                                 tags.append(t['M'])
-                            posts['tags']['L'] = tags
+                            post['tags']['L'] = tags
 
                         del post['email']
                         del post['value']
