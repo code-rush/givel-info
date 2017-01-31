@@ -54,16 +54,17 @@ class UsersPost(Resource):
     def post(self, user_email):
         """Creates Post"""
         response = {}
-        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
-        file_id_ex = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+        data = request.get_json(force=True)
 
-        if request.form.get('content') == None:
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+
+        if data.get('content') == None:
             raise BadRequest('Post cannot be empty. Please provide '\
                                             + 'content of the post.')
-        if request.form.get('file_count') == None:
+        if data.get('file_count') == None:
             raise BadRequest('Please provide file_count. If no files are ' \
                                               + 'sent, set file_count to 0')
-        if int(request.form['file_count']) != 0 and int(request.form['file_count']) > 1:
+        if int(data['file_count']) != 0 and int(data['file_count']) > 1:
             raise BadRequest('Only one file is allowed!')
         else:
             user = db.get_item(TableName='users',
@@ -81,7 +82,8 @@ class UsersPost(Resource):
                                          {'BOOL': user['Item']['post_only_to_followers']['BOOL']}
                                 }
                             )
-                if 'location' in request.form:
+                
+                if data.get('location') != None:
                     post = db.update_item(TableName='posts',
                                   Key={'email':{'S': user_email},
                                        'creation_time': {'S': date_time}
@@ -91,7 +93,7 @@ class UsersPost(Resource):
                                       '#loc': 'location'
                                   },
                                   ExpressionAttributeValues={
-                                      ':l': {'S': request.form['location']}
+                                      ':l': {'S': data['location']}
                                   }
                               )
                 else:
@@ -112,29 +114,46 @@ class UsersPost(Resource):
                                       ':l': {'S': home_community}
                                   }
                               )
-                if 'content' in request.form:
+                
+                if data.get('content') != None:
                     post = db.update_item(TableName='posts',
                                   Key={'email': {'S': user_email},
                                        'creation_time': {'S': date_time}
                                   },
                                   UpdateExpression='SET content = :d',
                                   ExpressionAttributeValues={
-                                      ':d': {'S': request.form['content']}
+                                      ':d': {'S': data['content']}
                                   }
                               )
-                if 'tags' in request.form:
+
+                if data.get('tags') != None:
+                    tags = []
+                    for t in data['tags']:
+                        tag_entry = {}
+                        tag_entry['M'] = {}
+                        tag_entry['M']['user_id'] = {}
+                        tag_entry['M']['user_id']['S'] = t['user_id']
+                        tag_entry['M']['origin'] = {}
+                        tag_entry['M']['origin']['N'] = str(t['origin'])
+                        tag_entry['M']['length'] = {}
+                        tag_entry['M']['length']['N'] = str(t['length'])
+                        tags.append(tag_entry)
+
                     post = db.update_item(TableName='posts',
                                 Key={'email': {'S': user_email},
                                      'creation_time': {'S': date_time}
                                 },
-                                UpdateExpression='ADD tagged :t',
+                                UpdateExpression='SET tags = :t',
                                 ExpressionAttributeValues={
-                                    ':t': {'SS': request.form['tags']}
+                                    ':t': {'L': tags}
                                 }
                             )
-                    for i in range(0, len(request.form['tags'])):
+
+                    feed_id = str(user_email) + '_' + date_time
+
+                    for i in tags:
                         tag_notification = db.put_item(TableName='notifications',
-                                Item={'notify_to': {'S': request.form['tags'][i]['user_id']},
+                                Item={'notify_to': {'S': i['M']['user_id']['S']},
                                       'creation_time': {'S': date_time},
                                       'email': {'S': user_email},
                                       'from': {'S': 'feed'},
@@ -144,30 +163,13 @@ class UsersPost(Resource):
                                       'tagged_where': {'S': 'post'}
                                 }
                             )
-                if 'file_count' in request.form and int(request.form['file_count']) == 1:
-                    f = request.files['file']
-                    media_file, file_type = upload_post_file(f, BUCKET_NAME,
-                                     user_email+file_id_ex, ALLOWED_EXTENSIONS)
-                    if file_type == 'picture_file':
-                        post = db.update_item(TableName='posts',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='ADD pictures :p',
-                                      ExpressionAttributeValues={
-                                          ':p': {'SS': [media_file]}
-                                      }
-                                  )
-                    elif file_type == 'video_file':
-                        post = db.update_item(TableName='posts',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': date_time}
-                                      },
-                                      UpdateExpression='ADD videos :v',
-                                      ExpressionAttributeValues={
-                                          ':v': {'SS': [media_file]}
-                                      }
-                                  )
+                if int(data['file_count']) > 0:
+                    response['feed'] = {}
+                    response['feed']['id'] = {}
+                    response['feed']['key'] = {}
+                    response['feed']['id']['S'] = user_email
+                    response['feed']['key']['S'] = date_time
+
                 response['message'] = 'Success! Post Created!'
             except:
                 post = db.delete_item(TableName='posts',
@@ -182,13 +184,17 @@ class UsersPost(Resource):
     def put(self, user_email):
         """Edit Post"""
         response = {}
+
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+
         post_data = request.get_json(force=True)
         if post_data.get('id') == None or post_data.get('key') == None:
             raise BadRequest('Post ID and KEY is required to edit a post')
         if post_data['id'] != str(user_email):
             raise BadRequest('Posts can only be edited by the creators!')
-        if post_data.get('content') != None:
-            try:
+        try:
+            feed_id = post_data['id'] + '_' + post_data['key']
+            if post_data.get('content') != None:
                 post = db.update_item(TableName='posts',
                                     Key={'email': {'S': post_data['id']},
                                          'creation_time': {'S': post_data['key']}
@@ -198,11 +204,92 @@ class UsersPost(Resource):
                                         ':c': {'S': post_data['content']}
                                     }
                                 )
-                response['message'] = 'Successfully edited!'
-            except:
-                raise BadRequest('Failed to edit post!')
-        else:
-            raise BadRequest('Only post content is allowed to edit!')
+
+                if post_data.get('tags') != None:
+                    response = db.get_item(TableName='posts', 
+                            Key={'email': {'S': post_data['id']},
+                                 'creation_time': {'S': post_data['key']}
+                            }
+                        )
+                    tags = []
+                    for t in post_data['tags']:
+                        tag_entry = {}
+                        tag_entry['M'] = {}
+                        tag_entry['M']['user_id'] = {}
+                        tag_entry['M']['user_id']['S'] = t['user_id']
+                        tag_entry['M']['origin'] = {}
+                        tag_entry['M']['origin']['N'] = str(t['origin'])
+                        tag_entry['M']['length'] = {}
+                        tag_entry['M']['length']['N'] = str(t['length'])
+                        tags.append(tag_entry)
+
+                    post = db.update_item(TableName='posts',
+                                Key={'email': {'S': user_email},
+                                     'creation_time': {'S': post_data['key']}
+                                },
+                                UpdateExpression='SET tags = :t',
+                                ExpressionAttributeValues={
+                                    ':t': {'L': tags}
+                                }
+                            )
+                    for i in tags:
+                        if response['Item'].get('tags') == None:
+                            tag_notification = db.put_item(
+                                    TableName='notifications',
+                                    Item={'notify_to': 
+                                              {'S': i['M']['user_id']['S']},
+                                          'creation_time': {'S': date_time},
+                                          'email': {'S': user_email},
+                                          'from': {'S': 'feed'},
+                                          'feed_id': {'S': feed_id},
+                                          'checked': {'BOOL': False},
+                                          'notify_for': {'S': 'tagging'},
+                                          'tagged_where': {'S': 'post'}
+                                    }
+                                )
+                        elif response['Item'].get('tags') != None \
+                          and i not in response['Item']['tags']['L']:
+                            tag_notification = db.put_item(
+                                    TableName='notifications',
+                                    Item={'notify_to': 
+                                              {'S': i['M']['user_id']['S']},
+                                          'creation_time': {'S': date_time},
+                                          'email': {'S': user_email},
+                                          'from': {'S': 'feed'},
+                                          'feed_id': {'S': feed_id},
+                                          'checked': {'BOOL': False},
+                                          'notify_for': {'S': 'tagging'},
+                                          'tagged_where': {'S': 'post'}
+                                    }
+                                )
+
+            if post_data.get('file') != None:
+                if post_data['file'] == 'remove':
+                    if post['Item'].get('pictures') != None:
+                        for picture in post['Item']['pictures']['SS']:
+                            key = picture.rsplit('/', 1)[1]
+                            s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+
+                        post = db.update_item(TableName='posts',
+                                Key={'email': {'S': post_data['id']},
+                                     'creation_time': {'S': post_data['key']}
+                                },
+                                UpdateExpression='REMOVE pictures'
+                            )
+                    if post['Item'].get('videos') != None:
+                        for video in post['Item']['videos']['SS']:
+                            key = video.rsplit('/', 1)[1]
+                            s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+
+                        post = db.update_item(TableName='posts',
+                                Key={'email': {'S': post_data['id']},
+                                     'creation_time': {'S': post_data['key']}
+                                },
+                                UpdateExpression='REMOVE videos'
+                            )
+            response['message'] = 'Successfully edited!'
+        except:
+            raise BadRequest('edit post request failed! Try again later.')
         return response, 200
 
 
@@ -253,6 +340,13 @@ class UsersPost(Resource):
                     posts['commented']['BOOL'] = commented
                     posts['added_to_fav'] = {}
                     posts['added_to_fav']['BOOL'] = added_to_fav
+
+                    if posts.get('tags') != None:
+                        tags = []
+                        for t in posts['tags']['L']:
+                            tags.append(t['M'])
+                        posts['tags']['L'] = tags
+
                     del posts['email']
                     del posts['value']
             response['message'] = 'Successfully fetched users all posts!'
@@ -291,6 +385,60 @@ class UsersPost(Resource):
                                     )
             response['message'] = 'Post deleted!'
             return response, 200
+
+
+class FileActivityOnPost(Resource):
+    def put(self, user_email):
+        response = {}
+
+        file_id_ex = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+
+        if request.form.get('id') == None or request.form.get('key') == None:
+            raise BadRequest('Please provide feed id and key!')
+        if request.form.get('file_count') == None:
+            raise BadRequest('Please provide file_count. If no files are ' \
+                                              + 'sent, set file_count to 0')
+        if int(request.form['file_count']) != 0 and int(request.form['file_count']) > 1:
+            raise BadRequest('Only one file is allowed!')
+        elif request.form['id'] != user_email:
+            raise BadRequest('Only the creator of the post is allowed to edit the post.')
+        else:
+            old_post = db.get_item(TableName='posts', 
+                        Key={'email': {'S': request.form['id']},
+                             'creation_time': {'S': request.form['key']}
+                        }
+                    )
+            try:
+                if 'file_count' in request.form and int(request.form['file_count']) == 1:
+                    f = request.files['file']
+                    media_file, file_type = upload_post_file(f, BUCKET_NAME,
+                                     user_email+file_id_ex, ALLOWED_EXTENSIONS)
+                    if file_type == 'picture_file':
+                        post = db.update_item(TableName='posts',
+                                      Key={'email': {'S': user_email},
+                                           'creation_time': {'S': request.form['key']}
+                                      },
+                                      UpdateExpression='ADD pictures :p',
+                                      ExpressionAttributeValues={
+                                          ':p': {'SS': [media_file]}
+                                      }
+                                  )
+                    elif file_type == 'video_file':
+                        post = db.update_item(TableName='posts',
+                                      Key={'email': {'S': user_email},
+                                           'creation_time': {'S': request.form['key']}
+                                      },
+                                      UpdateExpression='ADD videos :v',
+                                      ExpressionAttributeValues={
+                                          ':v': {'SS': [media_file]}
+                                      }
+                                  )
+                response['message'] = 'Successfully added picture to post!'
+            except:
+                raise BadRequest('Request failed! Try again later.')
+
+            return response,200
+                
 
 
 class UserRepostFeed(Resource):
@@ -515,4 +663,5 @@ class UsersFavoritePosts(Resource):
 api.add_resource(UsersPost, '/<user_email>')
 api.add_resource(UserRepostFeed, '/repost/<user_email>')
 api.add_resource(UsersFavoritePosts, '/favorites/<user_email>')
+api.add_resource(FileActivityOnPost, '/files/<user_email>')
 
