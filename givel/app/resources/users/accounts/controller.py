@@ -684,5 +684,4 @@ api.add_resource(PostOnlyToFollowers, '/settings/post_only_to_followers/<user_em
 api.add_resource(GiveStarsToFollowings, '/stars/share/<user_email>')
 api.add_resource(ForgotPassword, '/settings/forgot_password')
 profile_api.add_resource(GetUsersProfile, '/users/<user_email>')
-profile_api.add_resource(GetUsersProfileFeed, '/users/feeds/<user_email>')
 
