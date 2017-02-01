@@ -2,3 +2,4 @@ flask
 flask-restful
 boto3
 Flask-Mail
+flask-login
