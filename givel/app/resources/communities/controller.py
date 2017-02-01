@@ -4,6 +4,7 @@ from app.app import app
 
 from flask import Blueprint, request, json
 from flask_restful import Resource, Api
+from flask_login import login_required
 
 from app.models import create_community_table
 
