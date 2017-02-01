@@ -835,8 +835,8 @@
   - Required Data: user_id
   - Returns: List of followings and followers and badges if the request is successful.
   - Description: Gets user's profile page with results consisting of the user's followers,
-                 following and badges. {user_email} is the email of the user who is logged 
-                 in to the application.
+                 following and badges and activity(posts and challenges). {user_email} is 
+                 the email of the user who is logged in to the application.
                  The *following* Key has a boolean value for the user_email following the 
                  user_id and the *following* Key in the following and followers list has a 
                  boolean value for the user_email following the user in the list.
