@@ -841,15 +841,6 @@
                  user_id and the *following* Key in the following and followers list has a 
                  boolean value for the user_email following the user in the list.
 
-- **get user's posts and challenges on profile**
-  - Path: /api/v1/profile/users/feeds/{user_email}
-  - Method: **POST**
-  - Content-Type: application/json
-  - Required Data: user_id
-  - Returns: List of posts and challenges if request successful
-  - Description: Gets user's posts and challenges on the profile page.
-
-
 
 ### FAQ apis
 
