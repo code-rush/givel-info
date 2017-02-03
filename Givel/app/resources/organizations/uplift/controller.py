@@ -8,10 +8,10 @@ from flask_restful import Api, Resource
 
 from werkzeug.exceptions import BadRequest
 
-from app.helper import STATES, mid_west_states, southeast_states, northeast_states
-from app.helper import pacific_states, southwest_states, rocky_mountain_states
-from app.helper import check_if_user_following_user
-from app.helper import check_if_post_added_to_favorites
+from app.helper import (STATES, mid_west_states, southeast_states, 
+                        northeast_states, pacific_states, southwest_states,
+                        rocky_mountain_states, check_if_user_following_user,
+                        check_if_post_added_to_favorites)
 
 organizations_uplift_api_routes = Blueprint('uplift_api_routes', __name__)
 api = Api(organizations_uplift_api_routes)

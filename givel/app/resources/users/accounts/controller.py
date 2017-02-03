@@ -4,24 +4,23 @@ import string
 import random
 
 from app.app import app, mail
-from app.plugin import login_manager
+# from app.plugin import login_manager
 
 from flask import Blueprint, request
 from flask_restful import Resource, Api
 from flask_mail import Message
-from flask_login import login_required, UserMixin, login_user
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import NotFound, BadRequest, RequestTimeout
 
 from app.models import create_users_table, create_notifications_table
 
-from app.helper import upload_file, check_if_community_exists
-from app.helper import update_member_counts, check_if_user_exists
-from app.helper import check_if_user_following_user, get_user_details
-from app.helper import check_if_user_liked, check_if_user_starred
-from app.helper import check_if_user_starred, check_if_taking_off
-from app.helper import check_challenge_state, check_if_user_commented
+from app.helper import (upload_file, check_if_community_exists,
+                        update_member_counts, check_if_user_exists,
+                        check_if_user_following_user, get_user_details,
+                        check_if_user_liked, check_if_user_starred,
+                        check_if_user_starred, check_if_taking_off,
+                        check_challenge_state, check_if_user_commented)
 
 
 user_account_api_routes = Blueprint('account_api', __name__)
@@ -49,20 +48,6 @@ try:
         print('Users Table created!')
 except:
     pass
-
-
-class User(UserMixin):
-    def __init__(self, id):
-        self.id = id
-
-    @staticmethod
-    def get(user_id):
-        return User(user_id)
-
-
-@login_manager.user_loader
-def _login_manager_load_user(user_id):
-    return User.get(user_id)
 
 
 class UserAccount(Resource):
@@ -138,7 +123,6 @@ class UserLogin(Resource):
         try:
             if user and check_password_hash(user['Item']['password']['S'],
                                         user_data['password']):
-                login_user(User(user_data['email']))
                 user_authenticated = True
                 response['message'] = 'User successfully Logged In!'
                 response['result'] = user['Item']
@@ -157,7 +141,6 @@ class UserLogin(Resource):
 
 
 class UserProfilePicture(Resource):
-    decorators = [login_required]
     def get(self, user_email):
         """Returns Users Profile Picture"""
         response = {}
@@ -518,7 +501,6 @@ class ForgotPassword(Resource):
 
 
 class GetUsersProfile(Resource):
-    decorators = [login_required]
     def post(self, user_email):
         """Returns user's profile"""
         response = {}

@@ -7,12 +7,13 @@ from flask_restful import Resource, Api
 
 from app.models import create_notifications_table
 
-from app.helper import check_if_user_exists, get_user_details
-from app.helper import check_if_user_liked, check_if_user_starred
-from app.helper import check_if_user_commented, check_if_taking_off
-from app.helper import check_if_post_added_to_favorites
-from app.helper import get_challenge_accepted_users, check_if_challenge_accepted
-from app.helper import check_if_user_following_user
+from app.helper import (check_if_user_exists, get_user_details,
+                        check_if_user_liked, check_if_user_starred,
+                        check_if_user_commented, check_if_taking_off,
+                        check_if_post_added_to_favorites,
+                        get_challenge_accepted_users, 
+                        check_if_challenge_accepted,
+                        check_if_user_following_user)
 
 from werkzeug.exceptions import BadRequest
 

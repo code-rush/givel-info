@@ -6,12 +6,12 @@ from app.app import app
 from flask import Blueprint, request
 from flask_restful import Api, Resource
 
-from app.helper import check_if_taking_off, check_if_user_liked
-from app.helper import check_if_user_starred, check_if_user_commented
-from app.helper import get_user_details, check_challenge_state
-from app.helper import check_if_user_exists, check_if_post_added_to_favorites
-from app.helper import check_if_challenge_accepted, get_challenge_accepted_users
-from app.helper import check_if_user_following_user
+from app.helper import (check_if_taking_off, check_if_user_liked,
+                    check_if_user_starred, check_if_user_commented,
+                    get_user_details, check_challenge_state,
+                    check_if_user_exists, check_if_post_added_to_favorites,
+                    check_if_challenge_accepted, get_challenge_accepted_users,
+                    check_if_user_following_user)
 
 from werkzeug.exceptions import BadRequest
 

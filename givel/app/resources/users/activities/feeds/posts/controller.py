@@ -6,14 +6,14 @@ from app.app import app
 from flask import Blueprint, request
 from flask_restful import Api, Resource
 
-from app.models import create_posts_table
-from app.models import create_favorite_posts_table
+from app.models import (create_posts_table,
+                        create_favorite_posts_table)
 
-from app.helper import upload_post_file, check_if_user_exists
-from app.helper import check_if_user_liked, check_if_taking_off
-from app.helper import check_if_user_starred, check_if_user_commented
-from app.helper import get_user_details, check_if_post_added_to_favorites
-from app.helper import check_if_user_following_user
+from app.helper import (upload_post_file, check_if_user_exists,
+                        check_if_user_liked, check_if_taking_off,
+                        check_if_user_starred, check_if_user_commented,
+                        get_user_details, check_if_post_added_to_favorites,
+                        check_if_user_following_user)
 
 
 from werkzeug.exceptions import BadRequest

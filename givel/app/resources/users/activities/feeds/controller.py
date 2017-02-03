@@ -5,17 +5,14 @@ from app.app import app
 from flask import Blueprint, request
 from flask_restful import Api, Resource
 
-from app.models import create_likes_table
-from app.models import create_stars_activity_table
-from app.models import create_comments_table
-from app.models import create_shared_feeds_table
+from app.models import (create_likes_table, create_stars_activity_table,
+                        create_comments_table, create_shared_feeds_table)
 
-from app.helper import update_likes, update_value, update_stars_count
-from app.helper import get_user_details, STATES, update_comments
-
-from app.helper import mid_west_states, southeast_states, northeast_states
-from app.helper import pacific_states, southwest_states, rocky_mountain_states
-from app.helper import check_if_user_following_user
+from app.helper import (update_likes, update_value, update_stars_count,
+                        get_user_details, STATES, update_comments,
+                        mid_west_states, southeast_states, northeast_states,
+                        pacific_states, southwest_states, 
+                        rocky_mountain_states, check_if_user_following_user)
 
 from werkzeug.exceptions import BadRequest
 

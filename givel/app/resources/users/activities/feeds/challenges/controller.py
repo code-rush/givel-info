@@ -7,12 +7,13 @@ from flask import Blueprint, request
 from flask_restful import Api, Resource
 
 from app.models import create_challenges_table
-from app.helper import upload_post_file, check_challenge_state
-from app.helper import check_if_user_commented
-from app.helper import check_if_user_liked
-from app.helper import check_if_user_starred
-from app.helper import get_user_details, get_challenge_accepted_users
-from app.helper import check_if_taking_off, check_if_challenge_accepted
+
+from app.helper import (upload_post_file, check_challenge_state,
+                        check_if_user_commented,
+                        check_if_user_liked,
+                        check_if_user_starred,
+                        get_user_details, get_challenge_accepted_users,
+                        check_if_taking_off, check_if_challenge_accepted)
 
 from werkzeug.exceptions import BadRequest
 
