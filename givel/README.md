@@ -632,12 +632,10 @@
   - Description: Allows the admin to login into the organizations account.
 
 - **uplift feed**
-  - Path: /api/v1/organizations/uplift/{organization_type}/{user_email}
+  - Path: /api/v1/organizations/uplift/{user_email}
   - Method: **GET**
   - Returns: List of all the organization in the category
   - Description: Gets organizations of type 'social_good' and/or 'non-profit'.
-                 {organization_type} in the url can be either 'social_good' or 
-                 'non-profit'. 
 
 - **give stars to organization on uplift**
   - Path: /api/v1/organizations/uplift/stars/share/{user_email}

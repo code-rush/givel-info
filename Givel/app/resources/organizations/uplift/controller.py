@@ -21,77 +21,59 @@ db = boto3.client('dynamodb')
 
 
 class OrganizationsUplift(Resource):
-    def get(self, o_type, user_email):
+    def get(self, user_email):
         response = {}
 
-        if str(o_type) != 'social_good' and str(o_type) != 'non-profit':
-            raise BadRequest('Organizations type can be either social_good or non-profit.')
+        organizations = db.scan(TableName='organizations')
+
+        orgs = []
+
+        if organizations.get('Items') == []:
+            response['message'] = 'No organizations exists currently'
         else:
-            otype = None
-            if str(o_type) == 'social_good':
-                otype = 'b-corp'
-            else:
-                otype = 'non-profit'
-            organizations = db.query(TableName='organizations',
-                                  IndexName='organizations-type-name',
-                                  KeyConditionExpression='#t = :t',
-                                  ExpressionAttributeNames={
-                                      '#t': 'type'
-                                  },
-                                  ExpressionAttributeValues={
-                                      ':t': {'S': otype}
-                                  }
-                              )
+            for organization in organizations['Items']:
+                following = check_if_user_following_user(user_email, 
+                                            organization['name']['S'])
+                feed_id = 'organization_' + organization['name']['S']
+                added_to_fav = check_if_post_added_to_favorites(feed_id,
+                                                           user_email)
+                organization['feed'] = {}
+                organization['feed']['id'] = {}
+                organization['feed']['id']['S'] = 'organization'
+                organization['feed']['key'] = organization['name']
+                organization['following'] = {}
+                organization['following']['BOOL'] = following
+                organization['added_to_fav'] = {}
+                organization['added_to_fav']['BOOL'] = added_to_fav
+                organization['organization'] = {}
+                organization['organization']['id'] = organization['name']
+                organization['organization']['picture'] = organization['picture']
+                organization['organization']['description'] = organization['description']
+                del organization['description']
+                del organization['picture']
+                del organization['admin_email']
+                del organization['password']
+                del organization['type']
+                del organization['likes']
+                del organization['comments']
+                del organization['feed_stars']
+                del organization['mid_west_region_stars']
+                del organization['mid_west_region_feed_stars']
+                del organization['north_east_region_stars']
+                del organization['north_east_region_feed_stars']
+                del organization['pacific_region_stars']
+                del organization['pacific_region_feed_stars']
+                del organization['rocky_mountain_region_stars']
+                del organization['rocky_mountain_region_feed_stars']
+                del organization['south_east_region_stars']
+                del organization['south_east_region_feed_stars']
+                del organization['south_west_region_stars']
+                del organization['south_west_region_feed_stars']
+                orgs.append(organization)
+            response['message'] = 'Successfully fetched all organizations'
+            response['result'] = orgs
 
-
-            orgs = []
-
-            if organizations.get('Items') == []:
-                response['message'] = 'No organizations exists currently'
-            else:
-                for organization in organizations['Items']:
-                    following = check_if_user_following_user(user_email, 
-                                                organization['name']['S'])
-                    feed_id = 'organization_' + organization['name']['S']
-                    added_to_fav = check_if_post_added_to_favorites(feed_id,
-                                                               user_email)
-                    organization['feed'] = {}
-                    organization['feed']['id'] = {}
-                    organization['feed']['id']['S'] = 'organization'
-                    organization['feed']['key'] = organization['name']
-                    organization['following'] = {}
-                    organization['following']['BOOL'] = following
-                    organization['added_to_fav'] = {}
-                    organization['added_to_fav']['BOOL'] = added_to_fav
-                    organization['organization'] = {}
-                    organization['organization']['id'] = organization['name']
-                    organization['organization']['picture'] = organization['picture']
-                    organization['organization']['description'] = organization['description']
-                    del organization['description']
-                    del organization['picture']
-                    del organization['admin_email']
-                    del organization['password']
-                    del organization['type']
-                    del organization['likes']
-                    del organization['comments']
-                    del organization['feed_stars']
-                    del organization['mid_west_region_stars']
-                    del organization['mid_west_region_feed_stars']
-                    del organization['north_east_region_stars']
-                    del organization['north_east_region_feed_stars']
-                    del organization['pacific_region_stars']
-                    del organization['pacific_region_feed_stars']
-                    del organization['rocky_mountain_region_stars']
-                    del organization['rocky_mountain_region_feed_stars']
-                    del organization['south_east_region_stars']
-                    del organization['south_east_region_feed_stars']
-                    del organization['south_west_region_stars']
-                    del organization['south_west_region_feed_stars']
-                    orgs.append(organization)
-                response['message'] = 'Successfully fetched all organizations'
-                response['result'] = orgs
-
-            return response, 200
+        return response, 200
 
 
 class GiveStarsOnUplift(Resource):
@@ -171,6 +153,6 @@ class GiveStarsOnUplift(Resource):
 
 
 
-api.add_resource(OrganizationsUplift, '/<o_type>/<user_email>')
+api.add_resource(OrganizationsUplift, '/<user_email>')
 api.add_resource(GiveStarsOnUplift, '/stars/share/<user_email>')
 
