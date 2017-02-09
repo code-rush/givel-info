@@ -66,7 +66,10 @@ class SearchUsersOnGivel(Resource):
                             users['id']['S'] = item['email']
                             users['following'] = {}
                             users['following']['BOOL'] = following_user
-                            search_results.append(users)
+                            if following_user == True:
+                                search_results.insert(0, users)
+                            else:
+                                search_results.append(users)
                     response['results'] = search_results
         else:
             response['message'] = 'Please provide some input!'
