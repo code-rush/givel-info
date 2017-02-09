@@ -118,15 +118,23 @@ def type_of_file(filename):
 
 def check_if_community_exists(community):
     """Returns city, state and True if community exists"""
-    communities = db.scan(TableName='communities')
     comm = community.rsplit(' ', 1)
     state = comm[1]
     city = comm[0][:-1]
     exist = False
-    for i in communities['Items']:
-        if i['state']['S'] == STATES[state] and i['city']['S'] == city:
-            exist = True
-            return city, state, exist
+    response = db.query(TableName='communities', 
+                        KeyConditionExpression='#s = :s and city = :c',
+                        ExpressionAttributeNames={
+                            '#s': 'state' 
+                        },
+                        ExpressionAttributeValues={
+                            ':s': {'S': state},
+                            ':c': {'S': city}
+                        }
+                    )
+
+    if response.get('Items') != []:
+        exist = True
     return city, state, exist
 
 
@@ -134,7 +142,7 @@ def update_member_counts(city, state, operation):
     """Updates Member Counts"""
     if operation == 'add':
         update_count = db.update_item(TableName='communities',
-                                    Key={'state': {'S': STATES[state]},
+                                    Key={'state': {'S': state},
                                          'city': {'S': city},
                                     },
                                     UpdateExpression='SET members = members + :m',
@@ -144,7 +152,7 @@ def update_member_counts(city, state, operation):
                                 )
     elif operation == 'remove':
         update_count = db.update_item(TableName='communities',
-                                    Key={'state': {'S': STATES[state]},
+                                    Key={'state': {'S': state},
                                          'city': {'S': city},
                                     },
                                     UpdateExpression='SET members = members - :m',
@@ -470,7 +478,7 @@ def check_if_challenge_accepted(challenge_creator_id, user_id):
         for i in challenges['Items']:
             if i['email']['S'] == user_id:
                 challenge_accepted = True
-                state = check_challenge_state(i['email']['S'], 
+                state = check_challenge_state(user_id, 
                                         i['creation_time']['S'])
 
     return challenge_accepted, state
