@@ -337,9 +337,8 @@ class UserFollowingChallengesFeeds(Resource):
                         challenge['feed'] = {}
                         challenge['feed']['id'] = challenge['email']
                         challenge['feed']['key'] = challenge['creation_time']
-                        if c_state == None:
-                            challenge['state'] = {}
-                            challenge['state']['S'] = c_state
+                        challenge['state'] = {}
+                        challenge['state']['S'] = c_state
                         challenge['liked'] = {}
                         challenge['starred'] = {}
                         challenge['commented'] = {}
