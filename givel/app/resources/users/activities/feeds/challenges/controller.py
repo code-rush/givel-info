@@ -13,7 +13,8 @@ from app.helper import (upload_post_file, check_challenge_state,
                         check_if_user_liked,
                         check_if_user_starred,
                         get_user_details, get_challenge_accepted_users,
-                        check_if_taking_off, check_if_challenge_accepted)
+                        check_if_taking_off, check_if_challenge_accepted,
+                        check_if_user_following_user)
 
 from werkzeug.exceptions import BadRequest
 
@@ -201,12 +202,12 @@ class UsersChallengePosts(Resource):
         response = {}
         try:
             user_challenges = db.query(TableName='challenges',
-                           IndexName='challenges-creator-key',
-                           KeyConditionExpression='creator = :e',
-                           ExpressionAttributeValues={
-                               ':e': {'S': user_email}
-                           }
-                       )
+                                Select='ALL_ATTRIBUTES',
+                                KeyConditionExpression='email = :e',
+                                ExpressionAttributeValues={
+                                    ':e': {'S': user_email}
+                                }
+                            )
             for challenge in user_challenges['Items']:
                 user_name, profile_picture, home = get_user_details(
                                                 challenge['creator']['S'])
@@ -219,7 +220,7 @@ class UsersChallengePosts(Resource):
                     starred = check_if_user_starred(feed_id, user_email)
                     commented = check_if_user_commented(feed_id, user_email)
                     # state = check_challenge_state(user_email, \
-                                         # challenge['creation_time']['S'])
+                    #                      challenge['creation_time']['S'])
                     taking_off = check_if_taking_off(feed_id, 'challenges')
                     challenge_accepted, c_state = check_if_challenge_accepted(
                                                           feed_id, user_email)
@@ -232,8 +233,8 @@ class UsersChallengePosts(Resource):
                     challenge['user']['name']['S'] = user_name
                     challenge['user']['profile_picture']['S'] = profile_picture
                     challenge['feed'] = {}
-                    challenge['feed']['id'] = challenge['email']
-                    challenge['feed']['key'] = challenge['creation_time']
+                    challenge['feed']['id'] = challenge['creator']
+                    challenge['feed']['key'] = challenge['creation_key']
                     challenge['state'] = {}
                     challenge['state']['S'] = c_state
                     challenge['liked'] = {}
@@ -247,7 +248,14 @@ class UsersChallengePosts(Resource):
                     challenge['accepted'] = {}
                     challenge['accepted']['BOOL'] = challenge_accepted
                     challenge['accepted_users'] = {}
-                    challenge['accepted_users']['SS'] = accepted_users_list                   
+                    challenge['accepted_users']['SS'] = accepted_users_list 
+
+                    if challenge['creator']['S'] != user_email:
+                        following = check_if_user_following_user(user_email,
+                                                challenge['creator']['S'])
+                        challenge['user']['following'] = {}
+                        challenge['user']['following']['BOOL'] = following
+                    
                     del challenge['email']
                     del challenge['creator']
                     del challenge['value']
