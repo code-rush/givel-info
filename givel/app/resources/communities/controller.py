@@ -253,13 +253,13 @@ class CommunityChallenges(Resource):
                                                       feed_id, user_email)
                         challenge['user'] = {}
                         challenge['user']['name'] = {}
-                        challenge['user']['id'] = challenge['email']
+                        challenge['user']['id'] = challenge['creator']
                         challenge['user']['profile_picture'] = {}
                         challenge['user']['name']['S'] = user_name
                         challenge['user']['profile_picture']['S'] = profile_picture
                         challenge['feed'] = {}
-                        challenge['feed']['id'] = challenge['email']
-                        challenge['feed']['key'] = challenge['creation_time']
+                        challenge['feed']['id'] = challenge['creator']
+                        challenge['feed']['key'] = challenge['creation_key']
                         if c_state != None:
                             challenge['state'] = {}
                             challenge['state']['S'] = c_state
