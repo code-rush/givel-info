@@ -34,48 +34,12 @@ community_api_routes = Blueprint('community_api', __name__)
 api = Api(community_api_routes)
 
 
-STATES = {
-    'Arizona': 'AZ',
-    'California': 'CA',
-    'Colorado': 'CO',
-    'DC': 'D.C.',
-    'Florida': 'FL',
-    'Georgia': 'GA',
-    'Illinois': 'IL',
-    'Indiana': 'IN',
-    'Kansas': 'KS',
-    'Kentucky': 'KY',
-    'Louisiana': 'LA',
-    'Maryland': 'MD',
-    'Massachusetts': 'MA',
-    'Michigan': 'MI',
-    'Minnesota': 'MN',
-    'Missouri': 'MO',
-    'Nebraska': 'NE',
-    'Nevada': 'NV',
-    'New Mexico': 'NM',
-    'New York': 'NY',
-    'North Carolina': 'NC',
-    'Ohio': 'OH',
-    'Oklahoma': 'OK',
-    'Oregon': 'OR',
-    'Pennsylvania': 'PA',
-    'Tennessee': 'TN',
-    'Texas': 'TX',
-    'Virginia': 'VA',
-    'Washington': 'WA',
-    'Wisconsin': 'WI',
-}
-
-
 class Communities(Resource):
     def get(self):
         """Returns all communities"""
         communities = db.scan(TableName='communities')
         items = communities['Items']
         response = {}
-        for i in items:
-            i['state']['S'] = STATES[i['state']['S']]
         response['message'] = 'Success!'
         response['results'] = items
         return response, 200
