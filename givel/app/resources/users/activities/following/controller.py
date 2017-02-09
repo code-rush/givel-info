@@ -337,8 +337,9 @@ class UserFollowingChallengesFeeds(Resource):
                         challenge['feed'] = {}
                         challenge['feed']['id'] = challenge['creator']
                         challenge['feed']['key'] = challenge['creation_key']
-                        challenge['state'] = {}
-                        challenge['state']['S'] = c_state
+                        if c_state != None:
+                            challenge['state'] = {}
+                            challenge['state']['S'] = c_state
                         challenge['liked'] = {}
                         challenge['starred'] = {}
                         challenge['commented'] = {}
