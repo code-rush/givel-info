@@ -37,6 +37,40 @@ ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 db = boto3.client('dynamodb')
 s3 = boto3.client('s3')
 
+
+STATES = {
+    'Arizona': 'AZ',
+    'California': 'CA',
+    'Colorado': 'CO',
+    'DC': 'D.C.',
+    'Florida': 'FL',
+    'Georgia': 'GA',
+    'Illinois': 'IL',
+    'Indiana': 'IN',
+    'Kansas': 'KS',
+    'Kentucky': 'KY',
+    'Louisiana': 'LA',
+    'Maryland': 'MD',
+    'Massachusetts': 'MA',
+    'Michigan': 'MI',
+    'Minnesota': 'MN',
+    'Missouri': 'MO',
+    'Nebraska': 'NE',
+    'Nevada': 'NV',
+    'New Mexico': 'NM',
+    'New York': 'NY',
+    'North Carolina': 'NC',
+    'Ohio': 'OH',
+    'Oklahoma': 'OK',
+    'Oregon': 'OR',
+    'Pennsylvania': 'PA',
+    'Tennessee': 'TN',
+    'Texas': 'TX',
+    'Virginia': 'VA',
+    'Washington': 'WA',
+    'Wisconsin': 'WI',
+}
+
 # Connect to database and create table if not already created else return Table
 try:
     try:
@@ -219,15 +253,18 @@ class UserCommunities(Resource):
             user = db.get_item(TableName='users',
                                 Key={'email': {'S': user_email}}
                             )
+
             if community == 'home':
                 city, state, exists = check_if_community_exists(data['community'])
                 if exists == True:
+                    state_abbr = STATES[state]
+                    comm = city + ', ' + state_abbr
                     try:
                         user_home = db.update_item(TableName='users',
                                         Key={'email': {'S': user_email}},
                                         UpdateExpression='SET home = :p',
                                         ExpressionAttributeValues={
-                                                 ':p': {'S': data['community']}}
+                                                 ':p': {'S': comm}}
                                     )
                         update_member_counts(city, state, 'add')
                         response['message'] = 'home community successfully added!'
@@ -245,12 +282,14 @@ class UserCommunities(Resource):
                 else:
                     city, state, exists = check_if_community_exists(data['community'])
                     if exists == True:
+                        state_abbr = STATES[state]
+                        comm = city + ', ' + state_abbr
                         try:
                             user_home_away = db.update_item(TableName='users',
                                                 Key={'email': {'S': user_email}},
                                                 UpdateExpression='SET home_away = :p',
                                                 ExpressionAttributeValues={
-                                                         ':p': {'S': data['community']}}
+                                                         ':p': {'S': comm}}
                                             )
                             update_member_counts(city, state, 'add')
                             response['message'] = 'home_away community successfully added!'
