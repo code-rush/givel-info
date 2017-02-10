@@ -56,16 +56,19 @@ class SearchUsersOnGivel(Resource):
                                                                         item['email'])
                             users = {}
                             users['name'] = {}
-                            users['profile_picture'] = {}
                             users['name']['S'] = item['first_name'] + ' ' \
                                                     + item['last_name']
-                            users['profile_picture']['S'] = item['profile_picture']
                             users['home_community'] = {}
                             users['home_community']['S'] = item['home']
                             users['id'] = {}
                             users['id']['S'] = item['email']
                             users['following'] = {}
                             users['following']['BOOL'] = following_user
+                            
+                            if item.get('profile_picture') != None:
+                                users['profile_picture'] = {}
+                                users['profile_picture']['S'] = item['profile_picture']
+                            
                             if following_user == True:
                                 search_results.insert(0, users)
                             else:
