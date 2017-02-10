@@ -27,23 +27,31 @@ class SearchUsersOnGivel(Resource):
 
         search_results = []
         if data.get('search_for') != None:
-            search_upper = data['search_for'].upper()
-            search_lower = data['search_for'].lower()
-            search_camel = data['search_for'][0].upper() + data['search_for'][1:].lower()
             results = None
             if '@' in data['search_for']:
                 results = users_table.query(Select='ALL_ATTRIBUTES',
                             KeyConditionExpression=Key('email').eq(data['search_for'].lower())
                         )
             else:
-                results = users_table.scan(Select='ALL_ATTRIBUTES',
-                        FilterExpression=Attr('first_name').begins_with(search_lower) \
-                                        | Attr('last_name').begins_with(search_lower) \
-                                        | Attr('first_name').begins_with(search_upper) \
-                                        | Attr('last_name').begins_with(search_upper) \
-                                        | Attr('first_name').begins_with(search_camel) \
-                                        | Attr('last_name').begins_with(search_camel)
-                          )
+                search_upper = data['search_for'].upper()
+                search_lower = data['search_for'].lower()
+                if len(data['search_for']) > 1:
+                    search_camel = data['search_for'][0].upper() + data['search_for'][1:].lower()
+                    results = users_table.scan(Select='ALL_ATTRIBUTES',
+                            FilterExpression=Attr('first_name').begins_with(search_lower) \
+                                            | Attr('last_name').begins_with(search_lower) \
+                                            | Attr('first_name').begins_with(search_upper) \
+                                            | Attr('last_name').begins_with(search_upper) \
+                                            | Attr('first_name').begins_with(search_camel) \
+                                            | Attr('last_name').begins_with(search_camel)
+                              )
+                else:
+                    results = users_table.scan(Select='ALL_ATTRIBUTES',
+                            FilterExpression=Attr('first_name').begins_with(search_lower) \
+                                            | Attr('last_name').begins_with(search_lower) \
+                                            | Attr('first_name').begins_with(search_upper) \
+                                            | Attr('last_name').begins_with(search_upper)
+                              )
 
             if results.get('Count') != None:
                 if results['Count'] == 0:
@@ -68,7 +76,7 @@ class SearchUsersOnGivel(Resource):
                             if item.get('profile_picture') != None:
                                 users['profile_picture'] = {}
                                 users['profile_picture']['S'] = item['profile_picture']
-                            
+
                             if following_user == True:
                                 search_results.insert(0, users)
                             else:

@@ -217,7 +217,7 @@ class UserProfilePicture(Resource):
                 response['message'] = 'User not found!'
                 return response, 404              
         except:
-            raise BadRequest('Invalid Operation!')
+            raise BadRequest('Request failed.')
 
     def delete(self, user_email):
         """Removes Users Profile Picture"""
