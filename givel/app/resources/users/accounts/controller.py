@@ -102,7 +102,8 @@ class UserAccount(Resource):
                                  'givel_stars': {'N': '25'},
                                  'post_only_to_followers': {'BOOL': False},
                                  'total_stars_earned': {'N': '25'},
-                                 'total_stars_shared': {'N': '0'}
+                                 'total_stars_shared': {'N': '0'},
+                                 'following': {'SS': ['greg@givel.co']}
                                  },
                             ConditionExpression='attribute_not_exists(email)',
                            )
