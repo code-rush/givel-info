@@ -370,7 +370,66 @@ class UserFollowingChallengesFeeds(Resource):
         return response, 200
 
 
+class FollowOthers(Resource):
+    def get(self, user_email):
+        response = {}
+
+        greg_email = 'greg@givel.co'
+        japan_email = 'parikh.japan30@gmail.com'
+
+        try:
+            greg = db.get_item(TableName='users', 
+                            Key={'email': {'S': greg_email}})
+
+            japan = db.get_item(TableName='users',
+                            Key={'email': {'S': japan_email}})
+
+            follow_others = []
+
+            following_greg = check_if_user_following_user(user_email, 
+                                                            greg_email)
+            following_japan = check_if_user_following_user(user_email,
+                                                            japan_email)
+
+            g = {}
+            g['user'] = {}
+            g['user']['name'] = {}
+            g['user']['id'] = greg['Item']['email']
+            g['user']['name']['S'] = greg['Item']['first_name']['S'] + ' ' \
+                                        +greg['Item']['last_name']['S']
+            g['user']['following'] = {}
+            g['user']['following']['BOOL'] = following_greg
+            g['user']['home'] = greg['Item']['home']
+            if greg['Item'].get('profile_picture') != None:
+                g['user']['profile_picture'] = greg['Item']['profile_picture']
+
+            j = {}
+            j['user'] = {}
+            j['user']['name'] = {}
+            j['user']['id'] = japan['Item']['email']
+            j['user']['name']['S'] = japan['Item']['first_name']['S'] + ' ' \
+                                        +japan['Item']['last_name']['S']
+            j['user']['following'] = {}
+            j['user']['following']['BOOL'] = following_japan
+            j['user']['home'] = japan['Item']['home']
+            if japan['Item'].get('profile_picture') != None:
+                j['user']['profile_picture'] = japan['Item']['profile_picture']
+
+            follow_others.append(g)
+            follow_others.append(j)
+
+            response['message'] = 'Request Successful!'
+            response['result'] = follow_others
+            return response, 200
+        except:
+            raise BadRequest('Request failed. Please try again later.')
+
+
+
+
+
 api.add_resource(UserFollowings, '/<user_email>/following')
 api.add_resource(UserFollowers, '/<user_email>/followers')
 api.add_resource(UserFollowingPostsFeeds, '/following/posts/<user_email>')
 api.add_resource(UserFollowingChallengesFeeds, '/following/challenges/<user_email>')
+api.add_resource(FollowOthers, '/<user_email>/follow')
