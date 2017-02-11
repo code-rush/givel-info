@@ -855,3 +855,12 @@
   - Method: **GET**
   - Returns: All frequently asked questions and answers.
   - Description: Gets all questions that have been answered.
+
+
+### Other
+
+- **follow others**
+  - Path: /api/v1/users/{user_email}/follow
+  - Method: **GET**
+  - Returns: *200 OK* Status Code and a success message with a list of users
+  - Description: Returns a list of important Givel users to follow.
