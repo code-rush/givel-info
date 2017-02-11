@@ -322,7 +322,7 @@ def get_user_details(user_id):
     user = db.get_item(TableName='users',
                     Key={'email': {'S': user_id}})
     if user.get('Item') == None:
-        return None, None
+        return None, None, None
     else:
         profile_picture = None
         first_name = user['Item']['first_name']['S']

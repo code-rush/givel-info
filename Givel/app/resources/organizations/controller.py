@@ -206,7 +206,8 @@ class OrganizationPicture(Resource):
                                  'Please register the organization first.')
             else:
                 try:
-                    picture_file = upload_file(picture, BUCKET_NAME, organization_name, ALLOWED_EXTENSIONS)
+                    picture_file = upload_file(picture, BUCKET_NAME, 
+                                organization_name, ALLOWED_EXTENSIONS)
                     if picture_file != None:
                         pic = db.update_item(TableName='organizations',
                                             Key={'name': {'S': organization_name}},
