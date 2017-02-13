@@ -35,15 +35,16 @@ class UserFollowings(Resource):
                 f = {}
                 f['following'] = {}
                 f['following']['id'] = {}
-                f['following']['name'] = {}
-                f['following']['profile_picture'] = {}
+                f['following']['name'] = {}                
                 if '@' in following:
                     user_name, profile_picture, home = get_user_details(following)
                     f['following']['home_community'] = {}
                     f['following']['id']['S'] = following
                     f['following']['name']['S'] = user_name
                     f['following']['home_community'] = home
-                    f['following']['profile_picture'] = profile_picture
+                    if profile_picture != None:
+                        f['following']['profile_picture'] = {}
+                        f['following']['profile_picture']['S'] = profile_picture
                 else:
                     org = db.get_item(TableName='organizations',
                                         Key={'name': {'S': following}})
@@ -190,11 +191,12 @@ class UserFollowers(Resource):
                 f['user']['name'] = {}
                 f['user']['id'] = {}
                 f['user']['home_community'] = {}
-                f['user']['profile_picture'] = {}
                 f['user']['name']['S'] = user_name
                 f['user']['id']['S'] = follower
                 f['user']['home_community'] = home
-                f['user']['profile_picture'] = profile_picture
+                if profile_picture != None:
+                    f['user']['profile_picture'] = {}
+                    f['user']['profile_picture']['S'] = profile_picture
                 f['user']['following'] = {}
                 f['user']['following']['BOOL'] = following_follower
                 followers.append(f)
