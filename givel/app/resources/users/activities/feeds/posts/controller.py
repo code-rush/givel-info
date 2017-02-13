@@ -300,7 +300,6 @@ class UsersPost(Resource):
             user_posts = db.query(TableName='posts',
                                 Select='ALL_ATTRIBUTES',
                                 Limit=50,
-                                # ConsistentRead=True,
                                 KeyConditionExpression='email = :e',
                                 ExpressionAttributeValues={
                                     ':e': {'S': user_email}
