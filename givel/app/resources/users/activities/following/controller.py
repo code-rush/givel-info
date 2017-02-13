@@ -41,7 +41,7 @@ class UserFollowings(Resource):
                     f['following']['home_community'] = {}
                     f['following']['id']['S'] = following
                     f['following']['name']['S'] = user_name
-                    f['following']['home_community'] = home
+                    f['following']['home_community']['S'] = home
                     if profile_picture != None:
                         f['following']['profile_picture'] = {}
                         f['following']['profile_picture']['S'] = profile_picture
@@ -193,7 +193,7 @@ class UserFollowers(Resource):
                 f['user']['home_community'] = {}
                 f['user']['name']['S'] = user_name
                 f['user']['id']['S'] = follower
-                f['user']['home_community'] = home
+                f['user']['home_community']['S'] = home
                 if profile_picture != None:
                     f['user']['profile_picture'] = {}
                     f['user']['profile_picture']['S'] = profile_picture
