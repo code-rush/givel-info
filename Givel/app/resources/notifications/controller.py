@@ -38,19 +38,46 @@ except:
 
 class GetUserNotifications(Resource):
     """Returns user's all notifications"""
-    def get(self, user_email):
+    def post(self):
         response = {}
 
+        data = request.get_json(force=True)
+
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user_id' \
+                         + ' to get their notifications.')
+        else:
+            user_email = data['user_id']
+            user_exsits = check_if_user_exists(user_email)
+        
         users_notifications = []
-        user_exsits = check_if_user_exists(user_email)
+        
         if user_exsits:
-            notifications = db.query(TableName='notifications',
-                            Select='ALL_ATTRIBUTES',
-                            KeyConditionExpression='notify_to = :e',
-                            ExpressionAttributeValues={
-                                ':e': {'S': user_email}
-                            }
-                        )
+            if data.get('last_evaluated_key') != None:
+                notifications = db.query(TableName='notifications',
+                                    Select='ALL_ATTRIBUTES',
+                                    Limit=20,
+                                    KeyConditionExpression='notify_to = :e',
+                                    ExpressionAttributeValues={
+                                        ':e': {'S': user_email}
+                                    },
+                                    ExclusiveStartKey=data['last_evaluated_key'],
+                                    ScanIndexForward=False
+                                )
+            else:
+                notifications = db.query(TableName='notifications',
+                                Select='ALL_ATTRIBUTES',
+                                Limit=20,
+                                KeyConditionExpression='notify_to = :e',
+                                ExpressionAttributeValues={
+                                    ':e': {'S': user_email}
+                                },
+                                ScanIndexForward=False
+                            )
+
+            if notifications.get('LastEvaluatedKey') != None:
+                response['last_evaluated_key'] = notifications['LastEvaluatedKey']
+
             for notification in notifications['Items']:
                 user_name, profile_picture, home = get_user_details(
                                                notification['email']['S'])
@@ -299,6 +326,6 @@ class GetNotification(Resource):
         return response, 200
 
 
-api.add_resource(GetUserNotifications, '/<user_email>')
+api.add_resource(GetUserNotifications, '/')
 api.add_resource(GetNotification, '/<user_email>')
 
