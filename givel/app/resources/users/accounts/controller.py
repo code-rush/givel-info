@@ -612,7 +612,6 @@ class GetUsersProfile(Resource):
                     post['commented']['BOOL'] = commented
                     del post['email']
                     del post['value']
-                    del post['only_to_followers']
                     users_posts.append(post)
 
                 
@@ -659,7 +658,6 @@ class GetUsersProfile(Resource):
                     del challenge['email']
                     del challenge['creator']
                     del challenge['value']
-                    del challenge['only_to_followers']
                     users_challenges.append(challenge)
 
                 profile_details['followers'] = {}
