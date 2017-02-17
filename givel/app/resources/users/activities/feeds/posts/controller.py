@@ -645,7 +645,6 @@ class UsersFavoritePosts(Resource):
                             post['user']['following']['BOOL'] = following
 
                         del post['email']
-                        del post['creation_time']
                         del post['value']
 
                         favorites.append(post)
