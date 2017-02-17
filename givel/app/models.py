@@ -39,8 +39,8 @@ def create_users_table():
                         'ProjectionType': 'KEYS_ONLY'
                     },
                     'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 10,
-                        'WriteCapacityUnits': 10
+                        'ReadCapacityUnits': 3,
+                        'WriteCapacityUnits': 3
                     }
                 },
                 {
@@ -55,15 +55,15 @@ def create_users_table():
                         'ProjectionType': 'KEYS_ONLY'
                     },
                     'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 10,
-                        'WriteCapacityUnits': 10
+                        'ReadCapacityUnits': 3,
+                        'WriteCapacityUnits': 3
                     }
                 }
 
             ],
            ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
+                'ReadCapacityUnits': 3,
+                'WriteCapacityUnits': 3
            }
         )
     except:
@@ -96,8 +96,8 @@ def create_community_table():
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
+                'ReadCapacityUnits': 1,
+                'WriteCapacityUnits': 1
             }
         )
     except:
@@ -154,14 +154,14 @@ def create_posts_table():
                         'ProjectionType': 'ALL'
                     },
                     'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 10,
-                        'WriteCapacityUnits': 10
+                        'ReadCapacityUnits': 5,
+                        'WriteCapacityUnits': 5
                     }
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
+                'ReadCapacityUnits': 5,
+                'WriteCapacityUnits': 5
             }
         )
     except:
@@ -226,8 +226,8 @@ def create_challenges_table():
                         'ProjectionType': 'ALL'
                     },
                     'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 10,
-                        'WriteCapacityUnits': 10
+                        'ReadCapacityUnits': 4,
+                        'WriteCapacityUnits': 2
                     }
                 },
                 {
@@ -246,14 +246,14 @@ def create_challenges_table():
                         'ProjectionType': 'KEYS_ONLY'
                     },
                     'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 10,
-                        'WriteCapacityUnits': 10
+                        'ReadCapacityUnits': 5,
+                        'WriteCapacityUnits': 3
                     }
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
+                'ReadCapacityUnits': 3,
+                'WriteCapacityUnits': 3
             }
         )
     except:
@@ -290,8 +290,8 @@ def create_likes_table():
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 5,
-                'WriteCapacityUnits': 5
+                'ReadCapacityUnits': 3,
+                'WriteCapacityUnits': 3
             }
         )
     except:
@@ -386,14 +386,14 @@ def create_stars_activity_table():
                         'ProjectionType': 'ALL'
                     },
                     'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 10,
-                        'WriteCapacityUnits': 10
+                        'ReadCapacityUnits': 3,
+                        'WriteCapacityUnits': 2
                     }
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 5,
-                'WriteCapacityUnits': 5
+                'ReadCapacityUnits': 2,
+                'WriteCapacityUnits': 3
             }
         )
     except:
@@ -450,14 +450,14 @@ def create_comments_table():
                         'ProjectionType': 'ALL'
                     },
                     'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 10,
-                        'WriteCapacityUnits': 10
+                        'ReadCapacityUnits': 3,
+                        'WriteCapacityUnits': 3
                     }
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
+                'ReadCapacityUnits': 3,
+                'WriteCapacityUnits': 3
             }
         )
     except:
@@ -494,8 +494,8 @@ def create_favorite_posts_table():
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
+                'ReadCapacityUnits': 3,
+                'WriteCapacityUnits': 3
             }
         )
     except:
@@ -532,8 +532,8 @@ def create_report_table():
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
+                'ReadCapacityUnits': 2,
+                'WriteCapacityUnits': 2
             }
         )
     except:
@@ -585,34 +585,14 @@ def create_organizations_table():
                         ]
                     },
                     'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 10,
-                        'WriteCapacityUnits': 10
-                    }
-                },
-                {
-                    'IndexName': 'organizations-type-name',
-                    'KeySchema': [
-                        {
-                            'AttributeName': 'type',
-                            'KeyType': 'HASH'
-                        },
-                        {
-                            'AttributeName': 'name',
-                            'KeyType': 'RANGE'
-                        }
-                    ],
-                    'Projection': {
-                        'ProjectionType': 'ALL',
-                    },
-                    'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 10,
-                        'WriteCapacityUnits': 10
+                        'ReadCapacityUnits': 2,
+                        'WriteCapacityUnits': 2
                     }
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
+                'ReadCapacityUnits': 3,
+                'WriteCapacityUnits': 3
             }
          )
     except:
@@ -674,14 +654,14 @@ def create_shared_feeds_table():
                         'ProjectionType': 'ALL',
                     },
                     'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 10,
-                        'WriteCapacityUnits': 10
+                        'ReadCapacityUnits': 3,
+                        'WriteCapacityUnits': 3
                     }
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
+                'ReadCapacityUnits': 3,
+                'WriteCapacityUnits': 3
             }
         )
     except:
@@ -718,8 +698,8 @@ def create_notifications_table():
                 }
             ],
             ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
+                'ReadCapacityUnits': 3,
+                'WriteCapacityUnits': 3
             }
          )
     except:
@@ -756,8 +736,8 @@ def create_faqs_table():
                  }
              ],
              ProvisionedThroughput={
-                 'ReadCapacityUnits': 10,
-                 'WriteCapacityUnits': 10
+                 'ReadCapacityUnits': 2,
+                 'WriteCapacityUnits': 2
              }
         )
     except:
@@ -768,4 +748,84 @@ def create_faqs_table():
     finally:
         return faqs_table
 
+def create_following_activity_table():
+    try:
+        following_activity_table = dynamodb.create_table(
+            TableName='following_activity',
+            KeySchema=[
+                {
+                    'AttributeName': 'id1',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'id2',
+                    'KeyType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'id1',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'id2',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'following',
+                    'AttributeType': 'S'
+                }
+            ],
+            LocalSecondaryIndexes=[
+                {
+                    'IndexName': 'id1-following',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'id1',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'following',
+                            'KeyType': 'RANGE'
+                        }
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    }
+                }
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'id2-following',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'id2',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'following',
+                            'KeyType': 'RANGE'
+                        }
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 2,
+                        'WriteCapacityUnits': 2
+                    }
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 2,
+                'WriteCapacityUnits': 2
+            }
+        )
+    except:
+        try:
+            following_activity_table = dynamodb.Table('following_activity')
+        except:
+            print('following_activity Table does not exist')
+    finally:
+        return following_activity_table
 
