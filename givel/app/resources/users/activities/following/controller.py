@@ -13,6 +13,8 @@ from app.helper import (check_if_taking_off, check_if_user_liked,
                     check_if_challenge_accepted, get_challenge_accepted_users,
                     check_if_user_following_user)
 
+from app.models import create_following_activity_table
+
 from werkzeug.exceptions import BadRequest
 
 user_following_activity_api_routes = Blueprint('following_activity_api', __name__)
@@ -21,76 +23,176 @@ api = Api(user_following_activity_api_routes)
 db = boto3.client('dynamodb')
 
 
-class UserFollowings(Resource):
-    def get(self, user_email):
-        """Returns list of users followings"""
+try:
+    try:
+        table_response = db.describe_table(TableName='following_activity')
+        if table_response['Table']['TableStatus'] == 'ACTIVE':
+            print('following_activity Table exists!')
+    except:
+        following_activity = create_following_activity_table()
+        print('following_activity Table created!')
+except:
+    pass
+
+
+class GetUsersFollowings(Resource):
+    def post(self):
+        """Returns list of user's followings"""
         response = {}
-        user = db.get_item(
-                    TableName='users',
-                    Key={'email': {'S': user_email}}
-                )
+        data = request.get_json(force=True)
+
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user\'s id.')
+
+        user_exists = check_if_user_exists(data['user_id'])
+        if not user_exists:
+            raise BadRequest('User does not exist.')
+
         followings = []
-        if user['Item'].get('following') != None:
-            for following in user['Item']['following']['SS']:
-                f = {}
-                f['following'] = {}
-                f['following']['id'] = {}
-                f['following']['name'] = {}                
-                if '@' in following:
-                    user_name, profile_picture, home = get_user_details(following)
-                    f['following']['home_community'] = {}
-                    f['following']['id']['S'] = following
-                    f['following']['name']['S'] = user_name
-                    f['following']['home_community']['S'] = home
-                    if profile_picture != None:
-                        f['following']['profile_picture'] = {}
-                        f['following']['profile_picture']['S'] = profile_picture
-                else:
-                    org = db.get_item(TableName='organizations',
-                                        Key={'name': {'S': following}})
-                    f['following']['type'] = {}
-                    f['following']['type']['S'] = 'organization'
-                    f['following']['id']['S'] = following
-                    f['following']['name']['S'] = following
-                    f['following']['profile_picture']['S'] = org['Item']['picture']['S']
-                followings.append(f)
-            response['message'] = 'Successfully fetched user\'s followings!'
-        else:
-            response['message'] = 'You have no followings!'
-        response['result'] = followings
-        return response, 200
+        try:
+            if data.get('last_evaluated_key') != None:
+                users = db.query(TableName='following_activity',
+                                IndexName='id1-following',
+                                Limit=200,
+                                KeyConditionExpression='id1 = :id and \
+                                                      following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                },
+                                ExclusiveStartKey=data['last_evaluated_key'],
+                                ScanIndexForward=False
+                            )
+            else:
+                users = db.query(TableName='following_activity',
+                                IndexName='id1-following',
+                                Limit=200,
+                                KeyConditionExpression='id1 = :id and \
+                                                      following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                },
+                                ScanIndexForward=False
+                            )
+
+            if users.get('Items') != None:
+                for following in users['Items']:
+                    f = {}
+                    f['following'] = {}
+                    f['following']['id'] = {}
+                    f['following']['name'] = {}
+                    if following['type']['S'] == 'user':
+                        following_user_exists = check_if_user_exists(
+                                                following['id2']['S'])
+                        if following_user_exists:
+                            user_name, photo, home = get_user_details(
+                                                   following['id2']['S'])
+                            f['following']['home_community'] = {}
+                            f['following']['id']['S'] = following['id2']['S']
+                            f['following']['name']['S'] = user_name
+                            f['following']['home_community']['S'] = home
+                            f['following']['type'] = {}
+                            f['following']['type']['S'] = 'user'
+                            if photo != None:
+                                f['following']['profile_picture'] = {}
+                                f['following']['profile_picture']['S'] = photo
+                            followings.append(f)
+                    else:
+                        org = db.get_item(TableName='organizations',
+                            Key={'name': {'S': following['id2']['S']}})
+
+                        if org.get('Item') != None:
+                            f['following']['type'] = {}
+                            f['following']['type']['S'] = 'organization'
+                            f['following']['id']['S'] = following['id2']['S']
+                            f['following']['name']['S'] = org['Item']\
+                                                              ['name']['S']
+                            f['following']['profile_picture'] = org['Item']\
+                                                                  ['picture']
+                            followings.append(f)
+
+            if users.get('LastEvaluatedKey') != None:
+                response['last_evaluated_key'] = users['LastEvaluatedKey']
+
+            response['message'] = 'Request successful.'
+            response['result'] = followings
+        except:
+            response['message'] = 'Request failed. Try again later.'
+
+        return response, 200         
 
 
+
+class UserFollowings(Resource):
     def put(self, user_email):
         """Adds a user or organization to the following and followers list"""
         data = request.get_json(force=True)
         response = {}
 
+        user_exists = check_if_user_exists(user_email)
+
+        if not user_exists:
+            raise BadRequest('User does not exist!')
         if data['follow'] == None:
-            raise BadRequest('Please provide user_id or organization_id ' \
-                             + 'in follow.')
+            raise BadRequest('Please provide user\'s id or ' \
+                                + 'organization\'s id')
+        if user_email == data['follow']:
+            raise BadRequest('Users cannot follow themselves.')
+
         try:
-            date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+            date_time = datetime.datetime.now().strftime(
+                                        "%Y-%m-%d %H:%M:%S:%f")
             if '@' in data['follow']:
-                following_user = check_if_user_exists(data['follow'])
-                user_exists = check_if_user_exists(user_email)
-                if following_user and user_exists:
-                    user = db.update_item(
-                                TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='ADD following :following',
-                                ExpressionAttributeValues={
-                                    ':following': {'SS': [data['follow']]}
-                                }
-                            )
-                    user_following = db.update_item(
-                                TableName='users',
-                                Key={'email': {'S': data['follow']}},
-                                UpdateExpression='ADD followers :follower',
-                                ExpressionAttributeValues={
-                                    ':follower': {'SS': [user_email]}
-                                }
-                            )
+                following_user_exists = check_if_user_exists(data['follow'])
+                if following_user_exists:
+                    following_activity = db.get_item(
+                                        TableName='following_activity',
+                                        Key={'id1': {'S': user_email},
+                                             'id2': {'S': data['follow']}
+                                        }
+                                    )
+                    if following_activity.get('Item') != None:
+                        add_following = db.update_item(
+                                    TableName='following_activity',
+                                    Key={'id1': {'S': user_email},
+                                         'id2': {'S': data['follow']}
+                                    },
+                                    UpdateExpression='SET following = :f',
+                                    ExpressionAttributeValues={
+                                        ':f': {'S': 'True'}
+                                    }
+                                )
+                        add_follower = db.update_item(
+                                    TableName='following_activity',
+                                    Key={'id2': {'S': user_email},
+                                         'id1': {'S': data['follow']}
+                                    },
+                                    UpdateExpression='SET follower = :f',
+                                    ExpressionAttributeValues={
+                                        ':f': {'S': 'True'}
+                                    }
+                                )
+                    else:
+                        add_following = db.put_item(
+                                    TableName='following_activity',
+                                    Item={'id1': {'S': user_email},
+                                          'id2': {'S': data['follow']},
+                                          'type': {'S': 'user'},
+                                          'following': {'S': 'True'},
+                                          'follower': {'S': 'False'}
+                                    }
+                                )
+                        add_follower = db.put_item(
+                                    TableName='following_activity',
+                                    Item={'id2': {'S': user_email},
+                                          'id1': {'S': data['follow']},
+                                          'type': {'S': 'user'},
+                                          'following': {'S': 'False'},
+                                          'follower': {'S': 'True'}
+                                    }
+                                )
+
                     notification = db.put_item(TableName='notifications',
                                 Item={'notify_to': {'S': data['follow']},
                                       'creation_time': {'S': date_time},
@@ -100,111 +202,169 @@ class UserFollowings(Resource):
                                       'checked': {'BOOL': False}
                                 }
                             )
-                    response['message'] = 'Successfully following the user!'
                 else:
-                    if user_exists == False:
-                        response['message'] = 'User does not exist!'
-                    if following_user == False:
-                        response['message'] = 'The user you are trying to '\
-                                              +'follow does not exist!'
+                    response['message'] = 'User you are trying ' \
+                                            +'to follow does not exist.'
             else:
-                user = db.update_item(
-                            TableName='users',
-                            Key={'email': {'S': user_email}},
-                            UpdateExpression='ADD following :following',
-                            ExpressionAttributeValues={
-                                ':following': {'SS': [data['follow']]}
-                            }
-                        )
-                response['message'] = 'Successfully following the organization!'
+                add_following = db.put_item(
+                                TableName='following_activity',
+                                Item={'id1': {'S': user_email},
+                                      'id2': {'S': data['follow']},
+                                      'type': {'S': 'organization'},
+                                      'following': {'S': 'True'}
+                                }
+                            )
+            response['message'] = 'Request successful.'
         except:
-            response['message'] = 'Failed to follow user!'
+            response['message'] = 'Request failed. Try again later.'
+
         return response, 200
+
 
     def delete(self, user_email):
         """Unfollows a user"""
         data = request.get_json(force=True)
         response = {}
 
+        user_exists = check_if_user_exists(user_email)
+
+        if not user_exists:
+            raise BadRequest('User does not exist!')
         if data['unfollow'] == None:
-            raise BadRequest('Please provide user_id or organization_id ' \
-                             + 'to unfollow.')
+            raise BadRequest('Please provide user\'s id or ' \
+                                + 'organization\'s id')
+
         try:
             if '@' in data['unfollow']:
-                unfollow_user = check_if_user_exists(data['unfollow'])
-                user_exists = check_if_user_exists(user_email)
-                if unfollow_user and user_exists:
-                    user = db.update_item(
-                                TableName='users',
-                                Key={'email': {'S': user_email}},
-                                UpdateExpression='DELETE following :user',
-                                ExpressionAttributeValues={
-                                    ':user': {'SS':[data['unfollow']]}
-                                }
-                            )
-                    user_following = db.update_item(
-                                TableName='users',
-                                Key={'email': {'S': data['unfollow']}},
-                                UpdateExpression='DELETE followers :follower',
-                                ExpressionAttributeValues={
-                                    ':follower': {'SS':[user_email]}
-                                }
-                            )
-                    response['message'] = 'Successfully unfollowed the user.'
+                activity = db.get_item(TableName='following_activity',
+                                        Key={'id1': {'S': user_email},
+                                             'id2': {'S': data['unfollow']}
+                                        }
+                                    )
+                if activity['Item']['following']['S'] == 'True'\
+                  and activity['Item']['follower']['S'] == 'True':
+                    delete_following = db.update_item(
+                                        TableName='following_activity',
+                                        Key={'id1': {'S': user_email},
+                                             'id2': {'S': data['unfollow']}
+                                        },
+                                        UpdateExpression='SET following = :f',
+                                        ExpressionAttributeValues={
+                                            ':f': {'S': 'False'}
+                                        }
+                                    )
+                    delete_follower = db.update_item(
+                                        TableName='following_activity',
+                                        Key={'id2': {'S': user_email},
+                                             'id1': {'S': data['unfollow']}
+                                        },
+                                        UpdateExpression='SET follower = :f',
+                                        ExpressionAttributeValues={
+                                            ':f': {'S': 'False'}
+                                        }
+                                    )
                 else:
-                    if user_exists == False:
-                        response['message'] = 'User does not exist!'
-                    if unfollow_user == False:
-                        response['message'] = 'The user you are trying to '\
-                                              +'unfollow does not exist!'
+                    delete_following = db.delete_item(
+                                        TableName='following_activity',
+                                        Key={'id1': {'S': user_email},
+                                             'id2': {'S': data['unfollow']}
+                                        }
+                                    )
+                    delete_follower = db.delete_item(
+                                        TableName='following_activity',
+                                        Key={'id1': {'S': data['unfollow']},
+                                             'id2': {'S': user_email}
+                                        }
+                                    )
             else:
-                user = db.update_item(
-                            TableName='users',
-                            Key={'email': {'S': user_email}},
-                            UpdateExpression='DELETE following :user',
-                            ExpressionAttributeValues={
-                                ':user': {'SS':[data['unfollow']]}
-                            }
-                        )
-                response['message'] = 'Successfully unfollowed the organization.'
+                delete_following = db.delete_item(TableName='following_activity',
+                                        Key={'id1': {'S': user_email},
+                                             'id2': {'S': data['unfollow']}
+                                        }
+                                    )
+            response['message'] = 'Request successful.'
         except:
-            response['message'] = 'Request Failed.'
+            response['message'] = 'Request failed. Try again later.'
+
         return response, 200
 
 
-class UserFollowers(Resource):
-    def get(self, user_email):
-        """Returns list of followers"""
+class GetUsersFollowers(Resource):
+    def post(self):
+        """Returns list of user's followers"""
+
         response = {}
-        user = db.get_item(
-                        TableName='users',
-                        Key={'email': {'S': user_email}}
-                    )
-        if user['Item'].get('followers') != None:
-            followers = []
-            for follower in user['Item']['followers']['SS']:
-                user_name, profile_picture, home = get_user_details(follower)
-                following_follower = check_if_user_following_user(user_email,
-                                                                    follower)
-                f = {}
-                f['user'] = {}
-                f['user']['name'] = {}
-                f['user']['id'] = {}
-                f['user']['home_community'] = {}
-                f['user']['name']['S'] = user_name
-                f['user']['id']['S'] = follower
-                f['user']['home_community']['S'] = home
-                if profile_picture != None:
-                    f['user']['profile_picture'] = {}
-                    f['user']['profile_picture']['S'] = profile_picture
-                f['user']['following'] = {}
-                f['user']['following']['BOOL'] = following_follower
-                followers.append(f)
-            response['message'] = 'Success!'
+        data = request.get_json(force=True)
+
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user\'s id.')
+
+        user_exists = check_if_user_exists(data['user_id'])
+        if not user_exists:
+            raise BadRequest('User does not exist.')
+
+        followers = []
+
+        try:
+            if data.get('last_evaluated_key') != None:
+                users = db.query(TableName='following_activity',
+                                Limit=200,
+                                IndexName='id2-following',
+                                KeyConditionExpression='id2 = :id and \
+                                                        following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                },
+                                ExclusiveStartKey=data['last_evaluated_key'],
+                                ScanIndexForward=False
+                        )
+            else:
+                 users = db.query(TableName='following_activity',
+                                Limit=200,
+                                IndexName='id2-following',
+                                KeyConditionExpression='id2 = :id and \
+                                                        following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                },
+                                ScanIndexForward=False
+                        )
+
+            if users.get('Items') != None:
+                for follower in users['Items']:
+                    follower_exists = check_if_user_exists(
+                                            follower['id1']['S'])
+                    if follower_exists:
+                        user_name, photo, home = get_user_details(
+                                                    follower['id1']['S'])
+                        following_follower = check_if_user_following_user(
+                                      data['user_id'], follower['id1']['S'])
+                        f = {}
+                        f['user'] = {}
+                        f['user']['name'] = {}
+                        f['user']['id'] = {}
+                        f['user']['home_community'] = {}
+                        f['user']['name']['S'] = user_name
+                        f['user']['id']['S'] = follower['id1']['S']
+                        f['user']['home_community']['S'] = home
+                        if photo != None:
+                            f['user']['profile_picture'] = {}
+                            f['user']['profile_picture']['S'] = photo
+                        f['user']['following'] = {}
+                        f['user']['following']['BOOL'] = following_follower
+
+                        followers.append(f)
+
+            if users.get('LastEvaluatedKey') != None:
+                response['last_evaluated_key'] = users['LastEvaluatedKey']
+
+            response['message'] = 'Request successful.'
             response['result'] = followers
-        else:
-            response['message'] = 'Success!'
-            response['message'] = 'You have no followers!'
+        except:
+            response['message'] = 'Request failed. Try again later.'
+
         return response, 200
 
 
@@ -428,10 +588,10 @@ class FollowOthers(Resource):
 
 
 
-
-
 api.add_resource(UserFollowings, '/<user_email>/following')
-api.add_resource(UserFollowers, '/<user_email>/followers')
+api.add_resource(GetUsersFollowers, '/followers')
+api.add_resource(GetUsersFollowings, '/following')
 api.add_resource(UserFollowingPostsFeeds, '/following/posts/<user_email>')
 api.add_resource(UserFollowingChallengesFeeds, '/following/challenges/<user_email>')
 api.add_resource(FollowOthers, '/<user_email>/follow')
+
