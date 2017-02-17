@@ -126,6 +126,7 @@
                  also sends a *last_evaluated_key* parameter to get more results if all 
                  results are not fetched. If the response does not contain *last_evaluated_key*, 
                  which means all results have been fetched in the response.
+                 The *user_id* is the *email* of the logged_in user.
 
 - **unfollow a user/organization**
   - Path: /api/v1/users/{user_email}/following
@@ -147,6 +148,7 @@
                  also sends a *last_evaluated_key* parameter to get more results if all 
                  results are not fetched. If the response does not contain *last_evaluated_key*, 
                  which means all results have been fetched in the response.
+                 The *user_id* is the *email* of the logged_in user.
 
 
 
@@ -386,18 +388,6 @@
                  - {user_email} is the email of the user who likes/unlikes the feed.
                  - {feed} is either *posts* or *challenges*. Any other value raises 
                    an exception.
-
-- **post only to followers**
-  - Path: /api/v1/users/accounts/settings/post_only_to_followers/{user_email}
-  - Method: **PUT**
-  - Required Data: value
-  - Content-Type: application/json
-  - Returns: *200 OK* Status code with a message.
-  - Description: If *Post Only to Followers* is turned on, the feeds created from 
-                 now on will only show to the followers, else they will show up 
-                 on both communities and followers.
-                 By default the post shows up to both communities and followers.
-                 The value here is either 'true' or 'false'.
 
 - **share stars**
   - Path: /api/v1/feeds/stars/share{user_email}/{feed}
