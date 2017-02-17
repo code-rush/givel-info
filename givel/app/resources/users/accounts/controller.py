@@ -84,6 +84,25 @@ except:
     pass
 
 
+def follow_greg(user_id):
+    add_following = db.put_item(TableName='following_activity',
+                                Item={'id1': {'S': user_id},
+                                      'id2': {'S': 'greg@givel.co'},
+                                      'type': {'S': 'user'},
+                                      'following': {'S': 'True'},
+                                      'follower': {'S': 'False'}
+                                }
+                            )
+    add_follower = db.put_item(TableName='following_activity',
+                                Item={'id1': {'S': 'greg@givel.co'},
+                                      'id2': {'S': user_id},
+                                      'type': {'S': 'user'},
+                                      'following': {'S': 'False'},
+                                      'follower': {'S': 'True'}
+                                }
+                            )
+
+
 class UserAccount(Resource):
     def post(self):
         """Creates User"""
@@ -101,11 +120,11 @@ class UserAccount(Resource):
                                  'password': {'S': password},
                                  'givel_stars': {'N': '25'},
                                  'total_stars_earned': {'N': '25'},
-                                 'total_stars_shared': {'N': '0'},
-                                 'following': {'SS': ['greg@givel.co']}
+                                 'total_stars_shared': {'N': '0'}
                                  },
                             ConditionExpression='attribute_not_exists(email)',
                            )
+            follow = follow_greg(data['email'])
             response['message'] = 'User successfully created!'
             return response, 201
         except:
