@@ -183,7 +183,7 @@ class GetUserNotifications(Resource):
                 del notification['notify_for']
                 del notification['notify_to']
                 users_notifications.append(notification)
-            response['message'] = 'Successfully fetched all notifications.'
+            response['message'] = 'Request successful.'
             response['result'] = users_notifications
         else:
             response['message'] = 'Request failed! User does not exist.'
