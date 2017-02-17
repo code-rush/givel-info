@@ -1,8 +1,6 @@
 import boto3
 import datetime
 
-from werkzeug.utils import secure_filename
-
 s3 = boto3.client('s3')
 db = boto3.client('dynamodb')
 
