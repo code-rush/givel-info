@@ -431,14 +431,17 @@ def check_if_taking_off(feed_id, feed):
 
 
 def check_if_user_following_user(user1_id, user2_id):
-    user1 = db.get_item(TableName='users',
-               Key={'email': {'S': user1_id}})
+    response = db.get_item(TableName='following_activity',
+                            Key={'id1': {'S': user1_id},
+                                 'id2': {'S': user2_id}
+                            }
+                        )
 
     following = False
-    if user1['Item'].get('following') != None:
-        for user in user1['Item']['following']['SS']:
-            if user == user2_id:
-                following = True
+
+    if response.get('Item') != None:
+        if response['Item']['following']['S'] == 'True':
+            following = True
 
     return following
 
