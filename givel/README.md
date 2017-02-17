@@ -125,7 +125,7 @@
   - Description: Gets all list of user's followings as results. Alongwith the results it 
                  also sends a *last_evaluated_key* parameter to get more results if all 
                  results are not fetched. If the response does not contain *last_evaluated_key*, 
-                 which means all results have been fetched in the response.
+                 it means all results have been fetched in the response.
                  The *user_id* is the *email* of the logged_in user.
 
 - **unfollow a user/organization**
@@ -147,7 +147,7 @@
   - Description: Returns all users followers as results with a message. Alongwith the results it 
                  also sends a *last_evaluated_key* parameter to get more results if all 
                  results are not fetched. If the response does not contain *last_evaluated_key*, 
-                 which means all results have been fetched in the response.
+                 it means all results have been fetched in the response.
                  The *user_id* is the *email* of the logged_in user.
 
 
@@ -740,11 +740,17 @@
 ### Notifications API's
 
 - **get user's all notifications**
-  - Path: /api/v1/notifications/{user_email}
-  - Method: **GET**
-  - Returns: Lists of dictionaries with all the user's notifications
-  - Description: Gets all the users notifications. {user_email} is the email id for 
-                 the user who's is logged in.
+  - Path: /api/v1/notifications/
+  - Method: **POST**
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
+  - Returns: List of user's notifications as results with a message and *200 OK* 
+             if the request is successful.
+  - Description: Gets all the users notifications. *user_id* is the email for 
+                 the user who's is logged in. Alongwith the results it also sends a 
+                 *last_evaluated_key* parameter to get more results if all results are 
+                 not fetched. If the response does not contain *last_evaluated_key*, 
+                 it means all results have been fetched in the response.
   - WHAT DOES EVERY NOTIFICATION CONTAIN:
     - checked: denotes that the notification is seen OR not seen by the user.
       - 2 possible boolean values: True OR False.
