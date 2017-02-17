@@ -116,7 +116,7 @@
   - Description: Following a user. It adds the user to the following list and 
                  adds this user to the following users followers list.
 
-- **get all users followings**
+- **get users followings**
   - Path: /api/v1/users/following
   - Method: **POST**
   - Required Data: user_id
