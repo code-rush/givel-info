@@ -117,11 +117,15 @@
                  adds this user to the following users followers list.
 
 - **get all users followings**
-  - Path: /api/v1/users/{user_email}/following
-  - Method: **GET**
+  - Path: /api/v1/users/following
+  - Method: **POST**
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
   - Returns: Users all followings list as results with a message and *200 OK* Status Code.
-  - Description: Get all list of user's following user list as results and also 
-                 returns a message.
+  - Description: Gets all list of user's followings as results. Alongwith the results it 
+                 also sends a *last_evaluated_key* parameter to get more results if all 
+                 results are not fetched. If the response does not contain *last_evaluated_key*, 
+                 which means all results have been fetched in the response.
 
 - **unfollow a user/organization**
   - Path: /api/v1/users/{user_email}/following
@@ -134,10 +138,15 @@
                  if this operation fails or is successfully executed.
 
 - **get users followers**
-  - Path: /api/v1/users/{user_email}/followers
-  - Method: **GET**
+  - Path: /api/v1/users/followers
+  - Method: **POST**
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
   - Returns: List of all followers if any with a success message and *200 OK* Status Code.
-  - Description: Returns all users followers as results with a message.
+  - Description: Returns all users followers as results with a message. Alongwith the results it 
+                 also sends a *last_evaluated_key* parameter to get more results if all 
+                 results are not fetched. If the response does not contain *last_evaluated_key*, 
+                 which means all results have been fetched in the response.
 
 
 
