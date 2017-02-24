@@ -66,10 +66,7 @@ class UsersChallengePosts(Resource):
                                   'stars': {'N': '0'},
                                   'description': {'S': 
                                           challenge_data['description']},
-                                  'creator': {'S': user_email},
-                                  'only_to_followers': 
-                                      {'BOOL': user['Item']\
-                                          ['post_only_to_followers']['BOOL']}
+                                  'creator': {'S': user_email}
                             }
                         )
             try:

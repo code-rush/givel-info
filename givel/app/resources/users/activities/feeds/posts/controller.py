@@ -77,9 +77,7 @@ class UsersPost(Resource):
                                      'likes': {'N': '0'},
                                      'stars': {'N': '0'},
                                      'favorites': {'N': '0'},
-                                     'comments': {'N': '0'},
-                                     'only_to_followers': 
-                                         {'BOOL': user['Item']['post_only_to_followers']['BOOL']}
+                                     'comments': {'N': '0'}
                                 }
                             )
                 
