@@ -748,6 +748,10 @@ def get_feeds(users, table, last_evaluated_key=None):
                     if post['creator']['S'] in users:
                         feeds.append(post)
 
+        print(date)
+        print(feeds)
+        print(response)
+
         if response.get('LastEvaluatedKey') != None:
             last_evaluated_key = {}
             last_evaluated_key['last_key'] = response['LastEvaluatedKey']
@@ -764,3 +768,18 @@ def get_feeds(users, table, last_evaluated_key=None):
             fetch = False
 
     return feeds, lek
+
+
+def update_notifications_activity_page(user_id, seen_activity):
+    if seen_activity == False:
+        update = db.put_item(TableName='notifications_activity_page',
+                            Item={'email': {'S': user_id},
+                                  'seen': {'BOOL': seen_activity}
+                            }
+                        )
+    else:
+        update = db.put_item(TableName='notifications_activity_page',
+                            Item={'email': {'S': user_id},
+                                  'seen': {'BOOL': seen_activity}
+                            }
+                        )
