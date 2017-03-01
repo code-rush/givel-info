@@ -1,7 +1,6 @@
 import boto3
 import datetime
-import string
-import random
+import string, random
 
 from app.app import app, mail
 # from app.plugin import login_manager
@@ -20,7 +19,8 @@ from app.helper import (upload_file, check_if_community_exists,
                         check_if_user_following_user, get_user_details,
                         check_if_user_liked, check_if_user_starred,
                         check_if_user_starred, check_if_taking_off,
-                        check_challenge_state, check_if_user_commented)
+                        check_challenge_state, check_if_user_commented,
+                        update_notifications_activity_page)
 
 
 user_account_api_routes = Blueprint('account_api', __name__)
@@ -453,6 +453,7 @@ class GiveStarsToFollowings(Resource):
                                                   'stars': {'N': str(data['stars'])}
                                             }
                                         )
+                    update_notifications_activity_page(data['user_id'], False)
                 except:
                     rollback_activity = db.delete_item(TableName='stars_activity',
                                         Key={'email': {'S': user_email},

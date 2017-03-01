@@ -14,7 +14,8 @@ from app.helper import (upload_post_file, check_challenge_state,
                         check_if_user_starred,
                         get_user_details, get_challenge_accepted_users,
                         check_if_taking_off, check_if_challenge_accepted,
-                        check_if_user_following_user)
+                        check_if_user_following_user,
+                        update_notifications_activity_page)
 
 from werkzeug.exceptions import BadRequest
 
@@ -340,6 +341,7 @@ class AcceptChallenge(Resource):
                                                   'accepting challenge'}
                                     }
                                 )
+                    update_notifications_activity_page(data['id'], False)
                 response['message'] = 'Challenge Accepted!'
             except:
                 response['message'] = 'Try again later'

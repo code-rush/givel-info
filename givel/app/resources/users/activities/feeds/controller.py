@@ -12,7 +12,8 @@ from app.helper import (update_likes, update_value, update_stars_count,
                         get_user_details, STATES, update_comments,
                         mid_west_states, southeast_states, northeast_states,
                         pacific_states, southwest_states, 
-                        rocky_mountain_states, check_if_user_following_user)
+                        rocky_mountain_states, check_if_user_following_user,
+                        update_notifications_activity_page)
 
 from werkzeug.exceptions import BadRequest
 
@@ -106,6 +107,7 @@ class FeedLikes(Resource):
                                       'feed_type': {'S': str(feed)}
                                 }
                             )
+                        update_notifications_activity_page(data['id'], False)
                     response['message'] = 'Success! Feed liked!'
                 elif data.get('emotion') == 'unlike':
                     unlike_post = db.delete_item(TableName='likes',
@@ -255,6 +257,7 @@ class FeedStars(Resource):
                                                   'stars': {'N': str(data['stars'])}
                                             }
                                         )
+                            update_notifications_activity_page(data['id'], False)
                 except:
                     raise BadRequest('Request Failed!')
 
@@ -440,6 +443,8 @@ class FeedComments(Resource):
                                       {'S': user_email + '_' + date_time} 
                             }
                         )
+                    update_notifications_activity_page(
+                                    i['M']['user_id']['S'], False)
             else:
                 add_comment = db.put_item(TableName='comments',
                             Item={'email': {'S': user_email},
@@ -462,6 +467,7 @@ class FeedComments(Resource):
                                       {'S': user_email + '_' + date_time}
                             }
                         )
+                update_notifications_activity_page(data['id'], False)
 
             update_comments(data['id'], data['key'], 'add_comment')
 
@@ -566,6 +572,8 @@ class FeedComments(Resource):
                                       {'S': data['id'] + '_' + data['key']} 
                             }
                         )
+                    update_notifications_activity_page(
+                                    i['M']['user_id']['S'], False)
             response['message'] = 'Comment edited!'
             return response, 200
 
@@ -655,6 +663,8 @@ class ShareFeeds(Resource):
                                            'feed_type': {'S': str(feed)+'s'}
                                      }
                                  )
+                        update_notifications_activity_page(
+                                            data['shared_to'][i], False)
 
                     share_feed = db.put_item(TableName='shared_feeds',
                                     Item={'email': {'S': user_email},
@@ -680,6 +690,7 @@ class ShareFeeds(Resource):
                                           'feed_type': {'S': str(feed)+'s'}
                                     }
                                 )
+                    update_notifications_activity_page(data['id'], False)
 
                 response['message'] = 'Post successfully shared!'
             except:
