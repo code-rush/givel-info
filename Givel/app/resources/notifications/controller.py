@@ -13,7 +13,8 @@ from app.helper import (check_if_user_exists, get_user_details,
                         check_if_post_added_to_favorites,
                         get_challenge_accepted_users, 
                         check_if_challenge_accepted,
-                        check_if_user_following_user)
+                        check_if_user_following_user,
+                        update_notifications_activity_page)
 
 from werkzeug.exceptions import BadRequest
 
@@ -326,6 +327,38 @@ class GetNotification(Resource):
         return response, 200
 
 
+class NotificationActivityPage(Resource):
+    def get(self, user_email):
+        response = {}
+
+        data = db.get_item(TableName='notifications_activity_page',
+                            Key={'email': {'S': user_email}})
+
+        if data.get('Item') != None:
+            response['seen'] = data['Item']['seen']
+        else:
+            response['seen'] = {}
+            response['seen']['BOOL'] = True
+
+        response['message'] = 'Request successful.'
+        return response, 200
+
+    def put(self, user_email):
+        response = {}
+        data = request.get_json(force=True)
+
+        if data.get('seen') == None:
+            raise BadRequest('Please provide "seen" parameter with boolean '\
+                             + 'value(true) if user has seen the page.')
+        else:
+            update_notifications_activity_page(user_email, data['seen'])
+
+            response['message'] = 'Request successful.'
+        return response, 200
+
+
+
 api.add_resource(GetUserNotifications, '/')
 api.add_resource(GetNotification, '/<user_email>')
+api.add_resource(NotificationActivityPage, '/activity/page/<user_email>')
 
