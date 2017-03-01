@@ -53,6 +53,8 @@ northeast_states = ['Pennsylvania', 'New York', 'Maryland', 'Vermont', \
                     'New Hampshire', 'Maine', 'Massachusetts', 'Connecticut', \
                     'Rhode Island', 'New Jersey']
 
+APP_DATE = '2016-12-31'
+
 def check_if_user_exists(user_id):
     user = db.get_item(TableName='users',
                       Key={'email': {'S': user_id}})
@@ -522,4 +524,243 @@ def get_challenge_accepted_users(challenge_creator_id, user_id):
 
     return accepted_users
 
+def get_next_date(current_date):
+    date_split = current_date.rsplit('-', 2)
+    date = date_split[2]
+    month = date_split[1]
+    year = date_split[0]
+    if int(date) > 1:
+        new_date = year + '-' + month + '-' + str(int(date) - 1)
+    elif int(date) == 1:
+        if int(month) > 1:
+            new_date = year + '-' + str(int(month) - 1) \
+                            + '-' + '31'
+        if int(month) == 1:
+            new_date = str(int(year) - 1) + '-' + '12' + '-' + '31'
 
+    return new_date
+
+
+# def get_feeds(users, table, last_evaluated_key=None, feeds_list=None):
+#     today = str(datetime.date.today())
+#     results = {}
+
+#     if feeds_list == None:
+#         feeds = []
+#     else:
+#         feeds = feeds_list
+
+#     if last_evaluated_key != None:
+#         if last_evaluated_key.get('last_key') == None:
+#             date = get_next_date(last_evaluated_key['query_key'])
+#             if table == 'posts':
+#                 response = db.query(TableName=table,
+#                              Limit=100,
+#                              Select='ALL_ATTRIBUTES',
+#                              IndexName='creation-date-time',
+#                              KeyConditionExpression='creation_date = :d',
+#                              ExpressionAttributeValues={
+#                                  ':d': {'S': date}
+#                              }
+#                          )
+#             else:
+#                 response = db.query(TableName=table,
+#                              Limit=100,
+#                              Select='ALL_ATTRIBUTES',
+#                              IndexName='creation-date-key',
+#                              KeyConditionExpression='creation_date = :d',
+#                              ExpressionAttributeValues={
+#                                  ':d': {'S': date}
+#                              }
+#                          )
+#         else:
+#             date = last_evaluated_key['query_key']
+#             LastEvaluatedKey = last_evaluated_key['last_key']
+#             if table == 'posts':
+#                 response = db.query(TableName=table,
+#                              Limit=100,
+#                              Select='ALL_ATTRIBUTES',
+#                              IndexName='creation-date-time',
+#                              KeyConditionExpression='creation_date = :d',
+#                              ExpressionAttributeValues={
+#                                  ':d': {'S': date}
+#                              },
+#                              ExclusiveStartKey=last_evaluated_key['last_key']
+#                          )
+#             else:
+#                 response = db.query(TableName=table,
+#                              Limit=100,
+#                              Select='ALL_ATTRIBUTES',
+#                              IndexName='creation-date-key',
+#                              KeyConditionExpression='creation_date = :d',
+#                              ExpressionAttributeValues={
+#                                  ':d': {'S': date}
+#                              },
+#                              ExclusiveStartKey=last_evaluated_key['last_key']
+#                          )
+#     else:
+#         date = today
+#         if table == 'posts':
+#             response = db.query(TableName=table,
+#                             Select='ALL_ATTRIBUTES',
+#                             Limit=100,
+#                             IndexName='creation-date-time',
+#                             KeyConditionExpression='creation_date = :d',
+#                             ExpressionAttributeValues={
+#                                 ':d': {'S': date}
+#                             }
+#                         )
+#         else:
+#             response = db.query(TableName=table,
+#                         Select='ALL_ATTRIBUTES',
+#                         Limit=100,
+#                         IndexName='creation-date-key',
+#                         KeyConditionExpression='creation_date = :d',
+#                         ExpressionAttributeValues={
+#                             ':d': {'S': date}
+#                         }
+#                     )
+
+#     if response.get('Items') != []:
+#         for post in response['Items']:
+#             if table == 'posts':
+#                 if post['email']['S'] in users:
+#                     feeds.append(post)
+#             else:
+#                 if post['creator']['S'] in users:
+#                     feeds.append(post)
+
+#     if response.get('LastEvaluatedKey') != None:
+#         lek = {}
+#         lek['last_key'] = response['LastEvaluatedKey']
+#         lek['query_key'] = date
+#     elif date == APP_DATE:
+#         lek = None
+#     else:
+#         lek = {}
+#         lek['query_key'] = date
+
+#     print(date)
+#     print(feeds)
+
+#     if len(feeds) >= 1 or date == APP_DATE:
+#         results['feeds'] = feeds
+#         results['last_evaluated_key'] = lek
+#         print('Entered if loop...')
+#         print(results)
+#         return results
+#     else:
+#         results['feeds'] = feeds
+#         results['last_evaluated_key'] = lek
+#         print('Entered else loop...')
+#         print(date)
+#         feed = get_feeds(users, table, lek, feeds)
+#         return results
+
+
+def get_feeds(users, table, last_evaluated_key=None):
+    today = str(datetime.date.today())
+
+    feeds = []
+
+    lek = None
+
+    fetch = True
+
+    while fetch:
+        if last_evaluated_key != None:
+            if last_evaluated_key.get('last_key') == None:
+                date = get_next_date(last_evaluated_key['query_key'])
+                if table == 'posts':
+                    response = db.query(TableName=table,
+                                 Limit=100,
+                                 Select='ALL_ATTRIBUTES',
+                                 IndexName='creation-date-time',
+                                 KeyConditionExpression='creation_date = :d',
+                                 ExpressionAttributeValues={
+                                     ':d': {'S': date}
+                                 }
+                             )
+                else:
+                    response = db.query(TableName=table,
+                                 Limit=100,
+                                 Select='ALL_ATTRIBUTES',
+                                 IndexName='creation-date-key',
+                                 KeyConditionExpression='creation_date = :d',
+                                 ExpressionAttributeValues={
+                                     ':d': {'S': date}
+                                 }
+                             )
+            else:
+                date = last_evaluated_key['query_key']
+                LastEvaluatedKey = last_evaluated_key['last_key']
+                if table == 'posts':
+                    response = db.query(TableName=table,
+                                 Limit=100,
+                                 Select='ALL_ATTRIBUTES',
+                                 IndexName='creation-date-time',
+                                 KeyConditionExpression='creation_date = :d',
+                                 ExpressionAttributeValues={
+                                     ':d': {'S': date}
+                                 },
+                                 ExclusiveStartKey=last_evaluated_key['last_key']
+                             )
+                else:
+                    response = db.query(TableName=table,
+                                 Limit=100,
+                                 Select='ALL_ATTRIBUTES',
+                                 IndexName='creation-date-key',
+                                 KeyConditionExpression='creation_date = :d',
+                                 ExpressionAttributeValues={
+                                     ':d': {'S': date}
+                                 },
+                                 ExclusiveStartKey=last_evaluated_key['last_key']
+                             )
+        else:
+            date = today
+            if table == 'posts':
+                response = db.query(TableName=table,
+                                Select='ALL_ATTRIBUTES',
+                                Limit=100,
+                                IndexName='creation-date-time',
+                                KeyConditionExpression='creation_date = :d',
+                                ExpressionAttributeValues={
+                                    ':d': {'S': date}
+                                }
+                            )
+            else:
+                response = db.query(TableName=table,
+                            Select='ALL_ATTRIBUTES',
+                            Limit=100,
+                            IndexName='creation-date-key',
+                            KeyConditionExpression='creation_date = :d',
+                            ExpressionAttributeValues={
+                                ':d': {'S': date}
+                            }
+                        )
+
+        if response.get('Items') != []:
+            for post in response['Items']:
+                if table == 'posts':
+                    if post['email']['S'] in users:
+                        feeds.append(post)
+                else:
+                    if post['creator']['S'] in users:
+                        feeds.append(post)
+
+        if response.get('LastEvaluatedKey') != None:
+            last_evaluated_key = {}
+            last_evaluated_key['last_key'] = response['LastEvaluatedKey']
+            last_evaluated_key['query_key'] = date
+        elif date == APP_DATE:
+            last_evaluated_key = None
+        else:
+            last_evaluated_key= {}
+            last_evaluated_key['query_key'] = date
+
+        lek = last_evaluated_key
+
+        if len(feeds) >= 50 or date == APP_DATE:
+            fetch = False
+
+    return feeds, lek
