@@ -83,8 +83,9 @@ class GetUserNotifications(Resource):
                 user_name, profile_picture, home = get_user_details(
                                                notification['email']['S'])
                 notification['user']= {}
-                notification['user']['profile_picture'] = {}
-                notification['user']['profile_picture']['S'] = profile_picture
+                if profile_picture != None:
+                    notification['user']['profile_picture'] = {}
+                    notification['user']['profile_picture']['S'] = profile_picture
                 notification['user']['name'] = {}
                 notification['user']['name']['S'] = user_name
                 notification['user']['id'] = notification['email']
