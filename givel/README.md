@@ -827,6 +827,24 @@
   - Returns: *200 OK* Status Code with a success message if request is successful
   - Description: Gets the content of the notification.
   
+- **get notification's screen dot to appear/disappear**
+  - Path: /api/v1/notifications/activity/page/{user_email}
+  - Method: **GET**
+  - Returns: *200 OK* Status Code with a success message if request is successful
+  - Description: Gets if the hamburger/Activity should have a dot. 
+                 {user_email} is the email of the logged in user.
+                 The response consists of *seen* parameter with a boolean value. If the 
+                 value is *true*, the dot needs to disappear else the dot needs to appear.
+
+- **remove notification dot*
+  - Path: /api/v1/notifications/activity/page/{user_email}
+  - Method: **PUT**
+  - Content-Type: application/json
+  - Required Data: seen
+  - Returns: *200 OK* Status Code with a success message if request is successful
+  - Description: Send the value as *true* (boolean) if the user checks the notifications 
+                 screen. 
+                 {user_email} is the email of the logged in user.
 
 
 ### Get User's Profile Page (Following, Followers, Badges, Activity)
