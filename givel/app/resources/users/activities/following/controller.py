@@ -11,7 +11,8 @@ from app.helper import (check_if_taking_off, check_if_user_liked,
                     get_user_details, check_challenge_state,
                     check_if_user_exists, check_if_post_added_to_favorites,
                     check_if_challenge_accepted, get_challenge_accepted_users,
-                    check_if_user_following_user)
+                    check_if_user_following_user, get_feeds,
+                    update_notifications_activity_page)
 
 from app.models import create_following_activity_table
 
@@ -199,9 +200,10 @@ class UserFollowings(Resource):
                                       'email': {'S': user_email},
                                       'from': {'S': 'user'},
                                       'notify_for': {'S': 'following'},
-                                      'checked': {'BOOL': False}
+                                      'checked': {'BOOL': True}
                                 }
                             )
+                    update_notifications_activity_page(data['follow'], False)
                 else:
                     response['message'] = 'User you are trying ' \
                                             +'to follow does not exist.'
@@ -369,166 +371,258 @@ class GetUsersFollowers(Resource):
 
 
 class UserFollowingPostsFeeds(Resource):
-    def get(self, user_email):
+    def post(self):
         """Returns users followings all posts"""
         response = {}
-        users_following = db.get_item(TableName='users',
-                            Key={'email': {'S': user_email}}
-                        )
+        data = request.get_json(force=True)
+
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user\'s id.')
+
+        user_exists = check_if_user_exists(data['user_id'])
+
+        if not user_exists:
+            raise BadRequest('User does not exist.')
+
         feeds = []
-        if users_following['Item'].get('following') == None:
-            response['message'] = 'You have no followings!'
-            response['result'] = feeds
+        followings = [data['user_id']]
+
+        users_followings = db.query(TableName='following_activity',
+                                IndexName='id1-following',
+                                KeyConditionExpression='id1 = :id and \
+                                                        following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                }
+                            )
+
+        if users_followings.get('Items') != []:
+            for item in users_followings['Items']:
+                if item['type']['S'] == 'user':
+                    followings.append(item['id2']['S'])
+
+        if users_followings.get('LastEvaluatedKey') != None:
+            followings_last_evaluated_key = True
+            LastEvaluatedKey = users_followings['LastEvaluatedKey']
+            while followings_last_evaluated_key:
+                users_followings = db.query(TableName='following_activity',
+                                IndexName='id1-following',
+                                KeyConditionExpression='id1 = :id and \
+                                                        following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                },
+                                ExclusiveStartKey=LastEvaluatedKey
+                            )
+
+                if users_followings.get('Items') != []:
+                    for item in users_followings['Items']:
+                        if item['type']['S'] == 'user':
+                            followings.append(item['id2']['S'])
+
+                if users_followings.get('LastEvaluatedKey') == None:
+                    followings_last_evaluated_key = False
+                else:
+                    LastEvaluatedKey = users_followings['LastEvaluatedKey']
+
+        if data.get('last_evaluated_key') == None:
+            following_feeds, last_evaluated_key = get_feeds(
+                                            followings, 'posts')
         else:
-            for user in users_following['Item']['following']['SS']:
-                if '@' in user:
-                    following_posts = db.query(TableName='posts',
-                                       KeyConditionExpression='email = :e',
-                                       ExpressionAttributeValues={
-                                           ':e': {'S': user}
-                                       }
-                                   )
-                    for post in following_posts['Items']:
-                        if post['email']['S'] != user_email:
-                            feeds.append(post)
+            following_feeds, last_evaluated_key = get_feeds(followings, 
+                                        'posts', data['last_evaluated_key'])
 
-            try:
-                for post in feeds:
-                    user_name, profile_picture, home = get_user_details(post['email']['S'])
-                    if user_name == None:
-                        del post
-                    else:
-                        feed_id = post['email']['S'] + '_' + post['creation_time']['S']
-                        liked = check_if_user_liked(feed_id, user_email)
-                        starred = check_if_user_starred(feed_id, user_email)
-                        commented = check_if_user_commented(feed_id, user_email)
-                        taking_off = check_if_taking_off(feed_id, 'posts')
-                        added_to_fav = check_if_post_added_to_favorites(feed_id, 
-                                                                      user_email)
-                        post['user'] = {}
-                        post['user']['id'] = post['email']
-                        post['user']['name'] = {}
-                        post['user']['profile_picture'] = {}
-                        post['user']['name']['S'] = user_name
-                        post['user']['profile_picture']['S'] = profile_picture
-                        post['feed'] = {}
-                        post['feed']['id'] = post['email']
-                        post['feed']['key'] = post['creation_time']
-                        post['liked'] = {}
-                        post['starred'] = {}
-                        post['commented'] = {}
-                        post['taking_off'] = {}
-                        post['taking_off']['BOOL'] = taking_off
-                        post['liked']['BOOL'] = liked
-                        post['starred']['BOOL'] = starred
-                        post['commented']['BOOL'] = commented
-                        post['added_to_fav'] = {}
-                        post['added_to_fav']['BOOL'] = added_to_fav
+        if last_evaluated_key != None:
+            response['last_evaluated_key'] = last_evaluated_key
 
-                        if post['email']['S'] != user_email:
-                            following = check_if_user_following_user(user_email,
-                                                            post['email']['S'])
-                            post['user']['following'] = {}
-                            post['user']['following']['BOOL'] = following
+        try:
+            for post in following_feeds:
+                user_name, profile_picture, home = get_user_details(
+                                                post['email']['S'])
+                if user_name == None:
+                    del post
+                else:
+                    feed_id = post['email']['S'] + '_' + post['creation_time']['S']
+                    liked = check_if_user_liked(feed_id, data['user_id'])
+                    starred = check_if_user_starred(feed_id, data['user_id'])
+                    commented = check_if_user_commented(feed_id, data['user_id'])
+                    taking_off = check_if_taking_off(feed_id, 'posts')
+                    added_to_fav = check_if_post_added_to_favorites(feed_id, 
+                                                                  data['user_id'])
+                    post['user'] = {}
+                    post['user']['id'] = post['email']
+                    post['user']['name'] = {}
+                    post['user']['profile_picture'] = {}
+                    post['user']['name']['S'] = user_name
+                    post['user']['profile_picture']['S'] = profile_picture
+                    post['feed'] = {}
+                    post['feed']['id'] = post['email']
+                    post['feed']['key'] = post['creation_time']
+                    post['liked'] = {}
+                    post['starred'] = {}
+                    post['commented'] = {}
+                    post['taking_off'] = {}
+                    post['taking_off']['BOOL'] = taking_off
+                    post['liked']['BOOL'] = liked
+                    post['starred']['BOOL'] = starred
+                    post['commented']['BOOL'] = commented
+                    post['added_to_fav'] = {}
+                    post['added_to_fav']['BOOL'] = added_to_fav
 
-                        if post.get('tags') != None:
-                            tags = []
-                            for t in post['tags']['L']:
-                                tags.append(t['M'])
-                            post['tags']['L'] = tags
+                    if post['email']['S'] != data['user_id']:
+                        following = check_if_user_following_user(data['user_id'],
+                                                        post['email']['S'])
+                        post['user']['following'] = {}
+                        post['user']['following']['BOOL'] = following
 
-                        del post['email']
-                        del post['value']
-                        
-                response['message'] = 'Successfully fetched all following posts!'
-                response['results'] = feeds
-            except:
-                response['message'] = 'Failed to fetch following posts!'
+                    if post.get('tags') != None:
+                        tags = []
+                        for t in post['tags']['L']:
+                            tags.append(t['M'])
+                        post['tags']['L'] = tags
+
+                    del post['email']
+                    del post['value']
+                    del post['creation_date']
+
+                feeds.append(post)
+
+            response['message'] = 'Request successful.'
+            response['results'] = feeds
+        except:
+            response['message'] = 'Request failed!'
 
         return response, 200
 
 
 class UserFollowingChallengesFeeds(Resource):
-    def get(self, user_email):
+    def post(self):
         """Returns users followings challenges feed"""
         response = {}
-        users_following = db.get_item(TableName='users',
-                            Key={'email': {'S': user_email}}
-                        )
+        data = request.get_json(force=True)
+
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user\'s id.')
+
+        user_exists = check_if_user_exists(data['user_id'])
+
+        if not user_exists:
+            raise BadRequest('User does not exist.')
+
         feeds = []
-        if users_following['Item'].get('following') == None:
-            response['message'] = 'You have no followings!'
-            response['result'] = feeds
+
+        followings = [data['user_id']]
+
+        users_followings = db.query(TableName='following_activity',
+                                IndexName='id1-following',
+                                KeyConditionExpression='id1 = :id and \
+                                                        following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                }
+                            )
+
+        if users_followings.get('Items') != []:
+            for item in users_followings['Items']:
+                if item['type']['S'] == 'user':
+                    followings.append(item['id2']['S'])
+
+        last_evaluated_key = False
+        if users_followings.get('LastEvaluatedKey') != None:
+            followings_last_evaluated_key = True
+            LastEvaluatedKey = users_followings['LastEvaluatedKey']
+            while last_evaluated_key:
+                users_followings = db.query(TableName='following_activity',
+                                IndexName='id1-following',
+                                KeyConditionExpression='id1 = :id and \
+                                                        following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                },
+                                ExclusiveStartKey=LastEvaluatedKey
+                            )
+                if users_followings.get('LastEvaluatedKey') == None:
+                    last_evaluated_key = False
+                else:
+                    LastEvaluatedKey = users_followings['LastEvaluatedKey']
+
+        if data.get('last_evaluated_key') == None:
+            following_feeds, last_evaluated_key = get_feeds(
+                                            followings, 'challenges')
         else:
-            for user in users_following['Item']['following']['SS']:
-                if '@' in user:
-                    following_challenges = db.query(TableName='challenges',
-                                       IndexName='challenges-creator-key',
-                                       KeyConditionExpression='creator = :e',
-                                       ExpressionAttributeValues={
-                                           ':e': {'S': user}
-                                       }
-                                   )
-                    
-                    for feed in following_challenges['Items']:
-                        if feed['creator']['S'] != user_email:
-                            feeds.append(feed)
+            following_feeds, last_evaluated_key = get_feeds(followings, 
+                                    'challenges', data['last_evaluated_key'])
 
-            try:
-                for challenge in feeds:
-                    user_name, profile_picture, home = get_user_details(challenge['creator']['S'])
-                    if user_name == None:
-                        del challenge
-                    else:
-                        feed_id = challenge['creator']['S'] + '_' + challenge['creation_key']['S']
-                        liked = check_if_user_liked(feed_id, user_email)
-                        starred = check_if_user_starred(feed_id, user_email)
-                        commented = check_if_user_commented(feed_id, user_email)
-                        # state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
-                        taking_off = check_if_taking_off(feed_id, 'challenges')
-                        challenge_accepted, c_state = check_if_challenge_accepted(
-                                                              feed_id, user_email)
-                        accepted_users_list = get_challenge_accepted_users(
-                                                       feed_id, user_email)
-                        challenge['user'] = {}
-                        challenge['user']['id'] = challenge['creator']
-                        challenge['user']['name'] = {}
-                        challenge['user']['profile_picture'] = {}
-                        challenge['user']['name']['S'] = user_name
-                        challenge['user']['profile_picture']['S'] = profile_picture
-                        challenge['feed'] = {}
-                        challenge['feed']['id'] = challenge['creator']
-                        challenge['feed']['key'] = challenge['creation_key']
-                        if c_state != None:
-                            challenge['state'] = {}
-                            challenge['state']['S'] = c_state
-                        challenge['liked'] = {}
-                        challenge['starred'] = {}
-                        challenge['commented'] = {}
-                        challenge['taking_off'] = {}
-                        challenge['taking_off']['BOOL'] = taking_off
-                        challenge['liked']['BOOL'] = liked
-                        challenge['starred']['BOOL'] = starred
-                        challenge['commented']['BOOL'] = commented
-                        challenge['accepted'] = {}
-                        challenge['accepted']['BOOL'] = challenge_accepted
-                        challenge['accepted_users'] = {}
-                        challenge['accepted_users']['SS'] = accepted_users_list
+        if last_evaluated_key != None:
+            response['last_evaluated_key'] = last_evaluated_key
 
-                        if challenge['creator']['S'] != user_email:
-                            following = check_if_user_following_user(user_email,
-                                                    challenge['creator']['S'])
-                            challenge['user']['following'] = {}
-                            challenge['user']['following']['BOOL'] = following
+        try:
+            for challenge in following_feeds:
+                user_name, profile_picture, home = get_user_details(challenge['creator']['S'])
+                if user_name == None:
+                    del challenge
+                else:
+                    feed_id = challenge['creator']['S'] + '_' + challenge['creation_key']['S']
+                    liked = check_if_user_liked(feed_id, data['user_id'])
+                    starred = check_if_user_starred(feed_id, data['user_id'])
+                    commented = check_if_user_commented(feed_id, data['user_id'])
+                    # state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
+                    taking_off = check_if_taking_off(feed_id, 'challenges')
+                    challenge_accepted, c_state = check_if_challenge_accepted(
+                                                          feed_id, data['user_id'])
+                    accepted_users_list = get_challenge_accepted_users(
+                                                   feed_id, data['user_id'])
+                    challenge['user'] = {}
+                    challenge['user']['id'] = challenge['creator']
+                    challenge['user']['name'] = {}
+                    challenge['user']['profile_picture'] = {}
+                    challenge['user']['name']['S'] = user_name
+                    challenge['user']['profile_picture']['S'] = profile_picture
+                    challenge['feed'] = {}
+                    challenge['feed']['id'] = challenge['creator']
+                    challenge['feed']['key'] = challenge['creation_key']
+                    if c_state != None:
+                        challenge['state'] = {}
+                        challenge['state']['S'] = c_state
+                    challenge['liked'] = {}
+                    challenge['starred'] = {}
+                    challenge['commented'] = {}
+                    challenge['taking_off'] = {}
+                    challenge['taking_off']['BOOL'] = taking_off
+                    challenge['liked']['BOOL'] = liked
+                    challenge['starred']['BOOL'] = starred
+                    challenge['commented']['BOOL'] = commented
+                    challenge['accepted'] = {}
+                    challenge['accepted']['BOOL'] = challenge_accepted
+                    challenge['accepted_users'] = {}
+                    challenge['accepted_users']['SS'] = accepted_users_list
+                    challenge['creation_time'] = challenge['creation_key']
 
-                        del challenge['email']
-                        del challenge['creator']
-                        del challenge['value']
-                        del challenge['creation_key']
-                response['message'] = 'Successfully fetched all following\'s challenges!'
-                response['results'] = feeds
-            except:
-                response['message'] = 'Failed to fetch following\'s challenges!'
+                    if challenge_accepted == True:
+                        challenge['accepted_time'] = challenge['creation_time']
+
+                    if challenge['creator']['S'] != data['user_id']:
+                        following = check_if_user_following_user(data['user_id'],
+                                                challenge['creator']['S'])
+                        challenge['user']['following'] = {}
+                        challenge['user']['following']['BOOL'] = following
+
+                    del challenge['email']
+                    del challenge['creator']
+                    del challenge['value']
+                    del challenge['creation_key']
+                    del challenge['creation_date']
+
+                feeds.append(challenge)
+
+            response['message'] = 'Request successful.'
+            response['results'] = feeds
+        except:
+            response['message'] = 'Request failed.'
         return response, 200
 
 
@@ -591,7 +685,7 @@ class FollowOthers(Resource):
 api.add_resource(UserFollowings, '/<user_email>/following')
 api.add_resource(GetUsersFollowers, '/followers')
 api.add_resource(GetUsersFollowings, '/following')
-api.add_resource(UserFollowingPostsFeeds, '/following/posts/<user_email>')
-api.add_resource(UserFollowingChallengesFeeds, '/following/challenges/<user_email>')
+api.add_resource(UserFollowingPostsFeeds, '/following/posts')
+api.add_resource(UserFollowingChallengesFeeds, '/following/challenges')
 api.add_resource(FollowOthers, '/<user_email>/follow')
 
