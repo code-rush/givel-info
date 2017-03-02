@@ -319,9 +319,6 @@ class AcceptChallenge(Resource):
                              'stars': {'N': '0'},
                              'description': {'S': challenge['Item']\
                                                  ['description']['S']},
-                             'only_to_followers': 
-                                 {'BOOL': user['Item']\
-                                         ['post_only_to_followers']['BOOL']},
                              'location': {'S': challenge['Item']\
                                                      ['location']['S']}
                         }
@@ -377,10 +374,7 @@ class PostChallengeAsOwn(Resource):
                                      'comments': {'N': '0'},
                                      'stars': {'N': '0'},
                                      'description': {'S': challenge['Item']\
-                                                     ['description']['S']},
-                                     'only_to_followers': 
-                                         {'BOOL': user['Item']\
-                                          ['post_only_to_followers']['BOOL']}
+                                                     ['description']['S']}
                                 }
                             )
                 response['message'] = 'Challenge Posted as Own!'
@@ -463,10 +457,7 @@ class UsersChallengeRepost(Resource):
                                   'state': {'S': 'ACTIVE'},
                                   'comments': {'N': '0'},
                                   'stars': {'N': '0'},
-                                  'creator': {'S': user_email},
-                                  'only_to_followers': 
-                                      {'BOOL': user['Item']\
-                                          ['post_only_to_followers']['BOOL']}
+                                  'creator': {'S': user_email}
                             }
                         )
                 if data.get('location') != None:
