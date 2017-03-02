@@ -509,7 +509,7 @@
                  *following* will have a boolean value.
 
 - **get community posts(feed)**
-  - Path: /api/v1/communities/posts/{user_email}
+  - Path: /api/v1/communities/posts
   - Method: **POST**
   - Content-Type: application/json
   - Required Data: user_id
@@ -523,7 +523,7 @@
                  The *user_id* is the *email* of the logged_in user.
 
 - **get community challenges(feed)**
-  - Path: /api/v1/communities/challenges/{user_email}
+  - Path: /api/v1/communities/challenges
   - Method: **POST**
   - Content-Type: application/json
   - Required Data: user_id
@@ -537,7 +537,7 @@
                  The *user_id* is the *email* of the logged_in user.
 
 - **get following posts(feed)**
-  - Path: /api/v1/users/following/posts/{user_email}
+  - Path: /api/v1/users/following/posts
   - Method: **POST**
   - Content-Type: application/json
   - Required Data: user_id
@@ -550,7 +550,7 @@
                  The *user_id* is the *email* of the logged_in user.
 
 - **get following challenges(feed)**
-  - Path: /api/v1/users/following/challenges/{user_email}
+  - Path: /api/v1/users/following/challenges
   - Method: **POST**
   - Content-Type: application/json
   - Required Data: user_id
