@@ -510,27 +510,57 @@
 
 - **get community posts(feed)**
   - Path: /api/v1/communities/posts/{user_email}
-  - Method: **GET**
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
   - Returns: Posts feeds in the community
   - Description: Gets the users feeds that are in the community of the logged in user.
+                 Alongwith the results it also sends a *last_evaluated_key* parameter 
+                 to get more results if all results are not fetched. If the response 
+                 does not contain *last_evaluated_key*, it means all results have been 
+                 fetched in the response.
+                 The *user_id* is the *email* of the logged_in user.
 
 - **get community challenges(feed)**
   - Path: /api/v1/communities/challenges/{user_email}
-  - Method: **GET**
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
   - Returns: Challenges feeds in the community
   - Description: Gets the users post feeds that are in the community of the logged in user.
+                 Alongwith the results it also sends a *last_evaluated_key* parameter 
+                 to get more results if all results are not fetched. If the response 
+                 does not contain *last_evaluated_key*, it means all results have been 
+                 fetched in the response.
+                 The *user_id* is the *email* of the logged_in user.
 
 - **get following posts(feed)**
   - Path: /api/v1/users/following/posts/{user_email}
-  - Method: **GET**
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
   - Returns: Posts feeds in the following.
-  - Description: Returns all the posts of the followings.
+  - Description: Returns all the posts of the followings. Alongwith the results it 
+                 also sends a *last_evaluated_key* parameter to get more results if all 
+                 results are not fetched. If the response does not contain *last_evaluated_key*, 
+                 it means all results have been fetched in the response.
+                 The *user_id* is the *email* of the logged_in user.
 
 - **get following challenges(feed)**
   - Path: /api/v1/users/following/challenges/{user_email}
-  - Method: **GET**
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
   - Returns: Challenges feeds in the following.
-  - Description: Returns all the challenges of the followings.
+  - Description: Returns all the challenges of the followings. Alongwith the results it 
+                 also sends a *last_evaluated_key* parameter to get more results if all 
+                 results are not fetched. If the response does not contain *last_evaluated_key*, 
+                 it means all results have been fetched in the response.
+                 The *user_id* is the *email* of the logged_in user.
 
 - **report post**
   - Path: /api/v1/reports/{feed}/{user_email}
