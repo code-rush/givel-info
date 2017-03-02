@@ -191,6 +191,8 @@ class GetUserNotifications(Resource):
 
         return response, 200
 
+
+class ChangeNotificationStatus(Resource):
     def put(self, user_email):
         """Changes the state to seen once notification is checked"""
         response = {}
@@ -359,6 +361,7 @@ class NotificationActivityPage(Resource):
 
 
 api.add_resource(GetUserNotifications, '/')
+api.add_resource(ChangeNotificationStatus, '/<user_email>')
 api.add_resource(GetNotification, '/<user_email>')
 api.add_resource(NotificationActivityPage, '/activity/page/<user_email>')
 
