@@ -636,11 +636,7 @@ def get_feeds(users, table, last_evaluated_key=None):
                 else:
                     if post['creator']['S'] in users:
                         feeds.append(post)
-
-        print(date)
-        print(feeds)
-        print(response)
-
+                        
         if response.get('LastEvaluatedKey') != None:
             last_evaluated_key = {}
             last_evaluated_key['last_key'] = response['LastEvaluatedKey']
