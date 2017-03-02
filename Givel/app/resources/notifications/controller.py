@@ -322,7 +322,6 @@ class GetNotification(Resource):
 
                 del feed['Item']['email']
                 del feed['Item']['value']
-                del feed['Item']['only_to_followers']
                 del feed['ResponseMetadata']
 
                 response['message'] = 'Successfully fetched the notification!'
