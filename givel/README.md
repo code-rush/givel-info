@@ -94,6 +94,12 @@
   -IMPORTANT: Check if new_password and confirm_password matches on the front end 
               before sending the new password.
 
+- **get user's stars**
+  - Path: /api/v1/profile/users/stars/{user_email}
+  - Method: **GET**
+  - Returns: *200 OK* Status Code with a message and result if the request is successful.
+  - Description: Gets users stars.
+
 
 ### COMMUNITY APIS
 - **get all communities**
