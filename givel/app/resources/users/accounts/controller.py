@@ -182,6 +182,7 @@ class UserLogin(Resource):
                 del response['result']['password']
                 del response['result']['total_stars_shared']
                 del response['result']['total_stars_earned']
+                del response['result']['givel_stars']
             else:
                 response['message'] = 'Incorrect Password!'
 
@@ -259,6 +260,22 @@ class UserProfilePicture(Resource):
         else:
             response['message'] = 'User not found!'
             return response, 404
+
+
+class GetUsersStars(Resource):
+    def get(self, user_email):
+        response = {}
+
+        user = db.get_item(TableName='users', 
+                            Key={'email': {'S': user_email}})
+
+        if user.get('Item') == None:
+            raise BadRequest('User does not exist. Please register the user.')
+        else:
+            response['message'] = 'Request successful.'
+            response['result'] = {}
+            response['result']['stars'] = user['Item']['givel_stars']
+            return response, 200
 
 
 class UserCommunities(Resource):
@@ -715,5 +732,6 @@ api.add_resource(UserLogin, '/login')
 api.add_resource(ChangePassword, '/<user_email>/password')
 api.add_resource(GiveStarsToFollowings, '/stars/share/<user_email>')
 api.add_resource(ForgotPassword, '/settings/forgot_password')
+profile_api.add_resource(GetUsersStars, '/users/stars/<user_email>')
 profile_api.add_resource(GetUsersProfile, '/users/<user_email>')
 
