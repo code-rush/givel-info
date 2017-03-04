@@ -11,7 +11,8 @@ from werkzeug.exceptions import BadRequest
 from app.helper import (STATES, mid_west_states, southeast_states, 
                         northeast_states, pacific_states, southwest_states,
                         rocky_mountain_states, check_if_user_following_user,
-                        check_if_post_added_to_favorites)
+                        check_if_post_added_to_favorites,
+                        check_if_user_exists, check_if_user_starred)
 
 organizations_uplift_api_routes = Blueprint('uplift_api_routes', __name__)
 api = Api(organizations_uplift_api_routes)
@@ -20,58 +21,120 @@ api = Api(organizations_uplift_api_routes)
 db = boto3.client('dynamodb')
 
 
-class OrganizationsUplift(Resource):
-    def get(self, user_email):
+class UpliftOrganizationsFeed(Resource):
+    def post(self):
         response = {}
+        data = request.get_json(force=True)
 
-        organizations = db.scan(TableName='organizations')
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user_id.')
+
+        if data.get('last_evaluated_key') != None:
+            organizations = db.scan(TableName='organizations',
+                                Limit=50,
+                                ExclusiveStartKey=data['last_evaluated_key']
+                            )
+        else:
+            organizations = db.scan(TableName='organizations',
+                                Limit=50
+                            )
 
         orgs = []
 
-        if organizations.get('Items') == []:
-            response['message'] = 'No organizations exists currently'
-        else:
-            for organization in organizations['Items']:
-                following = check_if_user_following_user(user_email, 
-                                            organization['name']['S'])
-                feed_id = 'organization_' + organization['name']['S']
-                added_to_fav = check_if_post_added_to_favorites(feed_id,
-                                                           user_email)
-                organization['feed'] = {}
-                organization['feed']['id'] = {}
-                organization['feed']['id']['S'] = 'organization'
-                organization['feed']['key'] = organization['name']
-                organization['following'] = {}
-                organization['following']['BOOL'] = following
-                organization['added_to_fav'] = {}
-                organization['added_to_fav']['BOOL'] = added_to_fav
-                organization['organization'] = {}
-                organization['organization']['id'] = organization['name']
-                organization['organization']['picture'] = organization['picture']
-                organization['organization']['description'] = organization['description']
-                del organization['description']
-                del organization['picture']
-                del organization['admin_email']
-                del organization['password']
-                del organization['type']
-                del organization['likes']
-                del organization['comments']
-                del organization['feed_stars']
-                del organization['mid_west_region_stars']
-                del organization['mid_west_region_feed_stars']
-                del organization['north_east_region_stars']
-                del organization['north_east_region_feed_stars']
-                del organization['pacific_region_stars']
-                del organization['pacific_region_feed_stars']
-                del organization['rocky_mountain_region_stars']
-                del organization['rocky_mountain_region_feed_stars']
-                del organization['south_east_region_stars']
-                del organization['south_east_region_feed_stars']
-                del organization['south_west_region_stars']
-                del organization['south_west_region_feed_stars']
-                orgs.append(organization)
-            response['message'] = 'Successfully fetched all organizations'
+        if organizations.get('LastEvaluatedKey') != None:
+            response['last_evaluated_key'] = organizations['LastEvaluatedKey']
+
+        try:
+            for org in organizations['Items']:
+                org['id'] = org['name']
+                del org['admin_email']
+                del org['password']
+                del org['type']
+                del org['likes']
+                del org['comments']
+                del org['feed_stars']
+                del org['mid_west_region_stars']
+                del org['mid_west_region_feed_stars']
+                del org['north_east_region_stars']
+                del org['north_east_region_feed_stars']
+                del org['pacific_region_stars']
+                del org['pacific_region_feed_stars']
+                del org['rocky_mountain_region_stars']
+                del org['rocky_mountain_region_feed_stars']
+                del org['south_east_region_stars']
+                del org['south_east_region_feed_stars']
+                del org['south_west_region_stars']
+                del org['south_west_region_feed_stars']
+                del org['stars']
+                del org['location']
+                del org['link']
+                del org['global']
+
+                orgs.append(org)
+
+            response['message'] = 'Request successful.'
             response['result'] = orgs
+        except:
+            raise BadRequest('Request failed. Please try again later.')
+    
+        return response, 200
+
+
+class GetOrganizationsFeed(Resource):
+    def post(self):
+        response = {}
+        data = request.get_json(force=True)
+
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user_id.')
+        if data.get('organization_id') == None:
+            raise BadRequest("Please provide organization's id.")
+
+        user_exists = check_if_user_exists(data['user_id'])
+        if not user_exists:
+            raise BadRequest('User does not exist. '\
+                             + 'Please register the user.')
+
+        organization = db.get_item(TableName='organizations',
+                                Key={'name': {'S': data['organization_id']}})
+
+        following = check_if_user_following_user(data['user_id'],
+                                        organization['Item']['name']['S'])
+        feed_id = 'organization_' + organization['Item']['name']['S']
+        added_to_fav = check_if_post_added_to_favorites(feed_id, 
+                                                data['user_id'])
+        starred = check_if_user_starred(organization['Item']['name']['S'],
+                                                        data['user_id'])
+
+        if organization['Item']['type']['S'] == 'b-corp':
+            o_type = 'social good'
+        else:
+            o_type = 'non profit'
+        org = {}
+        org['organization'] = {}
+        org['organization']['id'] = organization['Item']['name']
+        org['organization']['name'] = organization['Item']['name']
+        org['organization']['description'] = organization['Item']['description']
+        org['organization']['picture'] = organization['Item']['picture']
+        org['organization']['type'] = {}
+        org['organization']['type']['S'] = o_type
+        org['feed'] = {}
+        org['feed']['id'] = {}
+        org['feed']['id']['S'] = 'organization'
+        org['feed']['key'] = organization['Item']['name']
+        org['following'] = {}
+        org['following']['BOOL'] = following
+        org['added_to_fav'] = {}
+        org['added_to_fav']['BOOL'] = added_to_fav
+        org['stars'] = organization['Item']['stars']
+        org['location'] = organization['Item']['location']
+        org['global'] = organization['Item']['global']
+        org['starred'] = {}
+        org['starred']['BOOL'] = starred
+        org['link'] = organization['Item']['link']
+
+        response['message'] = 'Request successful.'
+        response['result'] = org
 
         return response, 200
 
@@ -153,6 +216,7 @@ class GiveStarsOnUplift(Resource):
 
 
 
-api.add_resource(OrganizationsUplift, '/<user_email>')
+api.add_resource(UpliftOrganizationsFeed, '/')
+api.add_resource(GetOrganizationsFeed, '/feed')
 api.add_resource(GiveStarsOnUplift, '/stars/share/<user_email>')
 
