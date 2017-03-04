@@ -667,10 +667,26 @@
   - Description: Allows the admin to login into the organizations account.
 
 - **uplift feed**
-  - Path: /api/v1/organizations/uplift/{user_email}
-  - Method: **GET**
+  - Path: /api/v1/organizations/uplift/
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id
+  - Optional data: last_evaluated_key
   - Returns: List of all the organization in the category
   - Description: Gets organizations of type 'social_good' and/or 'non-profit'.
+                 Alongwith the results it also sends a *last_evaluated_key* parameter 
+                 to get more results if all results are not fetched. If the response 
+                 does not contain *last_evaluated_key*, it means all results have been 
+                 fetched in the response.
+                 The *user_id* is the *email* of the logged_in user.
+
+- **get organization details**
+  - Path: /api/v1/organizations/uplift/feed
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id, organization_id
+  - Returns: *200 OK* Status Code with a success message.
+  - Description: Gets the details of the organizations.
 
 - **give stars to organization on uplift**
   - Path: /api/v1/organizations/uplift/stars/share/{user_email}
