@@ -57,6 +57,7 @@ class UsersPost(Resource):
         data = request.get_json(force=True)
 
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        creation_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
         if data.get('content') == None:
             raise BadRequest('Post cannot be empty. Please provide '\
@@ -77,7 +78,8 @@ class UsersPost(Resource):
                                      'likes': {'N': '0'},
                                      'stars': {'N': '0'},
                                      'favorites': {'N': '0'},
-                                     'comments': {'N': '0'}
+                                     'comments': {'N': '0'},
+                                     'creation_date': {'S': creation_date}
                                 }
                             )
                 

@@ -47,6 +47,7 @@ class UsersChallengePosts(Resource):
         response = {}
         challenge_data = request.get_json(force=True)
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        creation_date = datetime.datetime.now().strftime("%Y-%m-%d")
         date = date_time.rsplit(' ', 1)[0]
         time = date_time.rsplit(' ', 1)[1]
 
@@ -67,7 +68,8 @@ class UsersChallengePosts(Resource):
                                   'stars': {'N': '0'},
                                   'description': {'S': 
                                           challenge_data['description']},
-                                  'creator': {'S': user_email}
+                                  'creator': {'S': user_email},
+                                  'creation_date': {'S': creation_date}
                             }
                         )
             try:
