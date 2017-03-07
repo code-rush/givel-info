@@ -293,6 +293,7 @@ class AcceptChallenge(Resource):
         response = {}
         data = request.get_json(force=True)
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        creation_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
         if data.get('id') == None and data.get('key') == None:
             raise BadRequest('Please provide ID and Key')
@@ -322,7 +323,8 @@ class AcceptChallenge(Resource):
                              'description': {'S': challenge['Item']\
                                                  ['description']['S']},
                              'location': {'S': challenge['Item']\
-                                                     ['location']['S']}
+                                                     ['location']['S']},
+                             'creation_date': {'S': creation_date}
                         }
                     )
                 if data['id'] != user_email:
@@ -352,6 +354,7 @@ class PostChallengeAsOwn(Resource):
         response = {}
         data = request.get_json(force=True)
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        creation_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
         if data.get('id') == None and data.get('key') == None:
             raise BadRequest('Please provide ID and Key')
@@ -376,7 +379,8 @@ class PostChallengeAsOwn(Resource):
                                      'comments': {'N': '0'},
                                      'stars': {'N': '0'},
                                      'description': {'S': challenge['Item']\
-                                                     ['description']['S']}
+                                                     ['description']['S']},
+                                     'creation_date': {'S': creation_date}
                                 }
                             )
                 response['message'] = 'Challenge Posted as Own!'
@@ -435,6 +439,7 @@ class UsersChallengeRepost(Resource):
         response = {}
         data = request.get_json(force=True)
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        creation_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
         try:
             if data.get('id') == None and data.get('key') == None:
@@ -459,7 +464,8 @@ class UsersChallengeRepost(Resource):
                                   'state': {'S': 'ACTIVE'},
                                   'comments': {'N': '0'},
                                   'stars': {'N': '0'},
-                                  'creator': {'S': user_email}
+                                  'creator': {'S': user_email},
+                                  'creation_date': {'S': creation_date}
                             }
                         )
                 if data.get('location') != None:

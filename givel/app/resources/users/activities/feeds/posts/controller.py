@@ -446,6 +446,7 @@ class UserRepostFeed(Resource):
         response = {}
         data = request.get_json(force=True)
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
+        creation_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
         try:
             if data.get('id') == None or data.get('key') == None:
@@ -466,7 +467,8 @@ class UserRepostFeed(Resource):
                                  'likes': {'N': '0'},
                                  'stars': {'N': '0'},
                                  'favorites': {'N': '0'},
-                                 'comments': {'N': '0'}
+                                 'comments': {'N': '0'},
+                                 'creation_date': {'S': creation_date}
                             }
                         )
 
@@ -644,6 +646,7 @@ class UsersFavoritePosts(Resource):
 
                         del post['email']
                         del post['value']
+                        del post['creation_date']
 
                         favorites.append(post)
                     response['message'] = 'Successfully fetched all favorites'
