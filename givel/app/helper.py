@@ -568,7 +568,8 @@ def get_feeds(users, table, last_evaluated_key=None):
                                  KeyConditionExpression='creation_date = :d',
                                  ExpressionAttributeValues={
                                      ':d': {'S': date}
-                                 }
+                                 },
+                                 ScanIndexForward=False
                              )
                 else:
                     response = db.query(TableName=table,
@@ -578,7 +579,8 @@ def get_feeds(users, table, last_evaluated_key=None):
                                  KeyConditionExpression='creation_date = :d',
                                  ExpressionAttributeValues={
                                      ':d': {'S': date}
-                                 }
+                                 },
+                                 ScanIndexForward=False
                              )
             else:
                 date = last_evaluated_key['query_key']
@@ -592,7 +594,8 @@ def get_feeds(users, table, last_evaluated_key=None):
                                  ExpressionAttributeValues={
                                      ':d': {'S': date}
                                  },
-                                 ExclusiveStartKey=last_evaluated_key['last_key']
+                                 ExclusiveStartKey=last_evaluated_key['last_key'],
+                                 ScanIndexForward=False
                              )
                 else:
                     response = db.query(TableName=table,
@@ -603,7 +606,8 @@ def get_feeds(users, table, last_evaluated_key=None):
                                  ExpressionAttributeValues={
                                      ':d': {'S': date}
                                  },
-                                 ExclusiveStartKey=last_evaluated_key['last_key']
+                                 ExclusiveStartKey=last_evaluated_key['last_key'],
+                                 ScanIndexForward=False
                              )
         else:
             date = today
@@ -615,7 +619,8 @@ def get_feeds(users, table, last_evaluated_key=None):
                                 KeyConditionExpression='creation_date = :d',
                                 ExpressionAttributeValues={
                                     ':d': {'S': date}
-                                }
+                                },
+                                ScanIndexForward=False
                             )
             else:
                 response = db.query(TableName=table,
@@ -625,7 +630,8 @@ def get_feeds(users, table, last_evaluated_key=None):
                             KeyConditionExpression='creation_date = :d',
                             ExpressionAttributeValues={
                                 ':d': {'S': date}
-                            }
+                            },
+                            ScanIndexForward=False
                         )
 
         if response.get('Items') != []:
