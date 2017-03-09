@@ -470,7 +470,7 @@
 - **delete comment**
   - Path: /api/v1/feeds/comments/{user_email}
   - Method: **DELETE**
-  - Required Data: id, key
+  - Required Data: id, key, feed_id
   - Content-Type: application/json
   - Returns: *200 OK* Status code with a message if comment succesfully deleted
   - Description: Deletes users comments if they are the creator of the comment.
