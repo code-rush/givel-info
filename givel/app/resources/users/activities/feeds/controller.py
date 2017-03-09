@@ -482,14 +482,21 @@ class FeedComments(Resource):
             raise BadRequest('Comment ID and Key not provided.')
         if data['id'] != str(user_email):
             raise BadRequest('Only the creator can delete the comment')
+        if data['feed_id'] == None:
+            raise BadRequest('Please provide feed_id.')
         else:
-            delete_comment = db.delete_item(TableName='comments',
-                            Key={'email': {'S': data['id']},
-                                 'creation_time': {'S': data['key']}
-                            }
-                        )
-            update_comments(data['id'], data['key'], 'delete_comment')
-            response['message'] = 'Comment deleted!'
+            try:
+                feed_id = data['feed_id'].rsplit('_', 1)[0]
+                feed_key = data['feed_id'].rsplit('_', 1)[1]
+                delete_comment = db.delete_item(TableName='comments',
+                                Key={'email': {'S': data['id']},
+                                     'creation_time': {'S': data['key']}
+                                }
+                            )
+                update_comments(feed_id, feed_key, 'delete_comment')
+                response['message'] = 'Comment deleted!'
+            except:
+                response['message'] = 'Request failed.'
             return response, 200
 
     def put(self, user_email):
