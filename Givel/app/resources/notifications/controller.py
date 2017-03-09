@@ -199,24 +199,27 @@ class ChangeNotificationStatus(Resource):
         response = {}
         data = request.get_json(force=True)
 
-        if data.get('id') == None and data.get('key') == None:
-            raise BadRequest('Please provide notification id and key.')
+        if data.get('notifications') == None:
+            raise BadRequest("Please provide notification's id and key " \
+                             + "in notifications parameter.")
 
         try:
             if data.get('checked') != None:
                 checked = False
                 if data['checked'] == True:
                     checked = True
+
+            for n in notifications:
                 notification = db.update_item(TableName='notifications',
-                                    Key={'notify_to': {'S': data['id']},
-                                         'creation_time': {'S': data['key']}
+                                    Key={'notify_to': {'S': n['id']},
+                                         'creation_time': {'S': n['key']}
                                     },
                                     UpdateExpression='SET checked = :c',
                                     ExpressionAttributeValues={
                                         ':c': {'BOOL': checked}
                                     }
                                 )
-                response['message'] = 'Request successful!'
+            response['message'] = 'Request successful!'
         except:
             response['message'] = 'Request Failed!'
 
