@@ -859,11 +859,13 @@
             comment/post has been deleted.
 
 
-- **changed notification's status**
+- **change notification's status**
   - Path: /api/v1/notifications/{user_email}
   - Method: **PUT**
   - Content-Type: application/json
-  - Required Data: id, key, checked
+  - Required Data: - notifications: array of dictionaries of notification's id and key
+                                    [{'id': 'notification_id', 'key': 'notification_key'}]
+                   - checked: boolean
   - Returns: *200 OK* Status Code with a message if request is successful
   - Description: Changes the state of the notification to "seen" once the user taps and checks 
                  the notification. *id* and *key* are the notification's id and key which is 
