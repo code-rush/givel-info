@@ -45,53 +45,53 @@ class OrganizationRegistration(Resource):
             raise BadRequest('Please provide all details.')
         if request.form['type'] != 'b-corp' and request.form['type'] != 'non-profit':
             raise BadRequest('Organization can be either b-corp or non-profit')
-        else:
-            organization_name = request.form['name']
-            organization = db.get_item(TableName='organizations',
-                            Key={'name': {'S': organization_name}})
-            if organization.get('Item') != None:
-                raise BadRequest('Organization with that name already exists. ' \
-                                 'Please provide a unique organization name.')
+        
+        organization_name = request.form['name']
+        organization = db.get_item(TableName='organizations',
+                        Key={'name': {'S': organization_name}})
+        if organization.get('Item') != None:
+            raise BadRequest('Organization with that name already exists. ' \
+                             'Please provide a unique organization name.')
 
-            global_org = False
-            if request.form['global'] == 'true':
-                global_org = True
-            else:
-                try:
-                    organization = db.put_item(TableName='organizations',
-                                    Item={'name': {'S': organization_name},
-                                          'description': {'S': request.form['description']},
-                                          'type': {'S': request.form['type']},
-                                          'global': {'BOOL': global_org},
-                                          'location': {'S': request.form['location']},
-                                          'admin_email': {'S': request.form['admin_email']},
-                                          'password': {'S': generate_password_hash(request.form['password'])},
-                                          'stars': {'N': '0'},
-                                          'feed_stars': {'N': '0'},
-                                          'comments': {'N': '0'},
-                                          'likes': {'N': '0'},
-                                          'pacific_region_stars': {'N': '0'},
-                                          'south_west_region_stars': {'N': '0'},
-                                          'rocky_mountain_region_stars': {'N': '0'},
-                                          'south_east_region_stars': {'N': '0'},
-                                          'north_east_region_stars': {'N': '0'},
-                                          'mid_west_region_stars': {'N': '0'},
-                                          'pacific_region_feed_stars': {'N': '0'},
-                                          'south_west_region_feed_stars': {'N': '0'},
-                                          'rocky_mountain_region_feed_stars': {'N': '0'},
-                                          'south_east_region_feed_stars': {'N': '0'},
-                                          'north_east_region_feed_stars': {'N': '0'},
-                                          'mid_west_region_feed_stars': {'N': '0'}
-                                    }
-                                )
+        global_org = False
+        if request.form['global'] == 'true':
+            global_org = True
+        
+        try:
+            organization = db.put_item(TableName='organizations',
+                            Item={'name': {'S': organization_name},
+                                  'description': {'S': request.form['description']},
+                                  'type': {'S': request.form['type']},
+                                  'global': {'BOOL': global_org},
+                                  'location': {'S': request.form['location']},
+                                  'admin_email': {'S': request.form['admin_email']},
+                                  'password': {'S': generate_password_hash(request.form['password'])},
+                                  'stars': {'N': '0'},
+                                  'feed_stars': {'N': '0'},
+                                  'comments': {'N': '0'},
+                                  'likes': {'N': '0'},
+                                  'pacific_region_stars': {'N': '0'},
+                                  'south_west_region_stars': {'N': '0'},
+                                  'rocky_mountain_region_stars': {'N': '0'},
+                                  'south_east_region_stars': {'N': '0'},
+                                  'north_east_region_stars': {'N': '0'},
+                                  'mid_west_region_stars': {'N': '0'},
+                                  'pacific_region_feed_stars': {'N': '0'},
+                                  'south_west_region_feed_stars': {'N': '0'},
+                                  'rocky_mountain_region_feed_stars': {'N': '0'},
+                                  'south_east_region_feed_stars': {'N': '0'},
+                                  'north_east_region_feed_stars': {'N': '0'},
+                                  'mid_west_region_feed_stars': {'N': '0'}
+                            }
+                        )
 
-                    response['message'] = 'Congratulations! Organization registered!'
-                except:
-                    delete_organization = db.delete_item(TableName='organizations',
-                                            Key={'name': {'S': organization_name}})
-                    raise BadRequest('Request Failed! Try again later')
+            response['message'] = 'Congratulations! Organization registered!'
+        except:
+            delete_organization = db.delete_item(TableName='organizations',
+                                    Key={'name': {'S': organization_name}})
+            raise BadRequest('Request Failed! Try again later')
 
-            return response, 201
+        return response, 201
 
 
 class ChangeOrganizationName(Resource):
@@ -197,31 +197,30 @@ class OrganizationPicture(Resource):
 
         if request.form['name'] == None:
             raise BadRequest('Please provide name of the organization!')
-        else:
-            organization_name = request.form['name']
-            organization = db.get_item(TableName='organizations',
-                            Key={'name': {'S': organization_name}})
-            if organization.get('Item') == None:
-                raise BadRequest('Organization with that name does not exist.' \
-                                 'Please register the organization first.')
-            else:
-                try:
-                    picture_file = upload_file(picture, BUCKET_NAME, 
-                                organization_name, ALLOWED_EXTENSIONS)
-                    if picture_file != None:
-                        pic = db.update_item(TableName='organizations',
-                                            Key={'name': {'S': organization_name}},
-                                            UpdateExpression='SET picture = :picture',
-                                            ExpressionAttributeValues={
-                                                     ':picture': {'S': picture_file}}
-                                        )
-                        response['message'] = 'Picture changed successfully!'
-                    else:
-                        response ['message'] = 'File not allowed!'
-                except:
-                    raise BadRequest('Request failed! Try again later')
 
-            return response, 200
+        organization_name = request.form['name']
+        organization = db.get_item(TableName='organizations',
+                        Key={'name': {'S': organization_name}})
+        if organization.get('Item') == None:
+            raise BadRequest('Organization with that name does not exist.' \
+                             'Please register the organization first.')
+        try:
+            picture_file = upload_file(picture, BUCKET_NAME, 
+                        organization_name, ALLOWED_EXTENSIONS)
+            if picture_file != None:
+                pic = db.update_item(TableName='organizations',
+                                    Key={'name': {'S': organization_name}},
+                                    UpdateExpression='SET picture = :picture',
+                                    ExpressionAttributeValues={
+                                             ':picture': {'S': picture_file}}
+                                )
+                response['message'] = 'Picture changed successfully!'
+            else:
+                response ['message'] = 'File not allowed!'
+        except:
+            raise BadRequest('Request failed! Try again later')
+
+        return response, 200
 
 
 class OrganizationLogin(Resource):
@@ -265,23 +264,23 @@ class ChangePassword(Resource):
         if data.get('current_password') == None \
           or data.get('new_password') == None:
             raise BadRequest('Please provide both old and new password.')
+        
+        if check_password_hash(organization['Item']['password']['S'], \
+                                          data['current_password']):
+            update_pwd = db.update_item(TableName='organizations',
+                            Key={'name': {'S': str(ogz)}},
+                            UpdateExpression='SET password = :pwd',
+                            ExpressionAttributeValues={
+                                ':pwd': {
+                                    'S': generate_password_hash(
+                                          data['new_password'])}
+                            }
+                        )
+            response['message'] = 'Password Updated!'
         else:
-            if check_password_hash(organization['Item']['password']['S'], \
-                                              data['current_password']):
-                update_pwd = db.update_item(TableName='organizations',
-                                Key={'name': {'S': str(ogz)}},
-                                UpdateExpression='SET password = :pwd',
-                                ExpressionAttributeValues={
-                                    ':pwd': {
-                                        'S': generate_password_hash(
-                                              data['new_password'])}
-                                }
-                            )
-                response['message'] = 'Password Updated!'
-            else:
-                response['message'] = 'Please enter correct current password'
+            response['message'] = 'Please enter correct current password'
 
-            return response, 200
+        return response, 200
 
 
 class OrganizationUpliftBillboard(Resource):

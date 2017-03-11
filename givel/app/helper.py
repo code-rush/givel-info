@@ -240,7 +240,6 @@ def update_comments(id, key, operation):
                             }
                         )
     else:
-        feed_type = None
         get_feed = db.get_item(TableName='posts',
                         Key={'email': {'S': id},
                              'creation_time': {'S': key}
