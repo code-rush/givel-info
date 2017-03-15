@@ -639,7 +639,9 @@ def get_feeds(users, table, last_evaluated_key=None):
                     if post['email']['S'] in users:
                         feeds.append(post)
                 else:
-                    if post['creator']['S'] in users:
+                    if post['creator']['S'] in users \
+                      and (post['state']['S'] != 'INACTIVE' \
+                      or post['state']['S'] != 'COMPLETE'):
                         feeds.append(post)
                         
         if response.get('LastEvaluatedKey') != None:
