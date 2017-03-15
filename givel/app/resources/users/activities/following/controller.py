@@ -617,11 +617,11 @@ class UserFollowingChallengesFeeds(Resource):
                     del challenge['creation_key']
                     del challenge['creation_date']
 
-                    if challenge_accepted:
-                        if c_state == 'INACTIVE' or c_state == 'COMPLETE':
-                            del challenge
-                        else:
-                            feeds.append(challenge)
+                    if challenge_accepted and (c_state == 'INACTIVE' \
+                      or c_state == 'COMPLETE'):
+                        del challenge
+                    else:
+                        feeds.append(challenge)
 
             response['message'] = 'Request successful.'
             response['results'] = feeds
