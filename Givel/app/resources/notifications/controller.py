@@ -209,7 +209,7 @@ class ChangeNotificationStatus(Resource):
                 if data['checked'] == True:
                     checked = True
 
-            for n in notifications:
+            for n in data['notifications']:
                 notification = db.update_item(TableName='notifications',
                                     Key={'notify_to': {'S': n['id']},
                                          'creation_time': {'S': n['key']}
