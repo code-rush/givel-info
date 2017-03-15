@@ -156,7 +156,7 @@ class CommunityPosts(Resource):
                     del post['value']
                     del post['creation_date']
 
-                feeds.append(post)
+                    feeds.append(post)
 
             response['message'] = 'Request successful.'
             response['results'] = feeds
@@ -285,7 +285,12 @@ class CommunityChallenges(Resource):
                     del challenge['creation_key']
                     del challenge['creation_date']
 
-                feeds.append(challenge)
+                    if challenge_accepted and (c_state == 'INACTIVE' \
+                      or c_state == 'COMPLETE'):
+                        del challenge
+                    else:
+                        feeds.append(challenge)
+
             response['message'] = 'Request successful.'
             response['results'] = feeds
         except:
