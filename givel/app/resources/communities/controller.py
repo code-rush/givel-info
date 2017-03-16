@@ -244,6 +244,9 @@ class CommunityChallenges(Resource):
                                                         feed_id, data['user_id'])
                     accepted_users_list = get_challenge_accepted_users(
                                                   feed_id, data['user_id'])
+
+                    if challenge_accepted == True:
+                        challenge['accepted_time'] = challenge['creation_time']
                     challenge['user'] = {}
                     challenge['user']['name'] = {}
                     challenge['user']['id'] = challenge['creator']
@@ -270,8 +273,6 @@ class CommunityChallenges(Resource):
                     challenge['accepted_users']['SS'] = accepted_users_list
                     challenge['creation_time'] = challenge['creation_key']
 
-                    if challenge_accepted == True:
-                        challenge['accepted_time'] = challenge['creation_time']
 
                     if challenge['creator']['S'] != data['user_id']:
                         following = check_if_user_following_user(data['user_id'],
