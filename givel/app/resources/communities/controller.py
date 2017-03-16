@@ -247,6 +247,8 @@ class CommunityChallenges(Resource):
 
                     if challenge_accepted == True:
                         challenge['accepted_time'] = challenge['creation_time']
+                        challenge['state'] = {}
+                        challenge['state']['S'] = c_state
                     challenge['user'] = {}
                     challenge['user']['name'] = {}
                     challenge['user']['id'] = challenge['creator']
@@ -256,9 +258,6 @@ class CommunityChallenges(Resource):
                     challenge['feed'] = {}
                     challenge['feed']['id'] = challenge['creator']
                     challenge['feed']['key'] = challenge['creation_key']
-                    if c_state != None:
-                        challenge['state'] = {}
-                        challenge['state']['S'] = c_state
                     challenge['liked'] = {}
                     challenge['starred'] = {}
                     challenge['commented'] = {}
