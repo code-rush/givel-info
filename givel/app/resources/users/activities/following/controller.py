@@ -580,6 +580,8 @@ class UserFollowingChallengesFeeds(Resource):
                         challenge['accepted_time'] = challenge['creation_time']
                         challenge['state'] = {}
                         challenge['state']['S'] = c_state
+                    else:
+                        del challenge['state']
                     challenge['user'] = {}
                     challenge['user']['id'] = challenge['creator']
                     challenge['user']['name'] = {}
