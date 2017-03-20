@@ -135,6 +135,10 @@ def create_posts_table():
                 {
                     'AttributeName': 'value',
                     'AttributeType': 'N'
+                },
+                {
+                    'AttributeName': 'creation_date',
+                    'AttributeType': 'S'
                 }
             ],
             GlobalSecondaryIndexes=[
@@ -156,6 +160,26 @@ def create_posts_table():
                     'ProvisionedThroughput': {
                         'ReadCapacityUnits': 5,
                         'WriteCapacityUnits': 5
+                    }
+                },
+                {
+                    'IndexName': 'creation-date-time',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'creation_date',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'creation_time',
+                            'KeyType': 'RANGE'
+                        },
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 2,
+                        'WriteCapacityUnits': 1
                     }
                 }
             ],
@@ -201,11 +225,7 @@ def create_challenges_table():
                     'AttributeType': 'N'
                 },
                 {
-                    'AttributeName': 'creator',
-                    'AttributeType': 'S'
-                },
-                {
-                    'AttributeName': 'creation_key',
+                    'AttributeName': 'creation_date',
                     'AttributeType': 'S'
                 }
             ],
@@ -231,23 +251,23 @@ def create_challenges_table():
                     }
                 },
                 {
-                    'IndexName': 'challenge-creator-key',
+                    'IndexName': 'creation-date-time',
                     'KeySchema': [
                         {
-                            'AttributeName': 'creator',
+                            'AttributeName': 'creation_date',
                             'KeyType': 'HASH'
                         },
                         {
-                            'AttributeName': 'creation_key',
+                            'AttributeName': 'creation_time',
                             'KeyType': 'RANGE'
                         },
                     ],
                     'Projection': {
-                        'ProjectionType': 'KEYS_ONLY'
+                        'ProjectionType': 'ALL'
                     },
                     'ProvisionedThroughput': {
-                        'ReadCapacityUnits': 5,
-                        'WriteCapacityUnits': 3
+                        'ReadCapacityUnits': 2,
+                        'WriteCapacityUnits': 1
                     }
                 }
             ],
@@ -828,4 +848,68 @@ def create_following_activity_table():
             print('following_activity Table does not exist')
     finally:
         return following_activity_table
+
+
+def create_challenges_activity_table():
+    try:
+        challenges_activity_table = dynamodb.create_table(
+            TableName='challenges_activity',
+            KeySchema=[
+                {
+                    'AttributeName': 'email',
+                    'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'accepted_time',
+                    'KeyType': 'RANGE'
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'email',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'accepted_time',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'challenge_id',
+                    'AttributeType': 'S'
+                }
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'challenge-id-email',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'challenge_id',
+                            'KeyType': 'HASH'
+                        },
+                        {
+                            'AttributeName': 'email',
+                            'KeyType': 'RANGE'
+                        }
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 2,
+                        'WriteCapacityUnits': 1
+                    }
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 2,
+                'WriteCapacityUnits': 2
+            }
+        )
+    except:
+        try:
+            challenges_activity_table = dynamodb.Table('challenges_activity')
+        except:
+            print('challenges_activity Table does not exist')
+    finally:
+        return challenges_activity_table
 
