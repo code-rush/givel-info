@@ -8,11 +8,10 @@ from flask_restful import Api, Resource
 
 from app.helper import (check_if_taking_off, check_if_user_liked,
                     check_if_user_starred, check_if_user_commented,
-                    get_user_details, check_challenge_state,
+                    get_user_details, update_notifications_activity_page,
                     check_if_user_exists, check_if_post_added_to_favorites,
                     check_if_challenge_accepted, get_challenge_accepted_users,
-                    check_if_user_following_user, get_feeds,
-                    update_notifications_activity_page)
+                    check_if_user_following_user, get_feeds)
 
 from app.models import create_following_activity_table
 
@@ -562,35 +561,33 @@ class UserFollowingChallengesFeeds(Resource):
 
         try:
             for challenge in following_feeds:
-                user_name, profile_picture, home = get_user_details(challenge['creator']['S'])
+                user_name, profile_picture, home = get_user_details(challenge['email']['S'])
                 if user_name == None:
                     del challenge
                 else:
-                    feed_id = challenge['creator']['S'] + '_' + challenge['creation_key']['S']
+                    feed_id = challenge['email']['S'] + '_' + challenge['creation_time']['S']
                     liked = check_if_user_liked(feed_id, data['user_id'])
                     starred = check_if_user_starred(feed_id, data['user_id'])
                     commented = check_if_user_commented(feed_id, data['user_id'])
-                    # state = check_challenge_state(challenge['email']['S'], challenge['creation_time']['S'])
                     taking_off = check_if_taking_off(feed_id, 'challenges')
-                    challenge_accepted, c_state = check_if_challenge_accepted(
+                    accepted, state, ac_time = check_if_challenge_accepted(
                                                           feed_id, data['user_id'])
                     accepted_users_list = get_challenge_accepted_users(
                                                    feed_id, data['user_id'])
-                    if challenge_accepted == True:
-                        challenge['accepted_time'] = challenge['creation_time']
+                    if accepted == True:
+                        challenge['accepted_time'] = {}
+                        challenge['accepted_time']['S'] = ac_time
                         challenge['state'] = {}
-                        challenge['state']['S'] = c_state
-                    else:
-                        del challenge['state']
+                        challenge['state']['S'] = state
                     challenge['user'] = {}
-                    challenge['user']['id'] = challenge['creator']
+                    challenge['user']['id'] = challenge['email']
                     challenge['user']['name'] = {}
                     challenge['user']['profile_picture'] = {}
                     challenge['user']['name']['S'] = user_name
                     challenge['user']['profile_picture']['S'] = profile_picture
                     challenge['feed'] = {}
-                    challenge['feed']['id'] = challenge['creator']
-                    challenge['feed']['key'] = challenge['creation_key']
+                    challenge['feed']['id'] = challenge['email']
+                    challenge['feed']['key'] = challenge['creation_time']
                     challenge['liked'] = {}
                     challenge['starred'] = {}
                     challenge['commented'] = {}
@@ -600,25 +597,22 @@ class UserFollowingChallengesFeeds(Resource):
                     challenge['starred']['BOOL'] = starred
                     challenge['commented']['BOOL'] = commented
                     challenge['accepted'] = {}
-                    challenge['accepted']['BOOL'] = challenge_accepted
+                    challenge['accepted']['BOOL'] = accepted
                     challenge['accepted_users'] = {}
                     challenge['accepted_users']['SS'] = accepted_users_list
-                    challenge['creation_time'] = challenge['creation_key']
 
-                    if challenge['creator']['S'] != data['user_id']:
+                    if challenge['email']['S'] != data['user_id']:
                         following = check_if_user_following_user(data['user_id'],
-                                                challenge['creator']['S'])
+                                                challenge['email']['S'])
                         challenge['user']['following'] = {}
                         challenge['user']['following']['BOOL'] = following
 
                     del challenge['email']
-                    del challenge['creator']
                     del challenge['value']
-                    del challenge['creation_key']
                     del challenge['creation_date']
 
-                    if challenge_accepted and (c_state == 'INACTIVE' \
-                      or c_state == 'COMPLETE'):
+                    if accepted and (state == 'INACTIVE' \
+                      or state == 'COMPLETE' or state == 'INCOMPLETE'):
                         del challenge
                     else:
                         feeds.append(challenge)
