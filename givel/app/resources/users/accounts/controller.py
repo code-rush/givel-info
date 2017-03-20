@@ -19,7 +19,7 @@ from app.helper import (upload_file, check_if_community_exists,
                         check_if_user_following_user, get_user_details,
                         check_if_user_liked, check_if_user_starred,
                         check_if_user_starred, check_if_taking_off,
-                        check_challenge_state, check_if_user_commented,
+                        check_if_user_commented,
                         update_notifications_activity_page)
 
 
@@ -662,40 +662,40 @@ class GetUsersProfile(Resource):
                             )
 
                 users_challenges = []
-                for challenge in challenges['Items']:
-                    user_name, profile_picture, home = get_user_details(
-                                                challenge['creator']['S'])
-                    feed_id = challenge['email']['S'] + '_' \
-                              + challenge['creation_time']['S']
-                    liked = check_if_user_liked(feed_id, user_email)
-                    starred = check_if_user_starred(feed_id, user_email)
-                    commented = check_if_user_commented(feed_id, user_email)
-                    state = check_challenge_state(challenge['email']['S'],
-                                            challenge['creation_time']['S'])
-                    taking_off = check_if_taking_off(feed_id, 'challenges')
-                    challenge['user'] = {}
-                    challenge['user']['name'] = {}
-                    challenge['user']['profile_picture'] = {}
-                    challenge['user']['id'] = challenge['creator']
-                    challenge['user']['name']['S'] = user_name
-                    challenge['user']['profile_picture']['S'] = profile_picture
-                    challenge['feed'] = {}
-                    challenge['feed']['id'] = challenge['email']
-                    challenge['feed']['key'] = challenge['creation_time']
-                    challenge['state'] = {}
-                    challenge['state']['S'] = state
-                    challenge['liked'] = {}
-                    challenge['starred'] = {}
-                    challenge['commented'] = {}
-                    challenge['taking_off'] = {}
-                    challenge['taking_off']['BOOL'] = taking_off
-                    challenge['liked']['BOOL'] = liked
-                    challenge['starred']['BOOL'] = starred
-                    challenge['commented']['BOOL'] = commented
-                    del challenge['email']
-                    del challenge['creator']
-                    del challenge['value']
-                    users_challenges.append(challenge)
+                # for challenge in challenges['Items']:
+                #     user_name, profile_picture, home = get_user_details(
+                #                                 challenge['creator']['S'])
+                #     feed_id = challenge['email']['S'] + '_' \
+                #               + challenge['creation_time']['S']
+                #     liked = check_if_user_liked(feed_id, user_email)
+                #     starred = check_if_user_starred(feed_id, user_email)
+                #     commented = check_if_user_commented(feed_id, user_email)
+                #     state = check_challenge_state(challenge['email']['S'],
+                #                             challenge['creation_time']['S'])
+                #     taking_off = check_if_taking_off(feed_id, 'challenges')
+                #     challenge['user'] = {}
+                #     challenge['user']['name'] = {}
+                #     challenge['user']['profile_picture'] = {}
+                #     challenge['user']['id'] = challenge['creator']
+                #     challenge['user']['name']['S'] = user_name
+                #     challenge['user']['profile_picture']['S'] = profile_picture
+                #     challenge['feed'] = {}
+                #     challenge['feed']['id'] = challenge['email']
+                #     challenge['feed']['key'] = challenge['creation_time']
+                #     challenge['state'] = {}
+                #     challenge['state']['S'] = state
+                #     challenge['liked'] = {}
+                #     challenge['starred'] = {}
+                #     challenge['commented'] = {}
+                #     challenge['taking_off'] = {}
+                #     challenge['taking_off']['BOOL'] = taking_off
+                #     challenge['liked']['BOOL'] = liked
+                #     challenge['starred']['BOOL'] = starred
+                #     challenge['commented']['BOOL'] = commented
+                #     del challenge['email']
+                #     del challenge['creator']
+                #     del challenge['value']
+                #     users_challenges.append(challenge)
 
                 profile_details['followers'] = {}
                 profile_details['followers']['SS'] = followers
