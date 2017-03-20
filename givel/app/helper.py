@@ -372,10 +372,10 @@ def check_if_user_commented(feed_id, user_id):
         commented = True
     return commented
 
-def check_challenge_state(id, key):
-    challenge = db.get_item(TableName='challenges',
+def get_challenge_state(id, key):
+    challenge = db.get_item(TableName='challenges_activity',
                         Key={'email': {'S': id},
-                             'creation_time': {'S': key}
+                             'accepted_time': {'S': key}
                         }
                     )
     if challenge['Item']['state']['S'] == 'COMPLETE':
@@ -386,14 +386,14 @@ def check_challenge_state(id, key):
         return state
     elif challenge['Item']['state']['S'] == 'ACTIVE':
         current_time = datetime.datetime.now()
-        creation_time = datetime.datetime.strptime(key, "%Y-%m-%d %H:%M:%S:%f")
-        diff = current_time - creation_time
+        accepted_time = datetime.datetime.strptime(key, "%Y-%m-%d %H:%M:%S:%f")
+        diff = current_time - accepted_time
         str_diff = str(diff).rsplit(' ', 2)
         if len(str_diff) > 1:
             if int(str_diff[0]) >= 2:
-                change_state = db.update_item(TableName='challenges',
+                change_state = db.update_item(TableName='challenges_activity',
                                     Key={'email': {'S': id},
-                                         'creation_time': {'S': key}
+                                         'accepted_time': {'S': key}
                                     },
                                     UpdateExpression='SET #s = :st',
                                     ExpressionAttributeNames={
@@ -461,40 +461,38 @@ def check_if_post_added_to_favorites(feed_id, user_id):
     return added_to_fav
 
 
-def check_if_challenge_accepted(challenge_creator_id, user_id):
+def check_if_challenge_accepted(challenge_id, user_id):
     challenge_accepted = False
     state = None
-    creator = challenge_creator_id.rsplit('_', 1)[0]
-    creation_key = challenge_creator_id.rsplit('_', 1)[1]
+    accepted_time = None
+    creator = challenge_id.rsplit('_', 1)[0]
 
-    challenges = db.query(TableName='challenges',
-                    IndexName='challenges-creator-key',
-                    KeyConditionExpression='creator = :c AND creation_key = :k',
+    challenge = db.query(TableName='challenges_activity',
+                    IndexName='challenge-id-email',
+                    KeyConditionExpression='challenge_id = :c AND email = :e',
                     ExpressionAttributeValues={
-                        ':c': {'S': creator},
-                        ':k': {'S': creation_key}
+                        ':c': {'S': challenge_id},
+                        ':e': {'S': user_id}
                     }
                 )
 
-    if challenges.get('Items') != []:
-        for i in challenges['Items']:
-            if i['email']['S'] == user_id:
-                challenge_accepted = True
-                state = check_challenge_state(user_id, 
-                                        i['creation_time']['S'])
+    if challenge.get('Items') != []:
+        challenge_accepted = True
+        state = get_challenge_state(user_id, 
+                            challenge['Items'][0]['accepted_time']['S'])
+        accepted_time = challenge['Items'][0]['accepted_time']['S']
 
-    return challenge_accepted, state
+    return challenge_accepted, state, accepted_time
 
-def get_challenge_accepted_users(challenge_creator_id, user_id):
-    creator = challenge_creator_id.rsplit('_', 1)[0]
-    creation_key = challenge_creator_id.rsplit('_', 1)[1]
 
-    users_list = db.query(TableName='challenges', 
-                      IndexName='challenges-creator-key',
-                      KeyConditionExpression='creator = :c AND creation_key = :k',
+def get_challenge_accepted_users(challenge_id, user_id):
+    creator = challenge_id.rsplit('_', 1)[0]
+
+    users_list = db.query(TableName='challenges_activity', 
+                      IndexName='challenge-id-email',
+                      KeyConditionExpression='challenge_id = :c',
                       ExpressionAttributeValues={
-                          ':c': {'S': creator},
-                          ':k': {'S': creation_key}
+                          ':c': {'S': challenge_id}
                       }
                   )
     accepted_users = []
@@ -503,7 +501,7 @@ def get_challenge_accepted_users(challenge_creator_id, user_id):
         for u in users_list['Items']:
             if creator != u['email']['S']:
                 user_exists = check_if_user_exists(u['email']['S'])
-                if user_exists == True:
+                if user_exists:
                     user_name, profile_picture, home = get_user_details(
                                                         u['email']['S'])
                     following = check_if_user_following_user(user_id,
@@ -559,73 +557,37 @@ def get_feeds(users, table, last_evaluated_key=None):
         if last_evaluated_key != None:
             if last_evaluated_key.get('last_key') == None:
                 date = get_next_date(last_evaluated_key['query_key'])
-                if table == 'posts':
-                    response = db.query(TableName=table,
-                                 Limit=100,
-                                 Select='ALL_ATTRIBUTES',
-                                 IndexName='creation-date-time',
-                                 KeyConditionExpression='creation_date = :d',
-                                 ExpressionAttributeValues={
-                                     ':d': {'S': date}
-                                 },
-                                 ScanIndexForward=False
-                             )
-                else:
-                    response = db.query(TableName=table,
-                                 Limit=100,
-                                 Select='ALL_ATTRIBUTES',
-                                 IndexName='creation-date-key',
-                                 KeyConditionExpression='creation_date = :d',
-                                 ExpressionAttributeValues={
-                                     ':d': {'S': date}
-                                 },
-                                 ScanIndexForward=False
-                             )
+                # if table == 'posts':
+                response = db.query(TableName=table,
+                             Limit=100,
+                             Select='ALL_ATTRIBUTES',
+                             IndexName='creation-date-time',
+                             KeyConditionExpression='creation_date = :d',
+                             ExpressionAttributeValues={
+                                 ':d': {'S': date}
+                             },
+                             ScanIndexForward=False
+                         )
             else:
                 date = last_evaluated_key['query_key']
                 LastEvaluatedKey = last_evaluated_key['last_key']
-                if table == 'posts':
-                    response = db.query(TableName=table,
-                                 Limit=100,
-                                 Select='ALL_ATTRIBUTES',
-                                 IndexName='creation-date-time',
-                                 KeyConditionExpression='creation_date = :d',
-                                 ExpressionAttributeValues={
-                                     ':d': {'S': date}
-                                 },
-                                 ExclusiveStartKey=last_evaluated_key['last_key'],
-                                 ScanIndexForward=False
-                             )
-                else:
-                    response = db.query(TableName=table,
-                                 Limit=100,
-                                 Select='ALL_ATTRIBUTES',
-                                 IndexName='creation-date-key',
-                                 KeyConditionExpression='creation_date = :d',
-                                 ExpressionAttributeValues={
-                                     ':d': {'S': date}
-                                 },
-                                 ExclusiveStartKey=last_evaluated_key['last_key'],
-                                 ScanIndexForward=False
-                             )
+                response = db.query(TableName=table,
+                             Limit=100,
+                             Select='ALL_ATTRIBUTES',
+                             IndexName='creation-date-time',
+                             KeyConditionExpression='creation_date = :d',
+                             ExpressionAttributeValues={
+                                 ':d': {'S': date}
+                             },
+                             ExclusiveStartKey=last_evaluated_key['last_key'],
+                             ScanIndexForward=False
+                         )
         else:
             date = today
-            if table == 'posts':
-                response = db.query(TableName=table,
-                                Select='ALL_ATTRIBUTES',
-                                Limit=100,
-                                IndexName='creation-date-time',
-                                KeyConditionExpression='creation_date = :d',
-                                ExpressionAttributeValues={
-                                    ':d': {'S': date}
-                                },
-                                ScanIndexForward=False
-                            )
-            else:
-                response = db.query(TableName=table,
+            response = db.query(TableName=table,
                             Select='ALL_ATTRIBUTES',
                             Limit=100,
-                            IndexName='creation-date-key',
+                            IndexName='creation-date-time',
                             KeyConditionExpression='creation_date = :d',
                             ExpressionAttributeValues={
                                 ':d': {'S': date}
@@ -635,11 +597,7 @@ def get_feeds(users, table, last_evaluated_key=None):
 
         if response.get('Items') != []:
             for post in response['Items']:
-                if table == 'posts':
-                    if post['email']['S'] in users:
-                        feeds.append(post)
-                else:
-                    if post['creator']['S'] in users:
+                if post['email']['S'] in users:
                         feeds.append(post)
                         
         if response.get('LastEvaluatedKey') != None:
