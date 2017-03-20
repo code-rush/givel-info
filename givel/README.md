@@ -313,25 +313,44 @@
   - Path: /api/v1/users/challenges/{user_email}
   - Method: **PUT**
   - Content-Type: application/json
-  - Data: description, state, id, key
+  - Data: description, id, key
   - Returns: *200 OK* Status Code and message if challenge edited successfully.
   - Description: - Edits challenge description. {user_email} is the email id for 
                    the one editing the challenge.
                  - Only the creator of the challenge can edit the challenge. If someone 
                    else trys to edit the challenge, it raises a BadRequest Exception.
-                 - Either only description or state is sent in the request.
-                 - state can either be 'incomplete', 'complete' or 'inactive'
+
+- **change challenge's state**
+  - Path: /api/v1/users/challenges/state/change/{user_email}
+  - Method: **PUT**
+  - Content-Type: application/json
+  - Required Data: id, key, accepted, state, new_state
+  - Returns: *200 OK* Status Code and message if challenge edited successfully.
+  - Description: - Changes the state of the challenge. The challenge should be either 
+                   created or accepted by the user to be able to change the state.
+                 - value for *new_state* can either be 'incomplete', 'complete' or 'inactive'
                  - if the challenge has been created 48 hrs ago, the client should send 
                    a request to change the state of the challenge to 'inactive'.
                  - 'complete' and 'incomplete' states are the events occured only when 
                    the user interacts with it.
+                 - the state of the challenge can only be changed if the current *state* 
+                   value is 'ACTIVE' or 'INACTIVE' and *accepted* value is true else it 
+                   raise *BadRequest Exception*.
+
 
 - **get user's challenges**
-  - Path: /api/v1/users/challenges/{user_email}
-  - Method: **GET**
+  - Path: /api/v1/users/challenges/
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
   - Returns: *200 OK* Status Code and message if fetched challenges successfully.
   - Description: Gets all users challenges. 
                 - Use *creation_time* to calculate time to display on challenge.
+                - Alongwith the results it also sends a *last_evaluated_key* parameter
+                  to get more results if all results are not fetched. If the response does 
+                  not contain *last_evaluated_key*, it means all results have been 
+                  fetched in the response. The *user_id* is the *email* of the logged_in user.
 
 - **delete user's challenge**
   - Path: /api/v1/users/challenges/{user_email}
