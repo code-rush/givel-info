@@ -176,6 +176,9 @@
                 - *origin*: origin of the person being tagged
                 - *length*: length of their tag. (Could be either 
                             full or first name)
+      - link = (Dictionary). Send *origin* and *length* of the link.
+                - *origin*: origin of the link.
+                - *length*: length of the link.
   - Returns:  - If *file_count* is not **0** then, the response will contain feed's *id* 
                  and *key*. Use this feed *id* and *key* to send the file in 
                  **add files to the post** api.
