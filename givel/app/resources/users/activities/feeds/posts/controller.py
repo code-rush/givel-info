@@ -126,6 +126,23 @@ class UsersPost(Resource):
                                   }
                               )
 
+                if data.get('link') != None:
+                    add_link = {}
+                    add_link['origin'] = {}
+                    add_link['origin']['N'] = str(data['link']['origin'])
+                    add_link['length'] = {}
+                    add_link['length']['N'] = str(data['link']['length'])
+
+                    post = db.update_item(TableName='posts',
+                                Key={'email': {'S': user_email},
+                                     'creation_time': {'S': date_time}
+                                },
+                                UpdateExpression='SET link = :l',
+                                ExpressionAttributeValues={
+                                    ':l': {'M': add_link}
+                                }
+                            )
+
                 if data.get('tags') != None:
                     tags = []
                     for t in data['tags']:
@@ -177,7 +194,7 @@ class UsersPost(Resource):
                                   'creation_time': {'S': date_time}
                              }
                          )
-                response['message'] = 'Failed to create post. Try again later.'
+                raise BadRequest('Failed to create post. Try again later.')
             return response, 201
 
 
