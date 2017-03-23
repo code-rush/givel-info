@@ -378,13 +378,14 @@ def get_challenge_state(id, key):
                              'accepted_time': {'S': key}
                         }
                     )
-    if challenge['Item']['state']['S'] == 'COMPLETE':
+    challenge_state = challenge['Item']['state']['S']
+    if challenge_state == 'COMPLETE':
         state = 'COMPLETE'
         return state
-    elif challenge['Item']['state']['S'] == 'INCOMPLETE':
+    elif challenge_state == 'INCOMPLETE':
         state = 'INCOMPLETE'
         return state
-    elif challenge['Item']['state']['S'] == 'ACTIVE':
+    elif challenge_state == 'ACTIVE':
         current_time = datetime.datetime.now()
         accepted_time = datetime.datetime.strptime(key, "%Y-%m-%d %H:%M:%S:%f")
         diff = current_time - accepted_time
@@ -411,7 +412,7 @@ def get_challenge_state(id, key):
         else:
             state = 'ACTIVE'
             return state
-    elif challenge['Item']['state']['S'] == 'INACTIVE':
+    elif challenge_state == 'INACTIVE':
         state = 'INACTIVE'
         return state
 
@@ -478,9 +479,8 @@ def check_if_challenge_accepted(challenge_id, user_id):
 
     if challenge.get('Items') != []:
         challenge_accepted = True
-        state = get_challenge_state(user_id, 
-                            challenge['Items'][0]['accepted_time']['S'])
-        accepted_time = challenge['Items'][0]['accepted_time']['S']
+        accepted_time = challenge['Items'][0]['accepted_time']['S'] 
+        state = get_challenge_state(user_id, accepted_time)
 
     return challenge_accepted, state, accepted_time
 
