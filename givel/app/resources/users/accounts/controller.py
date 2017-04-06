@@ -551,6 +551,31 @@ class ForgotPassword(Resource):
             return response, 200
 
 
+class GetUsersStarsDetails(Resource):
+    def get(self, user_email):
+        """Gets user's stars account details."""
+        response = {}
+        user_exists = check_if_user_exists(user_email)
+
+        if not user_exists:
+            raise BadRequest('User does not exist.')
+
+        user = db.get_item(TableName='users', 
+                          Key={'email': {'S': user_email}})
+
+        result = {}
+        result['sign_up_bonus'] = {}
+        result['others_kind_acts'] = user['Item']['total_stars_earned']
+        result['sign_up_bonus']['N'] = '25'
+        result['my_kind_acts'] = user['Item']['total_stars_shared']
+        result['stars_balance'] = user['Item']['givel_stars']
+
+        response['message'] = 'Request successful.'
+        response['result'] = result
+
+        return response, 200
+
+
 class GetUsersProfile(Resource):
     def post(self, user_email):
         """Returns user's profile"""
@@ -734,4 +759,6 @@ api.add_resource(GiveStarsToFollowings, '/stars/share/<user_email>')
 api.add_resource(ForgotPassword, '/settings/forgot_password')
 profile_api.add_resource(GetUsersStars, '/users/stars/<user_email>')
 profile_api.add_resource(GetUsersProfile, '/users/<user_email>')
+profile_api.add_resource(GetUsersStarsDetails, 
+                          '/users/stars/activity/<user_email>')
 
