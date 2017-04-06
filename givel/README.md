@@ -100,6 +100,13 @@
   - Returns: *200 OK* Status Code with a message and result if the request is successful.
   - Description: Gets users stars.
 
+- **get user's stars history**
+  - Path: /api/v1/profile/users/stars/activity/{user_email}
+  - Method: **GET**
+  - Returns: *200 OK* Status Code with a message and result if the request is successful.
+  - Description: Gets user's stars history like *user's sign up bonus*, *user's kind of 
+                 acts*, *user's current stars balance* and *others kind of acts*.
+
 
 ### COMMUNITY APIS
 - **get all communities**
