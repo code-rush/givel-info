@@ -19,8 +19,10 @@ from app.helper import (upload_file, check_if_community_exists,
                         check_if_user_following_user, get_user_details,
                         check_if_user_liked, check_if_user_starred,
                         check_if_user_starred, check_if_taking_off,
-                        check_if_user_commented,
-                        update_notifications_activity_page)
+                        check_if_user_commented, check_if_challenge_accepted,
+                        update_notifications_activity_page,
+                        get_challenge_accepted_users,
+                        check_if_post_added_to_favorites)
 
 
 user_account_api_routes = Blueprint('account_api', __name__)
@@ -661,6 +663,7 @@ class GetUsersProfileFollowers(Resource):
                                         user_email, follower['id1']['S'])
 
                         f = {}
+                        f['user'] = {}
                         f['user']['name'] = {}
                         f['user']['id'] = {}
                         f['user']['home_community'] = {}
@@ -897,7 +900,7 @@ class GetUsersProfilePosts(Resource):
         if data.get('last_evaluated_key') == None:
             user_posts = db.query(TableName='posts',
                                 Select='ALL_ATTRIBUTES',
-                                Limi=50,
+                                Limit=50,
                                 KeyConditionExpression='email = :e',
                                 ExpressionAttributeValues={
                                     ':e': {'S': user_email}
