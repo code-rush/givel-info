@@ -584,170 +584,412 @@ class GetUsersProfile(Resource):
 
         if data.get('user_id') == None:
             raise BadRequest('Please provide user_id.')
+
+        user_profile = db.get_item(TableName='users',
+                        Key={'email': {'S':data['user_id']}})
+
+        user_following = check_if_user_following_user(user_email, 
+                                                  data['user_id'])
+        name, picture, home = get_user_details(data['user_id'])
+
+        profile_details = {}
+
+        if user_profile['Item'] != None:
+            profile_details['user'] = {}
+            profile_details['user']['name'] = {}
+            profile_details['user']['name']['S'] = name
+            profile_details['user']['profile_picture'] = {}
+            profile_details['user']['profile_picture']['S'] = picture
+            profile_details['user']['home_community'] = {}
+            profile_details['user']['home_community']['S'] = home
+            profile_details['user']['following'] = {}
+            profile_details['user']['following']['BOOL'] = user_following
+
+            response['message'] = 'Request successful!'
+            response['result'] = profile_details
         else:
-            user_profile = db.get_item(TableName='users',
-                            Key={'email': {'S':data['user_id']}})
+            response['message'] = 'User not found!'
 
-            user_following = check_if_user_following_user(user_email, 
-                                                      data['user_id'])
-            name, picture, home = get_user_details(data['user_id'])
+        return response, 200
 
-            profile_details = {}
 
-            if user_profile['Item'] != None:
-                followings = []
-                followers = []
-                if user_profile['Item'].get('following') != None:
-                    for following in user_profile['Item']['following']['SS']:
-                        user_name, profile_picture, home = get_user_details(following)
-                        following_following = check_if_user_following_user(user_email,
-                                                                            following)
-                        user_profile['followings'] = {}
-                        user_profile['followings']['id'] = {}
-                        user_profile['followings']['name'] = {}
-                        user_profile['followings']['following'] = {}
-                        user_profile['followings']['profile_picture'] = {}
-                        user_profile['followings']['home_community'] = {}
-                        user_profile['followings']['id']['S'] = following
-                        user_profile['followings']['name']['S'] = user_name
-                        user_profile['followings']['following']['BOOL'] = following_following
-                        user_profile['followings']['profile_picture']['S'] = profile_picture
-                        user_profile['followings']['home_community']['S'] = home
-                        followings.append(user_profile['followings'])
+class GetUsersProfileFollowers(Resource):
+    def post(self, user_email):
+        """Returns user's followers"""
+        response = {}
+        data = request.get_json(force=True)
 
-                if user_profile['Item'].get('followers') != None:
-                    for follower in user_profile['Item']['followers']['SS']:
-                        user_name, profile_picture, home = get_user_details(follower)
-                        following_follower = check_if_user_following_user(user_email, 
-                                                                            follower)
-                        user_profile['follower'] = {}
-                        user_profile['follower']['id'] = {}
-                        user_profile['follower']['name'] = {}
-                        user_profile['follower']['following'] = {}
-                        user_profile['follower']['profile_picture'] = {}
-                        user_profile['follower']['home_community'] = {}
-                        user_profile['follower']['id']['S'] = follower
-                        user_profile['follower']['name']['S'] = user_name
-                        user_profile['follower']['following']['BOOL'] = following_follower
-                        user_profile['follower']['profile_picture']['S'] = profile_picture
-                        user_profile['follower']['home_community']['S'] = home
-                        followers.append(user_profile['follower'])
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user\'s id.')
 
-                badges = []
+        followers = []
+        try:
+            if data.get('last_evaluated_key') != None:
+                users = db.query(TableName='following_activity',
+                                Limit=200,
+                                IndexName='id2-following',
+                                KeyConditionExpression='id2 = :id and \
+                                                        following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                },
+                                ExclusiveStartKey=data['last_evaluated_key'],
+                                ScanIndexForward=False
+                            )
+            else:
+                users = db.query(TableName='following_activity',
+                                Limit=200,
+                                IndexName='id2-following',
+                                KeyConditionExpression='id2 = :id and \
+                                                        following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                },
+                                ScanIndexForward=False
+                            )
 
-                posts = db.query(TableName='posts',
-                            Select='ALL_ATTRIBUTES',
-                            Limit=50,
-                            KeyConditionExpression='email = :e',
-                            ExpressionAttributeValues={
-                                ':e': {'S': data['user_id']}
-                            }
-                        )
+            if users.get('Items') != []:
+                for follower in users['Items']: 
+                    follower_exists = check_if_user_exists(
+                                        follower['id1']['S'])
+                    if follower_exists:
+                        user_name, photo, home = get_user_details(
+                                                    follower['id1']['S'])
+                        following_follower = check_if_user_following_user(
+                                        user_email, follower['id1']['S'])
 
-                users_posts = []
-                for post in posts['Items']:
-                    user_name, profile_picture, home = get_user_details(data['user_id'])
-                    feed_id = post['email']['S'] + '_' + post['creation_time']['S']
+                        f = {}
+                        f['user']['name'] = {}
+                        f['user']['id'] = {}
+                        f['user']['home_community'] = {}
+                        f['user']['name']['S'] = user_name
+                        f['user']['id']['S'] = follower['id1']['S']
+                        f['user']['home_community']['S'] = home
+                        if photo != None:
+                            f['user']['profile_picture'] = {}
+                            f['user']['profile_picture']['S'] = photo
+                        f['user']['following'] = {}
+                        f['user']['following']['BOOL'] = following_follower
+
+                        followers.append(f)
+
+            if users.get('LastEvaluatedKey') != None:
+                response['last_evaluated_key'] = users['LastEvaluatedKey']
+
+            response['message'] = 'Request successful.'
+            response['result'] = followers
+        except:
+            response['message'] = 'Request failed. Please try again later.'
+
+        return response, 200
+
+
+class GetUsersProfileFollowings(Resource):
+    def post(self, user_email):
+        """Returns user's followings"""
+        response = {}
+        data = request.get_json(force=True)
+
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user\'s id in user_id.')
+
+        followings = []
+        try:
+            if data.get('last_evaluated_key') != None:
+                users = db.query(TableName='following_activity',
+                                IndexName='id1-following',
+                                Limit=200,
+                                KeyConditionExpression='id1 = :id and \
+                                                      following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                },
+                                ExclusiveStartKey=data['last_evaluated_key'],
+                                ScanIndexForward=False
+                            )
+            else:
+                users = db.query(TableName='following_activity',
+                                IndexName='id1-following',
+                                Limit=200,
+                                KeyConditionExpression='id1 = :id and \
+                                                      following = :f',
+                                ExpressionAttributeValues={
+                                    ':id': {'S': data['user_id']},
+                                    ':f': {'S': 'True'}
+                                },
+                                ScanIndexForward=False
+                            )
+
+            if users.get('Items') != []:
+                for following in users['Items']:
+                    f = {}
+                    f['followings'] = {}
+                    f['followings']['id'] = {}
+                    f['followings']['name'] = {}
+                    if following['type']['S'] == 'user':
+                        following_user_exists = check_if_user_exists(
+                                                following['id2']['S'])
+                        if following_user_exists:
+                            user_name, photo, home = get_user_details(
+                                                   following['id2']['S'])
+                            following_user = check_if_user_following_user(
+                                        user_email, following['id2']['S'])
+                            f['followings']['home_community'] = {}
+                            f['followings']['id'] = following['id2']
+                            f['followings']['name']['S'] = user_name
+                            f['followings']['home_community']['S'] = home
+                            f['followings']['type'] = {}
+                            f['followings']['type']['S'] = 'user'
+                            f['followings']['following'] = {}
+                            f['followings']['following']['BOOL'] = following_user
+                            if photo != None:
+                                f['followings']['profile_picture'] = {}
+                                f['followings']['profile_picture']['S'] = photo
+                            followings.append(f)
+                    else:
+                        org = db.get_item(TableName='organizations',
+                            Key={'name': {'S': following['id2']['S']}})
+                        following_org = check_if_user_following_user(
+                                        user_email, following['id2']['S'])
+
+                        if org.get('Item') != None:
+                            f['followings']['type'] = {}
+                            f['followings']['type']['S'] = 'organization'
+                            f['followings']['id']['S'] = following['id2']['S']
+                            f['followings']['name']['S'] = org['Item']\
+                                                              ['name']['S']
+                            f['followings']['profile_picture'] = org['Item']\
+                                                                  ['picture']
+                            f['followings']['following'] = {}
+                            f['followings']['following']['BOOL'] = following_org
+                            followings.append(f)
+
+            if users.get('LastEvaluatedKey') != None:
+                response['last_evaluated_key'] = users['LastEvaluatedKey']
+
+            response['message'] = 'Request successful.'
+            response['result'] = followings
+        except:
+            response['message'] = 'Request failed. Try again later.'
+
+        return response, 200
+
+
+class GetUsersProfileChallenges(Resource):
+    def post(self, user_email):
+        """Returns user's challenges"""
+        response = {}
+        data = request.get_json(force=True)
+
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user\'s id in user_id.')
+
+        if data.get('last_evaluated_key') == None:
+            user_challenges = db.query(TableName='challenges_activity',
+                                Limit=50,
+                                Select='ALL_ATTRIBUTES',
+                                KeyConditionExpression='email = :e',
+                                ExpressionAttributeValues={
+                                    ':e': {'S': data['user_id']},
+                                },
+                                ScanIndexForward=False,
+                            )
+        else:
+            user_challenges = db.query(TableName='challenges_activity',
+                                Limit=50,
+                                Select='ALL_ATTRIBUTES',
+                                KeyConditionExpression='email = :e',
+                                ExpressionAttributeValues={
+                                    ':e': {'S': data['user_id']},
+                                },
+                                ScanIndexForward=False,
+                            )
+
+        if user_challenges.get('LastEvaluatedKey') != None:
+            response['last_evaluated_key'] = user_challenges['LastEvaluatedKey']
+
+        feeds = []
+
+        try:
+            for challenges in user_challenges['Items']:
+                c_id = challenges['challenge_id']['S'].rsplit('_', 1)[0]
+                c_key = challenges['challenge_id']['S'].rsplit('_', 1)[1]
+
+                challenge = db.get_item(TableName='challenges',
+                                        Key={'email': {'S': c_id},
+                                             'creation_time': {'S': c_key}
+                                        }
+                                    )
+
+                user_name, profile_picture, home = get_user_details(
+                                                challenge['Item']['email']['S'])
+                if user_name == None:
+                    pass
+                else:
+                    feed_id = challenges['challenge_id']['S']
                     liked = check_if_user_liked(feed_id, user_email)
                     starred = check_if_user_starred(feed_id, user_email)
                     commented = check_if_user_commented(feed_id, user_email)
-                    taking_off = check_if_taking_off(feed_id, 'posts')
-                    post['user'] = {}
-                    post['user']['name'] = {}
-                    post['user']['id'] = {}
-                    post['user']['profile_picture'] = {}
-                    post['user']['id']['S'] = data['user_id']
-                    post['user']['name']['S'] = user_name
-                    post['user']['profile_picture']['S'] = profile_picture
-                    post['feed'] = {}
-                    post['feed']['id'] = {}
-                    post['feed']['id']['S'] = post['email']['S']
-                    post['feed']['key'] = {}
-                    post['feed']['key']['S'] = post['creation_time']['S']
-                    post['liked'] = {}
-                    post['starred'] = {}
-                    post['commented'] = {}
-                    post['taking_off'] = {}
-                    post['taking_off']['BOOL'] = taking_off
-                    post['liked']['BOOL'] = liked
-                    post['starred']['BOOL'] = starred
-                    post['commented']['BOOL'] = commented
-                    del post['email']
-                    del post['value']
-                    users_posts.append(post)
+                    taking_off = check_if_taking_off(feed_id, 'challenges')
+                    accepted, state, ac_time = check_if_challenge_accepted(
+                                                  feed_id, user_email)
+                    accepted_users_list = get_challenge_accepted_users(
+                                                    feed_id, user_email)
 
-                
-                challenges = db.query(TableName='challenges',
+                    challenge['Item']['user'] = {}
+                    challenge['Item']['user']['name'] = {}
+                    challenge['Item']['user']['profile_picture'] = {}
+                    challenge['Item']['user']['id'] = challenge['Item']['email']
+                    challenge['Item']['user']['name']['S'] = user_name
+                    challenge['Item']['user']['profile_picture']['S'] = profile_picture
+                    challenge['Item']['feed'] = {}
+                    challenge['Item']['feed']['id'] = challenge['Item']['email']
+                    challenge['Item']['feed']['key'] = challenge['Item']['creation_time']
+                    challenge['Item']['state'] = {}
+                    challenge['Item']['state']['S'] = state
+                    challenge['Item']['liked'] = {}
+                    challenge['Item']['starred'] = {}
+                    challenge['Item']['commented'] = {}
+                    challenge['Item']['taking_off'] = {}
+                    challenge['Item']['taking_off']['BOOL'] = taking_off
+                    challenge['Item']['liked']['BOOL'] = liked
+                    challenge['Item']['starred']['BOOL'] = starred
+                    challenge['Item']['commented']['BOOL'] = commented
+                    challenge['Item']['accepted'] = {}
+                    challenge['Item']['accepted']['BOOL'] = accepted
+                    challenge['Item']['accepted_users'] = {}
+                    challenge['Item']['accepted_users']['SS'] = accepted_users_list
+                    challenge['Item']['accepted_time'] = {}
+                    challenge['Item']['accepted_time']['S'] = ac_time
+
+                    if challenge['Item']['email']['S'] != user_email:
+                        following = check_if_user_following_user(user_email,
+                                                challenge['Item']['email']['S'])
+                        challenge['Item']['user']['following'] = {}
+                        challenge['Item']['user']['following']['BOOL'] = following
+
+                    del challenge['Item']['email']
+                    del challenge['Item']['value']
+                    del challenge['Item']['creation_date']
+
+                    feeds.append(challenge['Item'])
+
+            response['message'] = 'Request successful.'
+            response['result'] = feeds
+        except:
+            response['message'] = 'Request failed. Try again later.'
+
+        return response, 200
+
+
+class GetUsersProfilePosts(Resource):
+    def post(self, user_email):
+        """Returns user's posts"""
+        response = {}
+        data = request.get_json(force=True)
+
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user\'s id in user_id.')
+
+        if data.get('last_evaluated_key') == None:
+            user_posts = db.query(TableName='posts',
+                                Select='ALL_ATTRIBUTES',
+                                Limi=50,
+                                KeyConditionExpression='email = :e',
+                                ExpressionAttributeValues={
+                                    ':e': {'S': user_email}
+                                }
+                            )
+        else:
+            user_posts = db.query(TableName='posts',
                                 Select='ALL_ATTRIBUTES',
                                 Limit=50,
                                 KeyConditionExpression='email = :e',
                                 ExpressionAttributeValues={
-                                    ':e': {'S': data['user_id']}
-                                }
+                                    ':e': {'S': user_email}
+                                },
+                                ExclusiveStartKey=data['last_evaluated_key']
                             )
 
-                users_challenges = []
-                # for challenge in challenges['Items']:
-                #     user_name, profile_picture, home = get_user_details(
-                #                                 challenge['creator']['S'])
-                #     feed_id = challenge['email']['S'] + '_' \
-                #               + challenge['creation_time']['S']
-                #     liked = check_if_user_liked(feed_id, user_email)
-                #     starred = check_if_user_starred(feed_id, user_email)
-                #     commented = check_if_user_commented(feed_id, user_email)
-                #     state = check_challenge_state(challenge['email']['S'],
-                #                             challenge['creation_time']['S'])
-                #     taking_off = check_if_taking_off(feed_id, 'challenges')
-                #     challenge['user'] = {}
-                #     challenge['user']['name'] = {}
-                #     challenge['user']['profile_picture'] = {}
-                #     challenge['user']['id'] = challenge['creator']
-                #     challenge['user']['name']['S'] = user_name
-                #     challenge['user']['profile_picture']['S'] = profile_picture
-                #     challenge['feed'] = {}
-                #     challenge['feed']['id'] = challenge['email']
-                #     challenge['feed']['key'] = challenge['creation_time']
-                #     challenge['state'] = {}
-                #     challenge['state']['S'] = state
-                #     challenge['liked'] = {}
-                #     challenge['starred'] = {}
-                #     challenge['commented'] = {}
-                #     challenge['taking_off'] = {}
-                #     challenge['taking_off']['BOOL'] = taking_off
-                #     challenge['liked']['BOOL'] = liked
-                #     challenge['starred']['BOOL'] = starred
-                #     challenge['commented']['BOOL'] = commented
-                #     del challenge['email']
-                #     del challenge['creator']
-                #     del challenge['value']
-                #     users_challenges.append(challenge)
+        if user_posts.get('LastEvaluatedKey') != None:
+            response['last_evaluated_key'] = user_posts['LastEvaluatedKey']
 
-                profile_details['followers'] = {}
-                profile_details['followers']['SS'] = followers
-                profile_details['followings'] = {}
-                profile_details['followings']['SS'] = followings
-                profile_details['badges'] = {}
-                profile_details['badges']['SS'] = badges
-                profile_details['user'] = {}
-                profile_details['user']['name'] = {}
-                profile_details['user']['name']['S'] = name
-                profile_details['user']['profile_picture'] = {}
-                profile_details['user']['profile_picture']['S'] = picture
-                profile_details['user']['home_community'] = {}
-                profile_details['user']['home_community']['S'] = home
-                profile_details['user']['following'] = {}
-                profile_details['user']['following']['BOOL'] = user_following
-                profile_details['posts'] = {}
-                profile_details['challenges'] = {}
-                profile_details['posts']['SS'] = users_posts
-                profile_details['challenges']['SS'] = users_challenges
+        try:
+            for posts in user_posts['Items']:
+                user_name, profile_picture, home = get_user_details(user_email)
+                if user_name == None:
+                    del posts
+                else:
+                    feed_id = posts['email']['S'] + '_' + posts['creation_time']['S']
+                    liked = check_if_user_liked(feed_id, user_email)
+                    starred = check_if_user_starred(feed_id, user_email)
+                    commented = check_if_user_commented(feed_id, user_email)
+                    taking_off = check_if_taking_off(feed_id, 'posts')
+                    added_to_fav = check_if_post_added_to_favorites(feed_id, 
+                                                                  user_email)
+                    posts['user'] = {}
+                    posts['user']['name'] = {}
+                    posts['user']['id'] = {}
+                    posts['user']['profile_picture'] = {}
+                    posts['user']['id']['S'] = user_email
+                    posts['user']['name']['S'] = user_name
+                    posts['user']['profile_picture']['S'] = profile_picture
+                    posts['feed'] = {}
+                    posts['feed']['id'] = {}
+                    posts['feed']['id']['S'] = posts['email']['S']
+                    posts['feed']['key'] = {}
+                    posts['feed']['key']['S'] = posts['creation_time']['S']
+                    posts['liked'] = {}
+                    posts['starred'] = {}
+                    posts['commented'] = {}
+                    posts['taking_off'] = {}
+                    posts['taking_off']['BOOL'] = taking_off
+                    posts['liked']['BOOL'] = liked
+                    posts['starred']['BOOL'] = starred
+                    posts['commented']['BOOL'] = commented
+                    posts['added_to_fav'] = {}
+                    posts['added_to_fav']['BOOL'] = added_to_fav
 
-                response['message'] = 'Request successful!'
-                response['result'] = profile_details
-            else:
-                response['message'] = 'User not found!'
+                    if posts.get('tags') != None:
+                        tags = []
+                        for t in posts['tags']['L']:
+                            tags.append(t['M'])
+                        posts['tags']['L'] = tags
 
-            return response, 200
+                    if posts['email']['S'] != user_email:
+                        following = check_if_user_following_user(user_email,
+                                                    posts['email']['S'])
+                        posts['user']['following'] = {}
+                        posts['user']['following']['BOOL'] = following
+
+                    del posts['email']
+                    del posts['value']
+            response['message'] = 'Request successful.'
+            response['result'] = user_posts['Items']
+        except:
+            response['message'] = 'Request failed.'
+
+        return response, 200
+
+
+class GetUsersProfileBadges(Resource):
+    def post(self, user_email):
+        """Returns user's badges"""
+        response = {}
+        data = request.get_json(force=True)
+
+        if data.get('user_id') == None:
+            raise BadRequest('Please provide user\'s id in user_id.')
+
+        badges = []
+        response['message'] = 'Request successful.'
+        response['result'] = badges
+
+        return response, 200
+
 
 
 api.add_resource(UserAccount, '/')
@@ -758,7 +1000,17 @@ api.add_resource(ChangePassword, '/<user_email>/password')
 api.add_resource(GiveStarsToFollowings, '/stars/share/<user_email>')
 api.add_resource(ForgotPassword, '/settings/forgot_password')
 profile_api.add_resource(GetUsersStars, '/users/stars/<user_email>')
-profile_api.add_resource(GetUsersProfile, '/users/<user_email>')
 profile_api.add_resource(GetUsersStarsDetails, 
                           '/users/stars/activity/<user_email>')
+profile_api.add_resource(GetUsersProfile, '/users/<user_email>')
+profile_api.add_resource(GetUsersProfilePosts, '/users/<user_email>/posts')
+profile_api.add_resource(GetUsersProfileChallenges, 
+                          '/users/<user_email>/challenges')
+profile_api.add_resource(GetUsersProfileFollowings, 
+                          '/users/<user_email>/followings')
+profile_api.add_resource(GetUsersProfileFollowers, 
+                          '/users/<user_email>/followers')
+profile_api.add_resource(GetUsersProfileBadges, 
+                          '/users/<user_email>/badges')
+
 
