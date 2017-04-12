@@ -932,18 +932,86 @@
 
 ### Get User's Profile Page (Following, Followers, Badges, Activity)
 
-- **get user's profile**
+- **get user's profile details**
   - Path: /api/v1/profile/users/{user_email}
   - Method: **POST**
   - Content-Type: application/json
   - Required Data: user_id
   - Returns: List of followings and followers and badges if the request is successful.
-  - Description: Gets user's profile page with results consisting of the user's followers,
-                 following and badges and activity(posts and challenges). {user_email} is 
-                 the email of the user who is logged in to the application.
-                 The *following* Key has a boolean value for the user_email following the 
-                 user_id and the *following* Key in the following and followers list has a 
-                 boolean value for the user_email following the user in the list.
+  - Description: Gets user's profile page with results consisting of the user's profile 
+                 details. 
+                 - {user_email} is the email of the user who is logged in to the application.
+                 - The *following* Key has a boolean value for the user_email following the 
+                 user_id. 
+
+
+- **get user's profile followings list**
+  - Method: **POST**
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
+  - Returns: Users all followings list as results with a message and *200 OK* Status Code.
+  - Description: Gets all list of user's followings as results. Alongwith the results it 
+                 also sends a *last_evaluated_key* parameter to get more results if all 
+                 results are not fetched. If the response does not contain *last_evaluated_key*, 
+                 it means all results have been fetched in the response.
+                 - {user_email} is the email of the user who is logged in to the application.
+                 - The *following* Key in the followings list has a boolean value for the 
+                   *user_email* following the user in the list.
+
+
+- **get user's profile followers list**
+  - Method: **POST**
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
+  - Returns: List of all followers if any with a success message and *200 OK* Status Code.
+  - Description: Returns all users followers as results with a message. Alongwith the results it 
+                 also sends a *last_evaluated_key* parameter to get more results if all 
+                 results are not fetched. If the response does not contain *last_evaluated_key*, 
+                 it means all results have been fetched in the response.
+                 - {user_email} is the email of the user who is logged in to the application.
+                 - The *following* Key in the followings list has a boolean value for the 
+                   *user_email* following the user in the list.postsposts
+
+
+- **get user's profile challenges**
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
+  - Returns: *200 OK* Status Code and message if fetched challenges successfully.
+  - Description: Gets all users challenges. 
+                - Use *creation_time* to calculate time to display on challenge.
+                - Alongwith the results it also sends a *last_evaluated_key* parameter
+                  to get more results if all results are not fetched. If the response does 
+                  not contain *last_evaluated_key*, it means all results have been 
+                  fetched in the response. The *user_id* is the *email* of the logged_in user.
+                - {user_email} is the email of the user who is logged in to the application.
+
+
+- **get user's profile posts**
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id
+  - Optional Data: last_evaluated_key
+  - Returns: *200 OK* Status Code and message if fetched challenges successfully.
+  - Description: Gets the users feeds that are in the community of the logged in user.
+                 Alongwith the results it also sends a *last_evaluated_key* parameter 
+                 to get more results if all results are not fetched. If the response 
+                 does not contain *last_evaluated_key*, it means all results have been 
+                 fetched in the response.
+                 - Use *creation_time* to calculate time to display on challenge.
+                 - {user_email} is the email of the user who is logged in to the application.
+
+
+- **get user's profile badges**
+  - Path: /api/v1/profile/users/{user_email}/badges
+  - Method: **POST**
+  - Content-Type: application/json
+  - Required Data: user_id
+  - Returns: List of badges and a message if the request is successful.
+  - Description: Gets the user's badges list.
+                 - {user_email} is the email of the user who is logged in to the application.
+
 
 
 ### FAQ apis
