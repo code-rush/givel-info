@@ -946,6 +946,7 @@
 
 
 - **get user's profile followings list**
+  - Path: /api/v1/profile/users/{user_email}/followings
   - Method: **POST**
   - Required Data: user_id
   - Optional Data: last_evaluated_key
@@ -960,6 +961,7 @@
 
 
 - **get user's profile followers list**
+  - Path: /api/v1/profile/users/{user_email}/followers
   - Method: **POST**
   - Required Data: user_id
   - Optional Data: last_evaluated_key
@@ -974,6 +976,7 @@
 
 
 - **get user's profile challenges**
+  - Path: /api/v1/profile/users/{user_email}/challenges
   - Method: **POST**
   - Content-Type: application/json
   - Required Data: user_id
@@ -989,6 +992,7 @@
 
 
 - **get user's profile posts**
+  - Path: /api/v1/profile/users/{user_email}/posts
   - Method: **POST**
   - Content-Type: application/json
   - Required Data: user_id
