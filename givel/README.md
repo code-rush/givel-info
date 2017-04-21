@@ -211,13 +211,13 @@
   - Path: /api/v1/users/posts/files/{user_email}
   - Method: **PUT**
   - Content-Type: multipart/form-data
-  - Required Data: id, key, file_count, file
+  - Required Data: id, key, file_count, file, media_width, media_height
                 - file_count= 0 (default value should be 0. while sending file value is 
                        number of files. Max value is 1.)
                 - file = (send file only if file_count is not 0)
   - Allowed files: 
       - IMAGE(.jpg, .png, .jpeg)
-      - VIDEOS(.mp4, .mpeg)
+      - VIDEOS(.mp4, .mpeg, .mov/.MOV)
   - Returns: *200 OK* Status Code with a successful message if the file added successfully.
   - Description: Adds files to the post. Use this api only to add file to the post.
 
