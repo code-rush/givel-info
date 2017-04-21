@@ -379,28 +379,28 @@ class UsersPost(Resource):
             raise BadRequest('Please provide required data')
         if post_data['id'] != str(user_email):
             raise BadRequest('Posts can only be deleted by the creators!')
-        else:
-            post = db.get_item(TableName='posts',
-                               Key={'email': {'S': post_data['id']},
-                                    'creation_time': {'S': post_data['key']}
-                               }
-                           )
-            if post['Item'].get('pictures') != None:
-                for picture in post['Item']['pictures']['SS']:
-                    key = picture.rsplit('/', 1)[1]
-                    s3.delete_object(Bucket=BUCKET_NAME, Key=key)
-            if post['Item'].get('videos') != None:
-                for video in post['Item']['videos']['SS']:
-                    key = video.rsplit('/', 1)[1]
-                    s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+        
+        post = db.get_item(TableName='posts',
+                           Key={'email': {'S': post_data['id']},
+                                'creation_time': {'S': post_data['key']}
+                           }
+                       )
+        if post['Item'].get('pictures') != None:
+            for picture in post['Item']['pictures']['SS']:
+                key = picture.rsplit('/', 1)[1]
+                s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+        if post['Item'].get('videos') != None:
+            for video in post['Item']['videos']['SS']:
+                key = video.rsplit('/', 1)[1]
+                s3.delete_object(Bucket=BUCKET_NAME, Key=key)
 
-            delete_post = db.delete_item(TableName='posts',
-                                        Key={'email': {'S': post_data['id']},
-                                             'creation_time': {'S': post_data['key']}
-                                        }
-                                    )
-            response['message'] = 'Post deleted!'
-            return response, 200
+        delete_post = db.delete_item(TableName='posts',
+                                    Key={'email': {'S': post_data['id']},
+                                         'creation_time': {'S': post_data['key']}
+                                    }
+                                )
+        response['message'] = 'Post deleted!'
+        return response, 200
 
 
 class FileActivityOnPost(Resource):
@@ -414,46 +414,73 @@ class FileActivityOnPost(Resource):
         if request.form.get('file_count') == None:
             raise BadRequest('Please provide file_count. If no files are ' \
                                               + 'sent, set file_count to 0')
-        if int(request.form['file_count']) != 0 and int(request.form['file_count']) > 1:
+        if int(request.form['file_count']) != 0 \
+          and int(request.form['file_count']) > 1:
             raise BadRequest('Only one file is allowed!')
         elif request.form['id'] != user_email:
-            raise BadRequest('Only the creator of the post is allowed to edit the post.')
-        else:
-            old_post = db.get_item(TableName='posts', 
-                        Key={'email': {'S': request.form['id']},
-                             'creation_time': {'S': request.form['key']}
-                        }
-                    )
-            try:
-                if 'file_count' in request.form and int(request.form['file_count']) == 1:
-                    f = request.files['file']
-                    media_file, file_type = upload_post_file(f, BUCKET_NAME,
-                                     user_email+file_id_ex, ALLOWED_EXTENSIONS)
-                    if file_type == 'picture_file':
-                        post = db.update_item(TableName='posts',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': request.form['key']}
-                                      },
-                                      UpdateExpression='ADD pictures :p',
-                                      ExpressionAttributeValues={
-                                          ':p': {'SS': [media_file]}
-                                      }
-                                  )
-                    elif file_type == 'video_file':
-                        post = db.update_item(TableName='posts',
-                                      Key={'email': {'S': user_email},
-                                           'creation_time': {'S': request.form['key']}
-                                      },
-                                      UpdateExpression='ADD videos :v',
-                                      ExpressionAttributeValues={
-                                          ':v': {'SS': [media_file]}
-                                      }
-                                  )
-                response['message'] = 'Successfully added picture to post!'
-            except:
-                raise BadRequest('Request failed! Try again later.')
+            raise BadRequest('Only the creator of the post is \
+                                    allowed to edit the post.')
 
-            return response,200
+        if request.form['media_height'] == None \
+          or request.form['media_width'] == None:
+            raise BadRequest('Please provide media_height and media_width.')
+        
+        old_post = db.get_item(TableName='posts', 
+                    Key={'email': {'S': request.form['id']},
+                         'creation_time': {'S': request.form['key']}
+                    }
+                )
+
+        media_width = str(request.form['media_width'])
+        media_height = str(request.form['media_height'])
+
+        media_dimensions = []
+
+        dimensions = {}
+        dimensions['M'] = {}
+        dimensions['M']['media_width'] = {}
+        dimensions['M']['media_width']['N'] = media_width
+        dimensions['M']['media_height'] = {}
+        dimensions['M']['media_height']['N'] = media_height
+
+        media_dimensions.append(dimensions)
+
+
+        try:
+            if 'file_count' in request.form \
+              and int(request.form['file_count']) == 1:
+                f = request.files['file']
+                media_file, file_type = upload_post_file(f, BUCKET_NAME,
+                                 user_email+file_id_ex, ALLOWED_EXTENSIONS)
+                if file_type == 'picture_file':
+                    post = db.update_item(TableName='posts',
+                          Key={'email': {'S': user_email},
+                               'creation_time': {'S': request.form['key']}
+                          },
+                          UpdateExpression='ADD pictures :p, \
+                                            SET media_dimensions = :md',
+                          ExpressionAttributeValues={
+                              ':p': {'SS': [media_file]},
+                              ':md': {'L': media_dimensions}
+                          }
+                      )
+                elif file_type == 'video_file':
+                    post = db.update_item(TableName='posts',
+                          Key={'email': {'S': user_email},
+                               'creation_time': {'S': request.form['key']}
+                          },
+                          UpdateExpression='ADD videos :v, \
+                                            SET media_dimensions = :md',
+                          ExpressionAttributeValues={
+                              ':v': {'SS': [media_file]},
+                              ':md': {'L': media_dimensions}
+                          }
+                      )
+            response['message'] = 'Successfully added picture to post!'
+        except:
+            raise BadRequest('Request failed! Try again later.')
+
+        return response,200
                 
 
 
