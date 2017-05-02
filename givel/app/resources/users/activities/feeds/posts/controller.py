@@ -387,11 +387,11 @@ class UsersPost(Resource):
                                 'creation_time': {'S': post_data['key']}
                            }
                        )
-        if post['Item'].get('pictures') != None:
+        if post['Item'].get('pictures') != []:
             for picture in post['Item']['pictures']['SS']:
                 key = picture.rsplit('/', 1)[1]
                 s3.delete_object(Bucket=BUCKET_NAME, Key=key)
-        if post['Item'].get('videos') != None:
+        if post['Item'].get('videos') != []:
             for video in post['Item']['videos']['SS']:
                 key = video.rsplit('/', 1)[1]
                 s3.delete_object(Bucket=BUCKET_NAME, Key=key)
