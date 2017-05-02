@@ -50,9 +50,10 @@ except:
     pass
 
 
+
 class UsersPost(Resource):
     def post(self, user_email):
-        """Creates Post"""
+        """Creates a user's feed post"""
         response = {}
         data = request.get_json(force=True)
 
@@ -199,7 +200,7 @@ class UsersPost(Resource):
 
 
     def put(self, user_email):
-        """Edit Post"""
+        """Edits user's feed post"""
         response = {}
 
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
@@ -371,8 +372,9 @@ class UsersPost(Resource):
             response['message'] = 'Failed to fetch users posts!'
         return response, 200
 
+
     def delete(self, user_email):
-        """Deletes User's Post"""
+        """Deletes a user's feed post"""
         response={}
         post_data = request.get_json(force=True)
         if post_data.get('id') == None or post_data.get('key') == None:
@@ -405,6 +407,7 @@ class UsersPost(Resource):
 
 class FileActivityOnPost(Resource):
     def put(self, user_email):
+        """Add or Remove file to the user's feed post"""
         response = {}
 
         file_id_ex = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
@@ -457,23 +460,44 @@ class FileActivityOnPost(Resource):
                           Key={'email': {'S': user_email},
                                'creation_time': {'S': request.form['key']}
                           },
-                          UpdateExpression='ADD pictures :p, \
-                                            SET media_dimensions = :md',
+                          UpdateExpression='ADD pictures :p',
                           ExpressionAttributeValues={
-                              ':p': {'SS': [media_file]},
-                              ':md': {'L': media_dimensions}
+                              ':p': {'SS': [media_file]}
                           }
                       )
-                elif file_type == 'video_file':
                     post = db.update_item(TableName='posts',
                           Key={'email': {'S': user_email},
                                'creation_time': {'S': request.form['key']}
                           },
-                          UpdateExpression='ADD videos :v, \
-                                            SET media_dimensions = :md',
+                          UpdateExpression='SET media_dimensions = :md',
                           ExpressionAttributeValues={
-                              ':v': {'SS': [media_file]},
                               ':md': {'L': media_dimensions}
+                          }
+                      )
+                elif file_type == 'video_file':
+                    if request.form.get('media_extension') == None:
+                        s3.delete_object(Bucket=BUCKET_NAME, 
+                                         Key=user_email+file_id_ex)
+                        raise BadRequest('Please provide video\'s extension '\
+                                         'in video_extension.')
+                    post = db.update_item(TableName='posts',
+                          Key={'email': {'S': user_email},
+                               'creation_time': {'S': request.form['key']}
+                          },
+                          UpdateExpression='ADD videos :v',
+                          ExpressionAttributeValues={
+                              ':v': {'SS': [media_file]}
+                          }
+                      )
+                    post = db.update_item(TableName='posts',
+                          Key={'email': {'S': user_email},
+                               'creation_time': {'S': request.form['key']}
+                          },
+                          UpdateExpression='SET media_dimensions = :md, \
+                                            SET video_extension = :vx',
+                          ExpressionAttributeValues={
+                              ':md': {'L': media_dimensions},
+                              ':vx': {'S': request.form['video_extension']}
                           }
                       )
             response['message'] = 'Successfully added picture to post!'
@@ -483,10 +507,9 @@ class FileActivityOnPost(Resource):
         return response,200
                 
 
-
 class UserRepostFeed(Resource):
     def post(self, user_email):
-        """Repost user's post"""
+        """Repost a user's feed post"""
         response = {}
         data = request.get_json(force=True)
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")
@@ -583,7 +606,7 @@ class UserRepostFeed(Resource):
 
 class UsersFavoritePosts(Resource):
     def put(self, user_email):
-        """Add post to user's favorites"""
+        """Adds a feed post to user's favorites"""
         response = {}
         data = request.get_json(force=True)
 
@@ -608,7 +631,7 @@ class UsersFavoritePosts(Resource):
             return response, 200
 
     def delete(self, user_email):
-        """Delete post from user's favorites"""
+        """Deletes a feed post from user's favorites"""
         response = {}
         data = request.get_json(force=True)
 
