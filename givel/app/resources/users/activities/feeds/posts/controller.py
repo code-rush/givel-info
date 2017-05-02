@@ -475,7 +475,7 @@ class FileActivityOnPost(Resource):
                           }
                       )
                 elif file_type == 'video_file':
-                    if request.form.get('media_extension') == None:
+                    if request.form.get('video_extension') == None:
                         s3.delete_object(Bucket=BUCKET_NAME, 
                                          Key=user_email+file_id_ex)
                         raise BadRequest('Please provide video\'s extension '\
@@ -494,13 +494,13 @@ class FileActivityOnPost(Resource):
                                'creation_time': {'S': request.form['key']}
                           },
                           UpdateExpression='SET media_dimensions = :md, \
-                                            SET video_extension = :vx',
+                                            video_extension = :vx',
                           ExpressionAttributeValues={
                               ':md': {'L': media_dimensions},
                               ':vx': {'S': request.form['video_extension']}
                           }
                       )
-            response['message'] = 'Successfully added picture to post!'
+            response['message'] = 'Successfully added file to post!'
         except:
             raise BadRequest('Request failed! Try again later.')
 
