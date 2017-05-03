@@ -66,7 +66,7 @@ def check_if_user_exists(user_id):
 def upload_file(file, bucket, key, extensions):
     if file and allowed_file(file.filename, extensions):
         filename = 's3-us-west-2.amazonaws.com/' \
-                   + str(bucket) + '/' + str(key.replace("@","%"))
+                   + str(bucket) + '/' + str(key.replace("@","%40"))
         upload_file = s3.put_object(
                             Bucket=bucket,
                             Body=file,
@@ -82,7 +82,7 @@ def upload_post_file(file, bucket, key, extensions):
     if file and allowed_file(file.filename, extensions):
         file_type = type_of_file(file.filename)
         filename = 's3-us-west-2.amazonaws.com/' \
-                   + str(bucket) + '/' + str(key.replace("@","%"))
+                   + str(bucket) + '/' + str(key.replace("@","%40"))
         if file_type == 'picture_file':
             upload_file = s3.put_object(
                             Bucket=bucket,
