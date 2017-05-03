@@ -460,24 +460,24 @@ class FileActivityOnPost(Resource):
                     )
                 if post['Item'].get('pictures') != None:
                     for picture in post['Item']['pictures']['SS']:
-                        key = picture.rsplit('/', 1)[1]
+                        key = picture.rsplit('/', 1)[1].replace("%40", "@")
                         s3.delete_object(Bucket=BUCKET_NAME, Key=key)
 
                     post = db.update_item(TableName='posts',
-                            Key={'email': {'S': post_data['id']},
-                                 'creation_time': {'S': post_data['key']}
+                            Key={'email': {'S': request.form['id']},
+                                 'creation_time': {'S': request.form['key']}
                             },
                             UpdateExpression='REMOVE pictures, \
                                               media_dimensions'
                         )
                 if post['Item'].get('videos') != None:
                     for video in post['Item']['videos']['SS']:
-                        key = video.rsplit('/', 1)[1]
+                        key = video.rsplit('/', 1)[1].replace("%40", "@")
                         s3.delete_object(Bucket=BUCKET_NAME, Key=key)
 
                     post = db.update_item(TableName='posts',
-                            Key={'email': {'S': post_data['id']},
-                                 'creation_time': {'S': post_data['key']}
+                            Key={'email': {'S': request.form['id']},
+                                 'creation_time': {'S': request.form['key']}
                             },
                             UpdateExpression='REMOVE videos, \
                                     media_dimensions, video_extension'
