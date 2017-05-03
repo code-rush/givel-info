@@ -65,7 +65,8 @@ def check_if_user_exists(user_id):
 
 def upload_file(file, bucket, key, extensions):
     if file and allowed_file(file.filename, extensions):
-        filename = str(bucket)+'.s3.amazonaws.com/'+str(key)
+        filename = 's3-us-west-2.amazonaws.com/' \
+                   + str(bucket) + '/' + str(key.replace("@","%"))
         upload_file = s3.put_object(
                             Bucket=bucket,
                             Body=file,
