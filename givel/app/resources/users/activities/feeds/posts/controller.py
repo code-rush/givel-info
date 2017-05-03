@@ -452,6 +452,38 @@ class FileActivityOnPost(Resource):
         try:
             if 'file_count' in request.form \
               and int(request.form['file_count']) == 1:
+                # checks and removes if any previous files exists
+                post = db.get_item(TableName='posts', 
+                        Key={'email': {'S': request.form['id']},
+                             'creation_time': {'S': request.form['key']}
+                        }
+                    )
+                if post['Item'].get('pictures') != None:
+                    for picture in post['Item']['pictures']['SS']:
+                        key = picture.rsplit('/', 1)[1]
+                        s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+
+                    post = db.update_item(TableName='posts',
+                            Key={'email': {'S': post_data['id']},
+                                 'creation_time': {'S': post_data['key']}
+                            },
+                            UpdateExpression='REMOVE pictures, \
+                                              media_dimensions'
+                        )
+                if post['Item'].get('videos') != None:
+                    for video in post['Item']['videos']['SS']:
+                        key = video.rsplit('/', 1)[1]
+                        s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+
+                    post = db.update_item(TableName='posts',
+                            Key={'email': {'S': post_data['id']},
+                                 'creation_time': {'S': post_data['key']}
+                            },
+                            UpdateExpression='REMOVE videos, \
+                                    media_dimensions, video_extension'
+                        )
+
+                # adds a photo/video file to the feed post
                 f = request.files['file']
                 media_file, file_type = upload_post_file(f, BUCKET_NAME,
                                  user_email+file_id_ex, ALLOWED_EXTENSIONS)
