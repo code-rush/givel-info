@@ -387,21 +387,25 @@ class UsersPost(Resource):
                                 'creation_time': {'S': post_data['key']}
                            }
                        )
-        if post['Item'].get('pictures') != None:
-            for picture in post['Item']['pictures']['SS']:
-                key = picture.rsplit('/', 1)[1]
-                s3.delete_object(Bucket=BUCKET_NAME, Key=key)
-        if post['Item'].get('videos') != None:
-            for video in post['Item']['videos']['SS']:
-                key = video.rsplit('/', 1)[1]
-                s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+        try:
+            if post['Item'].get('pictures') != None:
+                for picture in post['Item']['pictures']['SS']:
+                    key = picture.rsplit('/', 1)[1].replace("%40", "@")
+                    s3.delete_object(Bucket=BUCKET_NAME, Key=key)
+            if post['Item'].get('videos') != None:
+                for video in post['Item']['videos']['SS']:
+                    key = video.rsplit('/', 1)[1].replace("%40", "@")
+                    s3.delete_object(Bucket=BUCKET_NAME, Key=key)
 
-        delete_post = db.delete_item(TableName='posts',
-                                    Key={'email': {'S': post_data['id']},
-                                         'creation_time': {'S': post_data['key']}
-                                    }
-                                )
-        response['message'] = 'Post deleted!'
+            delete_post = db.delete_item(TableName='posts',
+                                Key={'email': {'S': post_data['id']},
+                                     'creation_time': {'S': post_data['key']}
+                                }
+                            )
+            response['message'] = 'Request successful. Post deleted.'
+        except:
+            response['message'] = 'Request failed. Please try again later.'
+            
         return response, 200
 
 
