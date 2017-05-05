@@ -218,7 +218,7 @@
                 - file = (send file only if file_count is not 0)
   - Allowed files: 
       - IMAGE(.jpg, .png, .jpeg)
-      - VIDEOS(.mp4, .mpeg)
+      - VIDEOS(.mp4, .mpeg, .mov, .MOV, .flv, .mpg, .m4v)
   - Returns: *200 OK* Status Code with a successful message if the file added successfully.
   - Description: Adds files to the post. Use this api only to add file to the post.
 
@@ -1043,4 +1043,5 @@
   - Method: **GET**
   - Returns: *200 OK* Status Code and a success message with a list of users
   - Description: Returns a list of important Givel users to follow.
+
 
