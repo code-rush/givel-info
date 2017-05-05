@@ -1,6 +1,6 @@
 # API Documentation
 
-## Endpoints:
+## Endpoints(v1):
 
 ### USER APIS
 - **create a user account**
@@ -882,7 +882,7 @@
       the notification would be **"*user_name* tagged you in a *tagged_where* 
       *feed_content*"**.
     - If the value of the *activity* is "tagging" and the value of *tagged_where* is "comment", 
-      the notification would be **"*user_name* tagged you in a *tagged_where* 
+      the notification would be **"*user_name* mentioned you in a *tagged_where* 
       *comment_content"**.
 
     - *Note:* If **feed_content** OR **comment_content** is an empty string, it means the 
@@ -1043,3 +1043,4 @@
   - Method: **GET**
   - Returns: *200 OK* Status Code and a success message with a list of users
   - Description: Returns a list of important Givel users to follow.
+
