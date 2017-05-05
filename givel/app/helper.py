@@ -5,7 +5,7 @@ s3 = boto3.client('s3')
 db = boto3.client('dynamodb')
 
 IMAGE = set(['jpg', 'png', 'jpeg'])
-VIDEO = set(['mp4', 'mpeg'])
+VIDEO = set(['mp4', 'mpeg', 'mov', 'MOV', 'mpg', 'flv', 'm4v'])
 STATES = {
     'AZ': 'Arizona',
     'CA': 'California',

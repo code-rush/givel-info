@@ -22,7 +22,8 @@ user_post_activity_api_routes = Blueprint('post_activity_api', __name__)
 api = Api(user_post_activity_api_routes)
 
 BUCKET_NAME = 'givelposts'
-ALLOWED_EXTENSIONS = set(['jpg', 'png', 'jpeg', 'mpeg', 'mp4'])
+ALLOWED_EXTENSIONS = set(['jpg', 'png', 'jpeg', 'mpeg', 'mp4', 'm4v', \
+                          'mov', 'MOV', 'mpg', 'flv'])
 
 db = boto3.client('dynamodb')
 s3 = boto3.client('s3')
@@ -68,135 +69,135 @@ class UsersPost(Resource):
                                               + 'sent, set file_count to 0')
         if int(data['file_count']) != 0 and int(data['file_count']) > 1:
             raise BadRequest('Only one file is allowed!')
-        else:
-            user = db.get_item(TableName='users',
-                            Key={'email': {'S': user_email}})
-            try:
-                post = db.put_item(TableName='posts',
-                                Item={'email': {'S': user_email},
-                                     'creation_time': {'S': date_time},
-                                     'value': {'N': '0'},
-                                     'likes': {'N': '0'},
-                                     'stars': {'N': '0'},
-                                     'favorites': {'N': '0'},
-                                     'comments': {'N': '0'},
-                                     'creation_date': {'S': creation_date}
+
+        user = db.get_item(TableName='users',
+                        Key={'email': {'S': user_email}})
+        try:
+            post = db.put_item(TableName='posts',
+                            Item={'email': {'S': user_email},
+                                 'creation_time': {'S': date_time},
+                                 'value': {'N': '0'},
+                                 'likes': {'N': '0'},
+                                 'stars': {'N': '0'},
+                                 'favorites': {'N': '0'},
+                                 'comments': {'N': '0'},
+                                 'creation_date': {'S': creation_date}
+                            }
+                        )
+            
+            if data.get('location') != None:
+                post = db.update_item(TableName='posts',
+                              Key={'email':{'S': user_email},
+                                   'creation_time': {'S': date_time}
+                              },
+                              UpdateExpression='SET #loc = :l',
+                              ExpressionAttributeNames={
+                                  '#loc': 'location'
+                              },
+                              ExpressionAttributeValues={
+                                  ':l': {'S': data['location']}
+                              }
+                          )
+            else:
+                user = db.get_item(TableName='users',
+                                Key={'email': {'S': user_email}
                                 }
                             )
-                
-                if data.get('location') != None:
-                    post = db.update_item(TableName='posts',
-                                  Key={'email':{'S': user_email},
-                                       'creation_time': {'S': date_time}
-                                  },
-                                  UpdateExpression='SET #loc = :l',
-                                  ExpressionAttributeNames={
-                                      '#loc': 'location'
-                                  },
-                                  ExpressionAttributeValues={
-                                      ':l': {'S': data['location']}
-                                  }
-                              )
-                else:
-                    user = db.get_item(TableName='users',
-                                    Key={'email': {'S': user_email}
-                                    }
-                                )
-                    home_community = user['Item']['home']['S']
-                    post = db.update_item(TableName='posts',
-                                  Key={'email': {'S': user_email},
-                                       'creation_time': {'S': date_time}
-                                  },
-                                  UpdateExpression='SET #loc = :l',
-                                  ExpressionAttributeNames={
-                                      '#loc': 'location'
-                                  },
-                                  ExpressionAttributeValues={
-                                      ':l': {'S': home_community}
-                                  }
-                              )
-                
-                if data.get('content') != None:
-                    post = db.update_item(TableName='posts',
-                                  Key={'email': {'S': user_email},
-                                       'creation_time': {'S': date_time}
-                                  },
-                                  UpdateExpression='SET content = :d',
-                                  ExpressionAttributeValues={
-                                      ':d': {'S': data['content']}
-                                  }
-                              )
+                home_community = user['Item']['home']['S']
+                post = db.update_item(TableName='posts',
+                              Key={'email': {'S': user_email},
+                                   'creation_time': {'S': date_time}
+                              },
+                              UpdateExpression='SET #loc = :l',
+                              ExpressionAttributeNames={
+                                  '#loc': 'location'
+                              },
+                              ExpressionAttributeValues={
+                                  ':l': {'S': home_community}
+                              }
+                          )
+            
+            if data.get('content') != None:
+                post = db.update_item(TableName='posts',
+                              Key={'email': {'S': user_email},
+                                   'creation_time': {'S': date_time}
+                              },
+                              UpdateExpression='SET content = :d',
+                              ExpressionAttributeValues={
+                                  ':d': {'S': data['content']}
+                              }
+                          )
 
-                if data.get('link') != None:
-                    add_link = {}
-                    add_link['origin'] = {}
-                    add_link['origin']['N'] = str(data['link']['origin'])
-                    add_link['length'] = {}
-                    add_link['length']['N'] = str(data['link']['length'])
+            if data.get('link') != None:
+                add_link = {}
+                add_link['origin'] = {}
+                add_link['origin']['N'] = str(data['link']['origin'])
+                add_link['length'] = {}
+                add_link['length']['N'] = str(data['link']['length'])
 
-                    post = db.update_item(TableName='posts',
-                                Key={'email': {'S': user_email},
-                                     'creation_time': {'S': date_time}
-                                },
-                                UpdateExpression='SET link = :l',
-                                ExpressionAttributeValues={
-                                    ':l': {'M': add_link}
-                                }
-                            )
+                post = db.update_item(TableName='posts',
+                            Key={'email': {'S': user_email},
+                                 'creation_time': {'S': date_time}
+                            },
+                            UpdateExpression='SET link = :l',
+                            ExpressionAttributeValues={
+                                ':l': {'M': add_link}
+                            }
+                        )
 
-                if data.get('tags') != None:
-                    tags = []
-                    for t in data['tags']:
-                        tag_entry = {}
-                        tag_entry['M'] = {}
-                        tag_entry['M']['user_id'] = {}
-                        tag_entry['M']['user_id']['S'] = t['user_id']
-                        tag_entry['M']['origin'] = {}
-                        tag_entry['M']['origin']['N'] = str(t['origin'])
-                        tag_entry['M']['length'] = {}
-                        tag_entry['M']['length']['N'] = str(t['length'])
-                        tags.append(tag_entry)
+            if data.get('tags') != None:
+                tags = []
+                for t in data['tags']:
+                    tag_entry = {}
+                    tag_entry['M'] = {}
+                    tag_entry['M']['user_id'] = {}
+                    tag_entry['M']['user_id']['S'] = t['user_id']
+                    tag_entry['M']['origin'] = {}
+                    tag_entry['M']['origin']['N'] = str(t['origin'])
+                    tag_entry['M']['length'] = {}
+                    tag_entry['M']['length']['N'] = str(t['length'])
+                    tags.append(tag_entry)
 
-                    post = db.update_item(TableName='posts',
-                                Key={'email': {'S': user_email},
-                                     'creation_time': {'S': date_time}
-                                },
-                                UpdateExpression='SET tags = :t',
-                                ExpressionAttributeValues={
-                                    ':t': {'L': tags}
-                                }
-                            )
+                post = db.update_item(TableName='posts',
+                            Key={'email': {'S': user_email},
+                                 'creation_time': {'S': date_time}
+                            },
+                            UpdateExpression='SET tags = :t',
+                            ExpressionAttributeValues={
+                                ':t': {'L': tags}
+                            }
+                        )
 
-                    feed_id = str(user_email) + '_' + date_time
+                feed_id = str(user_email) + '_' + date_time
 
-                    for i in tags:
-                        tag_notification = db.put_item(TableName='notifications',
-                                Item={'notify_to': {'S': i['M']['user_id']['S']},
-                                      'creation_time': {'S': date_time},
-                                      'email': {'S': user_email},
-                                      'from': {'S': 'feed'},
-                                      'feed_id': {'S': feed_id},
-                                      'checked': {'BOOL': False},
-                                      'notify_for': {'S': 'tagging'},
-                                      'tagged_where': {'S': 'post'}
-                                }
-                            )
-                if int(data['file_count']) > 0:
-                    response['feed'] = {}
-                    response['feed']['id'] = {}
-                    response['feed']['key'] = {}
-                    response['feed']['id']['S'] = user_email
-                    response['feed']['key']['S'] = date_time
+                for i in tags:
+                    tag_notification = db.put_item(TableName='notifications',
+                            Item={'notify_to': {'S': i['M']['user_id']['S']},
+                                  'creation_time': {'S': date_time},
+                                  'email': {'S': user_email},
+                                  'from': {'S': 'feed'},
+                                  'feed_id': {'S': feed_id},
+                                  'checked': {'BOOL': False},
+                                  'notify_for': {'S': 'tagging'},
+                                  'tagged_where': {'S': 'post'}
+                            }
+                        )
+            if int(data['file_count']) > 0:
+                response['feed'] = {}
+                response['feed']['id'] = {}
+                response['feed']['key'] = {}
+                response['feed']['id']['S'] = user_email
+                response['feed']['key']['S'] = date_time
 
-                response['message'] = 'Success! Post Created!'
-            except:
-                post = db.delete_item(TableName='posts',
-                             Key={'email': {'S': user_email},
-                                  'creation_time': {'S': date_time}
-                             }
-                         )
-                raise BadRequest('Failed to create post. Try again later.')
-            return response, 201
+            response['message'] = 'Success! Post Created!'
+        except:
+            post = db.delete_item(TableName='posts',
+                         Key={'email': {'S': user_email},
+                              'creation_time': {'S': date_time}
+                         }
+                     )
+            raise BadRequest('Failed to create post. Try again later.')
+        return response, 201
 
 
     def put(self, user_email):
@@ -210,6 +211,7 @@ class UsersPost(Resource):
             raise BadRequest('Post ID and KEY is required to edit a post')
         if post_data['id'] != str(user_email):
             raise BadRequest('Posts can only be edited by the creators!')
+
         try:
             feed_id = post_data['id'] + '_' + post_data['key']
             if post_data.get('content') != None:
@@ -314,6 +316,7 @@ class UsersPost(Resource):
     def get(self, user_email):
         """Get all the user's posts"""
         response = {}
+
         try:
             user_posts = db.query(TableName='posts',
                                 Select='ALL_ATTRIBUTES',
@@ -377,6 +380,7 @@ class UsersPost(Resource):
         """Deletes a user's feed post"""
         response={}
         post_data = request.get_json(force=True)
+
         if post_data.get('id') == None or post_data.get('key') == None:
             raise BadRequest('Please provide required data')
         if post_data['id'] != str(user_email):
@@ -648,23 +652,23 @@ class UsersFavoritePosts(Resource):
 
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('Provide feed id and key to add to the favorites')
-        else:
-            user_exists = check_if_user_exists(user_email)
-            feed_id = str(data['id']) + '_' + str(data['key'])
-            try:
-                if user_exists == True:
-                    add_to_fav = db.put_item(TableName='favorites',
-                                    Item={'email': {'S': user_email},
-                                          'feed_id': {'S': feed_id}
-                                    }
-                                )
-                    response['message'] = 'Post added to your favorites'
-                else:
-                    raise BadRequest('User does not exist! ' \
-                                   + 'Sign Up to add post to favorites')
-            except:
-                response['message'] = 'Try again later'
-            return response, 200
+        
+        user_exists = check_if_user_exists(user_email)
+        feed_id = str(data['id']) + '_' + str(data['key'])
+        try:
+            if user_exists == True:
+                add_to_fav = db.put_item(TableName='favorites',
+                                Item={'email': {'S': user_email},
+                                      'feed_id': {'S': feed_id}
+                                }
+                            )
+                response['message'] = 'Post added to your favorites'
+            else:
+                raise BadRequest('User does not exist! ' \
+                               + 'Sign Up to add post to favorites')
+        except:
+            response['message'] = 'Try again later'
+        return response, 200
 
     def delete(self, user_email):
         """Deletes a feed post from user's favorites"""
@@ -673,18 +677,18 @@ class UsersFavoritePosts(Resource):
 
         if data.get('id') == None or data.get('key') == None:
             raise BadRequest('Provide feed id and key to delete post')
-        else:
-            feed_id = str(data['id']) + '_' + str(data['key'])
-            try:
-                delete_fav = db.delete_item(TableName='favorites',
-                                Key={'email': {'S': user_email},
-                                     'feed_id': {'S': feed_id}
-                                }
-                            )
-                response['message'] = 'Post deleted from your favorites'
-            except:
-                response['message'] = 'Try again later'
-            return response, 200
+        
+        feed_id = str(data['id']) + '_' + str(data['key'])
+        try:
+            delete_fav = db.delete_item(TableName='favorites',
+                            Key={'email': {'S': user_email},
+                                 'feed_id': {'S': feed_id}
+                            }
+                        )
+            response['message'] = 'Post deleted from your favorites'
+        except:
+            response['message'] = 'Try again later'
+        return response, 200
 
     def get(self, user_email):
         """Gets user's favorite posts"""
