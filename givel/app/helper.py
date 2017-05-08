@@ -109,9 +109,9 @@ def allowed_file(filename, extensions):
     return '.' in filename and filename.rsplit('.', 1)[1] in extensions
 
 
-def get_file_extension(filename):
+def get_file_extension(file):
     """Returns file's extension"""
-    return filename.rsplit('.', 1)[1]
+    return file.filename.rsplit('.', 1)[1]
 
 
 def type_of_file(filename):
