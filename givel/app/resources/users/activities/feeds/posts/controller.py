@@ -13,7 +13,7 @@ from app.helper import (upload_post_file, check_if_user_exists,
                         check_if_user_liked, check_if_taking_off,
                         check_if_user_starred, check_if_user_commented,
                         get_user_details, check_if_post_added_to_favorites,
-                        check_if_user_following_user)
+                        check_if_user_following_user, get_file_extension)
 
 
 from werkzeug.exceptions import BadRequest
@@ -493,8 +493,16 @@ class FileActivityOnPost(Resource):
 
                 # adds a photo/video file to the feed post
                 f = request.files['file']
+                extension = get_file_extension(f)
+                
+                if extension not in ALLOWED_EXTENSIONS:
+                    raise BadRequest('{} extension is not '\
+                                     + 'allowed'.format(extension))
+
+                # uploads media file to the server
                 media_file, file_type = upload_post_file(f, BUCKET_NAME,
                                  user_email+file_id_ex, ALLOWED_EXTENSIONS)
+
                 if file_type == 'picture_file':
                     post = db.update_item(TableName='posts',
                           Key={'email': {'S': user_email},
@@ -515,11 +523,6 @@ class FileActivityOnPost(Resource):
                           }
                       )
                 elif file_type == 'video_file':
-                    if request.form.get('video_extension') == None:
-                        s3.delete_object(Bucket=BUCKET_NAME, 
-                                         Key=user_email+file_id_ex)
-                        raise BadRequest('Please provide video\'s extension '\
-                                         'in video_extension.')
                     post = db.update_item(TableName='posts',
                           Key={'email': {'S': user_email},
                                'creation_time': {'S': request.form['key']}
@@ -537,7 +540,7 @@ class FileActivityOnPost(Resource):
                                             video_extension = :vx',
                           ExpressionAttributeValues={
                               ':md': {'L': media_dimensions},
-                              ':vx': {'S': request.form['video_extension']}
+                              ':vx': {'S': extension}
                           }
                       )
             response['message'] = 'Successfully added file to post!'
