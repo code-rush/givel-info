@@ -211,8 +211,7 @@
   - Path: /api/v1/users/posts/files/{user_email}
   - Method: **PUT**
   - Content-Type: multipart/form-data
-  - Required Data: id, key, file_count, file, media_width, media_height, 
-                   video_extension(required only video file is uploaded.)
+  - Required Data: id, key, file_count, file, media_width, media_height
                 - file_count= 0 (default value should be 0. while sending file value is 
                        number of files. Max value is 1.)
                 - file = (send file only if file_count is not 0)
