@@ -109,6 +109,11 @@ def allowed_file(filename, extensions):
     return '.' in filename and filename.rsplit('.', 1)[1] in extensions
 
 
+def get_file_extenstion(filename):
+    """Returns file's extension"""
+    return filename.rsplit('.', 1)[1]
+
+
 def type_of_file(filename):
     """Returns type of media file"""
     format = filename.rsplit('.', 1)[1]
